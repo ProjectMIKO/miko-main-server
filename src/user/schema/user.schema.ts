@@ -14,6 +14,9 @@ export class User {
   @Prop({ required: true })
   username: string;
 
+  @Prop({ default: 'user' })
+  role: string;
+
   @Prop({ default: true })
   isActive: boolean;
 }

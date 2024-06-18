@@ -20,7 +20,7 @@ export class UserController {
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<UserResponseDto> {
-    return this.userService.findOne(id);
+    return this.userService.findById(id);
   }
 
   @Delete(':id')

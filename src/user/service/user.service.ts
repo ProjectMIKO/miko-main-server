@@ -26,10 +26,15 @@ export class UserService {
     return users.map((user) => this.toUserResponseDto(user));
   }
 
-  async findOne(id: string): Promise<UserResponseDto> {
+  async findById(id: string): Promise<UserResponseDto> {
     const user = await this.userModel.findOne({ id }).exec();
 
     return this.toUserResponseDto(user);
+  }
+
+  async checkId(id: string): Promise<User> {
+
+    return this.userModel.findOne({ id }).exec();
   }
 
   async remove(id: string): Promise<void> {
@@ -40,7 +45,7 @@ export class UserService {
     const userResponseDto = new UserResponseDto();
 
     userResponseDto.id = user.id;
-    userResponseDto.username = user.username;
+    userResponseDto.username = user.id;
     userResponseDto.role = user.role;
     userResponseDto.isActive = user.isActive;
 

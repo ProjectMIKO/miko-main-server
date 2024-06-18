@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../schema/user.schema';
@@ -11,7 +11,13 @@ export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   async create(userCreateDto: UserCreateDto): Promise<User> {
-    const hashedPassword = await bcrypt.hash(userCreateDto.password, 10);
+    const { username, password } = userCreateDto;
+
+    if (await this.findByUsername(username)) {
+      throw new ConflictException('Username already taken');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
     const createdUser = new this.userModel({
       ...userCreateDto,
       password: hashedPassword,
@@ -26,15 +32,14 @@ export class UserService {
     return users.map((user) => this.toUserResponseDto(user));
   }
 
-  async findById(id: string): Promise<UserResponseDto> {
-    const user = await this.userModel.findOne({ id }).exec();
+  async findByUsername(username: string): Promise<UserResponseDto> {
+    const user = await this.userModel.findOne({ username: username }).exec();
 
     return this.toUserResponseDto(user);
   }
 
-  async checkId(id: string): Promise<User> {
-
-    return this.userModel.findOne({ id }).exec();
+  async checkUsername(username: string): Promise<User> {
+    return this.userModel.findOne({ username: username }).exec();
   }
 
   async remove(id: string): Promise<void> {
@@ -44,8 +49,8 @@ export class UserService {
   private toUserResponseDto(user: UserDocument): UserResponseDto {
     const userResponseDto = new UserResponseDto();
 
-    userResponseDto.id = user.id;
-    userResponseDto.username = user.id;
+    userResponseDto.username = user.username;
+    userResponseDto.nickname = user.nickname;
     userResponseDto.role = user.role;
     userResponseDto.isActive = user.isActive;
 

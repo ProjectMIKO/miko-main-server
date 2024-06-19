@@ -6,28 +6,30 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { OpenviduService } from '../service/openvidu.service';
+import { SessionPropertiesDto } from '../dto/session.request.dto';
+import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
 
-@Controller('api/sessions')
+@Controller('api/openvidu')
 export class OpenviduController {
   constructor(private readonly openviduService: OpenviduService) {}
 
-  @Post()
-  async createSession(@Body() body: any) {
-    const session = await this.openviduService.createSession(body);
-    return { sessionId: session.sessionId };
+  @Post('sessions')
+  async createSession(@Body() body: SessionPropertiesDto) {
+    const SessionResponseDto = await this.openviduService.createSession(body);
+    return SessionResponseDto
   }
 
-  @Post(':sessionId/connections')
+  @Post('sessions/:sessionId/connections')
   async createConnection(
     @Param('sessionId') sessionId: string,
-    @Body() body: any,
+    @Body() body: ConnectionPropertiesDto,
   ) {
     try {
-      const connection = await this.openviduService.createConnection(
+      const ConnectionResponseDto = await this.openviduService.createConnection(
         sessionId,
         body,
       );
-      return { token: connection.token };
+      return { ConnectionResponseDto };
     } catch (error) {
       throw new NotFoundException();
     }

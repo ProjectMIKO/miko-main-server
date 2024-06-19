@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getMongoConfig } from '../config/mongoose.config';
 import { AuthModule } from '../auth/auth.module';
+import { OpenviduModule } from '../openvidu/openvidu.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuthModule } from '../auth/auth.module';
     }),
     UserModule,
     AuthModule,
+    OpenviduModule
   ],
   controllers: [AppController],
   providers: [AppService],

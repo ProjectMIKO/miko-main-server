@@ -16,11 +16,12 @@ export class MiddlewareService {
   
   async summarizeText(summarizeRequestDto: SummarizeRequestDto): Promise<SummarizeResponseDto> {
     return axios
-      .post(`${this.NLP_SERVER_URL}/keyword`, summarizeRequestDto)
+      .post(`${this.NLP_SERVER_URL}/api/keyword`, summarizeRequestDto)
       .then((response) => {
         const responseData = response.data;
         const summarizeResponse: SummarizeResponseDto = {
           keyword: responseData.keyword,
+          subtitle: responseData.subtitle,
           cost: responseData.cost
         };
         return summarizeResponse;

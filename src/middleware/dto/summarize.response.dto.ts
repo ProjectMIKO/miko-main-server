@@ -8,6 +8,12 @@ export class SummarizeResponseDto {
   readonly keyword: string;
 
   @ApiProperty({
+    description: 'A subtitle or brief description related to the summarized text',
+    example: 'Technological advancement in AI',
+  })
+  readonly subtitle: string;
+
+  @ApiProperty({
     description: 'The cost of the summarization request',
     example: 0.005,
   })

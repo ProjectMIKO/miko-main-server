@@ -8,6 +8,7 @@ import { getMongoConfig } from '../config/mongoose.config';
 import { AuthModule } from '../auth/auth.module';
 import { OpenviduModule } from '../openvidu/openvidu.module';
 import { MiddlewareModule } from '../middleware/middleware.module';
+import { FileSystemModule } from '../filesystem/fileSystem.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { MiddlewareModule } from '../middleware/middleware.module';
     UserModule,
     AuthModule,
     OpenviduModule,
-    MiddlewareModule
+    MiddlewareModule,
+    FileSystemModule,
   ],
   controllers: [AppController],
   providers: [AppService],

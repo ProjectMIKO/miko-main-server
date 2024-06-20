@@ -5,31 +5,60 @@ import {
   Param,
   NotFoundException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { OpenviduService } from '../service/openvidu.service';
 import { SessionPropertiesDto } from '../dto/session.request.dto';
 import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
+import { ConnectionResponseDto } from '../dto/connection.response.dto';
+import { SessionResponseDto } from '../dto/session.response.dto';
 
+@ApiTags('OpenVidu')
 @Controller('api/openvidu')
 export class OpenviduController {
   constructor(private readonly openviduService: OpenviduService) {}
 
   @Post('sessions')
-  async createSession(@Body() body: SessionPropertiesDto) {
-    const SessionResponseDto = await this.openviduService.createSession(body);
-    return SessionResponseDto
+  @ApiOperation({ summary: 'Create a new session' })
+  @ApiResponse({
+    status: 201,
+    description: 'Session created successfully',
+    type: SessionResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiBody({ type: SessionPropertiesDto })
+  async createSession(
+    @Body() body: SessionPropertiesDto,
+  ): Promise<SessionResponseDto> {
+    const sessionResponseDto = await this.openviduService.createSession(body);
+    return sessionResponseDto;
   }
 
   @Post('sessions/:sessionId/connections')
+  @ApiOperation({ summary: 'Create a new connection for a session' })
+  @ApiResponse({
+    status: 201,
+    description: 'Connection created successfully',
+    type: ConnectionResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  @ApiBody({ type: ConnectionPropertiesDto })
   async createConnection(
     @Param('sessionId') sessionId: string,
     @Body() body: ConnectionPropertiesDto,
-  ) {
+  ): Promise<ConnectionResponseDto> {
     try {
-      const ConnectionResponseDto = await this.openviduService.createConnection(
+      const connectionResponseDto = await this.openviduService.createConnection(
         sessionId,
         body,
       );
-      return { ConnectionResponseDto };
+      return connectionResponseDto;
     } catch (error) {
       throw new NotFoundException();
     }

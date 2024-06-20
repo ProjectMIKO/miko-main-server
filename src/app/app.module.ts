@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getMongoConfig } from '../config/mongoose.config';
 import { AuthModule } from '../auth/auth.module';
 import { OpenviduModule } from '../openvidu/openvidu.module';
+import { MiddlewareModule } from '../middleware/middleware.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { OpenviduModule } from '../openvidu/openvidu.module';
     }),
     UserModule,
     AuthModule,
-    OpenviduModule
+    OpenviduModule,
+    MiddlewareModule
   ],
   controllers: [AppController],
   providers: [AppService],

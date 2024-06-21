@@ -14,6 +14,17 @@ async function bootstrap() {
     }),
   );
 
+  // cors 설정
+  app.enableCors({
+    origin: [
+      "https://miko-frontend-i3vt.vercel.app",
+      "http://localhost:3000"
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept',
+    credentials: true, // 서버가 자격 증명을 허용하도록 설정
+  });
+
   // Swagger 설정
   const config = new DocumentBuilder()
     .setTitle('miko')

@@ -76,4 +76,24 @@ export class OpenviduController {
     const sessionResponseDtoArr: SessionResponseDto[] = await this.openviduService.fetchAllSessions();
     return sessionResponseDtoArr;
   }
+
+  @Get('sessions/:sessionId')
+  @ApiOperation({ summary: 'Retrieve a specific session' })
+  @ApiResponse({
+    status: 200,
+    description: 'Session retrieved successfully',
+    type: SessionResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  async fetchSession(
+    @Param('sessionId') sessionId: string,
+  ): Promise<SessionResponseDto> {
+    try {
+      const sessionResponseDto = await this.openviduService.fetchSession(sessionId);
+      return sessionResponseDto;
+    } catch (error) {
+      throw new NotFoundException('Session not found');
+    }
+  }
 }

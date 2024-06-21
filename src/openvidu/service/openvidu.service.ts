@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OpenVidu, Session, Connection } from 'openvidu-node-client';
 import { SessionPropertiesDto } from '../dto/session.request.dto';
@@ -92,5 +92,17 @@ export class OpenviduService implements OnModuleInit {
     const sessions: Session[] = this.openvidu.activeSessions;
     const sessionResponseDtoArr = sessions.map(session => this.toSessionResponseDto(session));
     return sessionResponseDtoArr;
+  }
+
+  async fetchSession(sessionId: string): Promise<SessionResponseDto> {
+    // Fetch all session info from OpenVidu Server
+    await this.openvidu.fetch();
+    const session: Session = this.openvidu.activeSessions.find(
+      (s) => s.sessionId === sessionId,
+    );
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+    return this.toSessionResponseDto(session);
   }
 }

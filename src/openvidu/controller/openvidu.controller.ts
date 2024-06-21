@@ -246,4 +246,25 @@ export class OpenviduController {
     );
     return recordingResponseDto;
   }
+
+  @Get('recordings/:recordingId')
+  @ApiOperation({ summary: 'Get a recording' })
+  @ApiResponse({
+    status: 200,
+    description: 'Recording retrieved successfully',
+    type: RecordingResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Recording not found' })
+  @ApiParam({ name: 'recordingId', description: 'The ID of the recording' })
+  async getRecording(
+    @Param('recordingId') recordingId: string,
+  ): Promise<RecordingResponseDto> {
+    try {
+      const recordingResponseDto =
+        await this.recordService.getRecording(recordingId);
+      return recordingResponseDto;
+    } catch (error) {
+      throw new NotFoundException('Recording not found');
+    }
+  }
 }

@@ -41,7 +41,7 @@ export class RecordService {
       frameRate,
       recordingLayout,
       customLayout,
-      shmSize,
+      shmSize
     } = startRecordingDto;
 
     // Fetch the session info from OpenVidu Server
@@ -57,13 +57,15 @@ export class RecordService {
     const recordingProperties: RecordingProperties = {
       name,
       hasAudio,
-      hasVideo,
+      hasVideo: false, // ec2-micro는 비디오까지 전체녹화 힘든 걸로 보임
       outputMode,
+      // resolution,
+      resolution: '640x480', // 낮은 해상도
+      // frameRate,
+      frameRate: 15, // 낮은 프레임 레이트
       recordingLayout,
-      resolution,
-      frameRate,
-      shmSize,
       customLayout,
+      shmSize
     };
 
     // Start recording
@@ -78,6 +80,11 @@ export class RecordService {
   async stopRecording(recordingId: string): Promise<RecordingResponseDto> {
     // Stop recording
     const recording = await this.openvidu.stopRecording(recordingId);
+    return plainToClass(RecordingResponseDto, recording);
+  }
+
+  async getRecording(recordingId: string): Promise<RecordingResponseDto> {
+    const recording = await this.openvidu.getRecording(recordingId);
     return plainToClass(RecordingResponseDto, recording);
   }
 }

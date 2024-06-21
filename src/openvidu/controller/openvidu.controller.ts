@@ -4,6 +4,7 @@ import {
   Body,
   Param,
   NotFoundException,
+  Get,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -60,7 +61,19 @@ export class OpenviduController {
       );
       return connectionResponseDto;
     } catch (error) {
-      throw new NotFoundException();
+      throw new NotFoundException('Session not found');
     }
+  }
+
+  @Get('sessions')
+  @ApiOperation({ summary: 'Retrieve all sessions' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions retrieved successfully',
+    type: [SessionResponseDto],
+  })
+  async fetchAllSessions(): Promise<SessionResponseDto[]> {
+    const sessionResponseDtoArr: SessionResponseDto[] = await this.openviduService.fetchAllSessions();
+    return sessionResponseDtoArr;
   }
 }

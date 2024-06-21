@@ -85,4 +85,12 @@ export class OpenviduService implements OnModuleInit {
       subscribers
     });
   }
+
+  async fetchAllSessions(): Promise<SessionResponseDto[]> {
+    // Fetch all session info from OpenVidu Server
+    await this.openvidu.fetch();
+    const sessions: Session[] = this.openvidu.activeSessions;
+    const sessionResponseDtoArr = sessions.map(session => this.toSessionResponseDto(session));
+    return sessionResponseDtoArr;
+  }
 }

@@ -4,6 +4,8 @@ import {
   Body,
   Param,
   NotFoundException,
+  Get,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,6 +19,7 @@ import { SessionPropertiesDto } from '../dto/session.request.dto';
 import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
 import { ConnectionResponseDto } from '../dto/connection.response.dto';
 import { SessionResponseDto } from '../dto/session.response.dto';
+import { ModeratorRequestDto } from '../dto/moderator.request.dto';
 
 @ApiTags('OpenVidu')
 @Controller('api/openvidu')
@@ -60,7 +63,124 @@ export class OpenviduController {
       );
       return connectionResponseDto;
     } catch (error) {
-      throw new NotFoundException();
+      throw new NotFoundException('Session not found');
+    }
+  }
+
+  @Get('sessions')
+  @ApiOperation({ summary: 'Retrieve all sessions' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions retrieved successfully',
+    type: [SessionResponseDto],
+  })
+  async fetchAllSessions(): Promise<SessionResponseDto[]> {
+    const sessionResponseDtoArr: SessionResponseDto[] = await this.openviduService.fetchAllSessions();
+    return sessionResponseDtoArr;
+  }
+
+  @Get('sessions/:sessionId')
+  @ApiOperation({ summary: 'Retrieve a specific session' })
+  @ApiResponse({
+    status: 200,
+    description: 'Session retrieved successfully',
+    type: SessionResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  async fetchSession(
+    @Param('sessionId') sessionId: string,
+  ): Promise<SessionResponseDto> {
+    try {
+      const sessionResponseDto = await this.openviduService.fetchSession(sessionId);
+      return sessionResponseDto;
+    } catch (error) {
+      throw new NotFoundException('Session not found');
+    }
+  }
+
+  @Post('sessions/:sessionId/close')
+  @ApiOperation({ summary: 'Close a specific session (admin only)' })
+  @ApiResponse({
+    status: 204,
+    description: 'Session closed successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  @ApiBody({ type: ModeratorRequestDto })
+  async closeSession(
+    @Param('sessionId') sessionId: string,
+    @Body() moderatorRequestDto: ModeratorRequestDto,
+  ): Promise<void> {
+    try {
+      await this.openviduService.closeSession(sessionId, moderatorRequestDto.token);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Session not found');
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException('User not authorized to close this session');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  @Post('sessions/:sessionId/connections/:connectionId/destroy')
+  @ApiOperation({ summary: 'Destroy a specific connection (admin only)' })
+  @ApiResponse({
+    status: 204,
+    description: 'Connection destroyed successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Session or connection not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  @ApiParam({ name: 'connectionId', description: 'The ID of the connection' })
+  @ApiBody({ type: ModeratorRequestDto })
+  async destroyConnection(
+    @Param('sessionId') sessionId: string,
+    @Param('connectionId') connectionId: string,
+    @Body() moderatorRequestDto: ModeratorRequestDto,
+  ): Promise<void> {
+    try {
+      await this.openviduService.destroyConnection(sessionId, connectionId, moderatorRequestDto.token);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Session or connection not found');
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException('User not authorized to destroy this connection');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  @Post('sessions/:sessionId/connections/:connectionId/unpublish')
+  @ApiOperation({ summary: 'Unpublish a specific stream (admin only)' })
+  @ApiResponse({
+    status: 204,
+    description: 'Stream unpublished successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Session or connection not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  @ApiParam({ name: 'connectionId', description: 'The ID of the connection' })
+  @ApiBody({ type: ModeratorRequestDto })
+  async unpublishStream(
+    @Param('sessionId') sessionId: string,
+    @Param('connectionId') connectionId: string,
+    @Body() moderatorRequestDto: ModeratorRequestDto,
+  ): Promise<void> {
+    try {
+      await this.openviduService.unpublishStream(sessionId, connectionId, moderatorRequestDto.token);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Session or connection not found');
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException('User not authorized to unpublish this stream');
+      } else {
+        throw error;
+      }
     }
   }
 }

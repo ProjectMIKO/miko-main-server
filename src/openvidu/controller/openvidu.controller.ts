@@ -75,7 +75,8 @@ export class OpenviduController {
     type: [SessionResponseDto],
   })
   async fetchAllSessions(): Promise<SessionResponseDto[]> {
-    const sessionResponseDtoArr: SessionResponseDto[] = await this.openviduService.fetchAllSessions();
+    const sessionResponseDtoArr: SessionResponseDto[] =
+      await this.openviduService.fetchAllSessions();
     return sessionResponseDtoArr;
   }
 
@@ -92,7 +93,8 @@ export class OpenviduController {
     @Param('sessionId') sessionId: string,
   ): Promise<SessionResponseDto> {
     try {
-      const sessionResponseDto = await this.openviduService.fetchSession(sessionId);
+      const sessionResponseDto =
+        await this.openviduService.fetchSession(sessionId);
       return sessionResponseDto;
     } catch (error) {
       throw new NotFoundException('Session not found');
@@ -114,12 +116,17 @@ export class OpenviduController {
     @Body() moderatorRequestDto: ModeratorRequestDto,
   ): Promise<void> {
     try {
-      await this.openviduService.closeSession(sessionId, moderatorRequestDto.token);
+      await this.openviduService.closeSession(
+        sessionId,
+        moderatorRequestDto.token,
+      );
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Session not found');
       } else if (error instanceof ForbiddenException) {
-        throw new ForbiddenException('User not authorized to close this session');
+        throw new ForbiddenException(
+          'User not authorized to close this session',
+        );
       } else {
         throw error;
       }
@@ -143,12 +150,18 @@ export class OpenviduController {
     @Body() moderatorRequestDto: ModeratorRequestDto,
   ): Promise<void> {
     try {
-      await this.openviduService.destroyConnection(sessionId, connectionId, moderatorRequestDto.token);
+      await this.openviduService.destroyConnection(
+        sessionId,
+        connectionId,
+        moderatorRequestDto.token,
+      );
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Session or connection not found');
       } else if (error instanceof ForbiddenException) {
-        throw new ForbiddenException('User not authorized to destroy this connection');
+        throw new ForbiddenException(
+          'User not authorized to destroy this connection',
+        );
       } else {
         throw error;
       }
@@ -172,12 +185,18 @@ export class OpenviduController {
     @Body() moderatorRequestDto: ModeratorRequestDto,
   ): Promise<void> {
     try {
-      await this.openviduService.unpublishStream(sessionId, connectionId, moderatorRequestDto.token);
+      await this.openviduService.unpublishStream(
+        sessionId,
+        connectionId,
+        moderatorRequestDto.token,
+      );
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Session or connection not found');
       } else if (error instanceof ForbiddenException) {
-        throw new ForbiddenException('User not authorized to unpublish this stream');
+        throw new ForbiddenException(
+          'User not authorized to unpublish this stream',
+        );
       } else {
         throw error;
       }

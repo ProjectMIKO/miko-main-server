@@ -25,22 +25,35 @@ export class OpenviduService implements OnModuleInit {
     this.openvidu = new OpenVidu(OPENVIDU_URL, OPENVIDU_SECRET);
   }
 
-  async createSession(properties?: SessionPropertiesDto): Promise<SessionResponseDto> {
+  async createSession(
+    properties?: SessionPropertiesDto,
+  ): Promise<SessionResponseDto> {
     const session: Session = await this.openvidu.createSession(properties);
     return this.toSessionResponseDto(session);
   }
 
   private toSessionResponseDto(session: Session): SessionResponseDto {
-    const { sessionId, createdAt, connections, activeConnections, recording, broadcasting } = session;
-    const connectionDtos = connections.map(conn => this.toConnectionResponseDto(conn));
-    const activeConnectionDtos = activeConnections.map(conn => this.toConnectionResponseDto(conn));
+    const {
+      sessionId,
+      createdAt,
+      connections,
+      activeConnections,
+      recording,
+      broadcasting,
+    } = session;
+    const connectionDtos = connections.map((conn) =>
+      this.toConnectionResponseDto(conn),
+    );
+    const activeConnectionDtos = activeConnections.map((conn) =>
+      this.toConnectionResponseDto(conn),
+    );
     return plainToClass(SessionResponseDto, {
       sessionId,
       createdAt,
       connections: connectionDtos,
       activeConnections: activeConnectionDtos,
       recording,
-      broadcasting
+      broadcasting,
     });
   }
 
@@ -58,8 +71,23 @@ export class OpenviduService implements OnModuleInit {
     return this.toConnectionResponseDto(connection);
   }
 
-  private toConnectionResponseDto(connection: Connection): ConnectionResponseDto {
-    const { connectionId, status, createdAt, activeAt, location, ip, platform, clientData, token, publishers, subscribers, connectionProperties } = connection;
+  private toConnectionResponseDto(
+    connection: Connection,
+  ): ConnectionResponseDto {
+    const {
+      connectionId,
+      status,
+      createdAt,
+      activeAt,
+      location,
+      ip,
+      platform,
+      clientData,
+      token,
+      publishers,
+      subscribers,
+      connectionProperties,
+    } = connection;
     return plainToClass(ConnectionResponseDto, {
       id: connectionId,
       status,
@@ -71,7 +99,7 @@ export class OpenviduService implements OnModuleInit {
       clientData,
       token,
       record: connectionProperties.record,
-      publishers: publishers.map(p => ({
+      publishers: publishers.map((p) => ({
         streamId: p.streamId,
         createdAt: p.createdAt,
         hasAudio: p.hasAudio,
@@ -80,9 +108,9 @@ export class OpenviduService implements OnModuleInit {
         videoActive: p.videoActive,
         frameRate: p.frameRate,
         typeOfVideo: p.typeOfVideo,
-        videoDimensions: p.videoDimensions
+        videoDimensions: p.videoDimensions,
       })),
-      subscribers
+      subscribers,
     });
   }
 
@@ -90,7 +118,9 @@ export class OpenviduService implements OnModuleInit {
     // Fetch all session info from OpenVidu Server
     await this.openvidu.fetch();
     const sessions: Session[] = this.openvidu.activeSessions;
-    const sessionResponseDtoArr = sessions.map(session => this.toSessionResponseDto(session));
+    const sessionResponseDtoArr = sessions.map((session) =>
+      this.toSessionResponseDto(session),
+    );
     return sessionResponseDtoArr;
   }
 

@@ -90,7 +90,7 @@ export class OpenviduService implements OnModuleInit {
       clientData,
       connectionProperties,
       token,
-      publishers,
+      // publishers,
       subscribers,
     } = connection;
     return plainToClass(ConnectionResponseDto, {
@@ -104,7 +104,7 @@ export class OpenviduService implements OnModuleInit {
       clientData,
       connectionProperties,
       token,
-      publishers,
+      // publishers,
       subscribers,
     });
   }

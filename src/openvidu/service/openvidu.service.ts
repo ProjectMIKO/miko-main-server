@@ -184,4 +184,34 @@ export class OpenviduService implements OnModuleInit {
     // Destroy the connection
     await session.forceDisconnect(connection);
   }
+
+  async unpublishStream(sessionId: string, connectionId: string, token: string): Promise<void> {
+    // Fetch the session info from OpenVidu Server
+    await this.openvidu.fetch();
+    const session: Session = this.openvidu.activeSessions.find(
+      (s) => s.sessionId === sessionId,
+    );
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    // Verify user authorization by checking the token and role
+    const authorized = this.checkUserAuthorization(token, session);
+    if (!authorized) {
+      throw new ForbiddenException('User not authorized to unpublish this stream');
+    }
+
+    const connection = session.connections.find((conn) => conn.connectionId === connectionId);
+    if (!connection) {
+      throw new NotFoundException('Connection not found');
+    }
+
+    const publisher = connection.publishers.find((pub) => pub.streamId);
+    if (!publisher) {
+      throw new NotFoundException('Publisher not found');
+    }
+
+    // Unpublish the stream
+    await session.forceUnpublish(publisher);
+  }
 }

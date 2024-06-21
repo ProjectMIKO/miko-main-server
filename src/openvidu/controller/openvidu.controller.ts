@@ -154,4 +154,33 @@ export class OpenviduController {
       }
     }
   }
+
+  @Post('sessions/:sessionId/connections/:connectionId/unpublish')
+  @ApiOperation({ summary: 'Unpublish a specific stream (admin only)' })
+  @ApiResponse({
+    status: 204,
+    description: 'Stream unpublished successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Session or connection not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  @ApiParam({ name: 'connectionId', description: 'The ID of the connection' })
+  @ApiBody({ type: ModeratorRequestDto })
+  async unpublishStream(
+    @Param('sessionId') sessionId: string,
+    @Param('connectionId') connectionId: string,
+    @Body() moderatorRequestDto: ModeratorRequestDto,
+  ): Promise<void> {
+    try {
+      await this.openviduService.unpublishStream(sessionId, connectionId, moderatorRequestDto.token);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Session or connection not found');
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException('User not authorized to unpublish this stream');
+      } else {
+        throw error;
+      }
+    }
+  }
 }

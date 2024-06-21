@@ -87,4 +87,9 @@ export class RecordService {
     const recording = await this.openvidu.getRecording(recordingId);
     return plainToClass(RecordingResponseDto, recording);
   }
+
+  async deleteRecording(recordingId: string): Promise<RecordingResponseDto> {
+    const recording = await this.openvidu.deleteRecording(recordingId);
+    return plainToClass(RecordingResponseDto, recording);
+  }
 }

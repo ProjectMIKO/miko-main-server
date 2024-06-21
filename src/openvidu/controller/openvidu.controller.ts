@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Get,
   ForbiddenException,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -263,6 +264,22 @@ export class OpenviduController {
       const recordingResponseDto =
         await this.recordService.getRecording(recordingId);
       return recordingResponseDto;
+    } catch (error) {
+      throw new NotFoundException('Recording not found');
+    }
+  }
+
+  @Delete('recordings/:recordingId')
+  @ApiOperation({ summary: 'Delete a recording' })
+  @ApiResponse({
+    status: 204,
+    description: 'Recording deleted successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Recording not found' })
+  @ApiParam({ name: 'recordingId', description: 'The ID of the recording' })
+  async deleteRecording(@Param('recordingId') recordingId: string): Promise<void> {
+    try {
+        await this.recordService.deleteRecording(recordingId);
     } catch (error) {
       throw new NotFoundException('Recording not found');
     }

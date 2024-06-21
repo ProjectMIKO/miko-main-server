@@ -5,9 +5,6 @@ export type ConversationDocument = Conversation & Document;
 
 @Schema()
 export class Conversation {
-  @Prop({ required: true })
-  id: number; // 고유 ID
-
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   user: Types.ObjectId;
 

@@ -12,19 +12,16 @@ export class Meeting {
   title: string;
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
-  hostId: Types.ObjectId;
+  owner: Types.ObjectId;
 
   @Prop({ required: true })
   startTime: Date;
 
-  @Prop({ required: true })
+  @Prop()
   endTime: Date;
 
   @Prop({ type: [ConversationSchema], default: [] })
   conversations: Conversation[];
-
-  @Prop({ default: 0 })
-  conversationIdCounter: number; // 각 미팅 방마다 고유한 Conversation ID를 관리
 
   @Prop({ type: [NodeSchema], default: [] })
   nodes: Node[];

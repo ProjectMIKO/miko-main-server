@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateMeetingDto {
+export class MeetingCreateDto {
   @ApiProperty({ description: 'Meeting title' })
   @IsString()
   @IsNotEmpty()

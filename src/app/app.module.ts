@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './controller/app.controller';
-import { AppService } from './service/app.service';
+import { AppService, AppGateway } from './service/app.service';
 import { UserModule } from '../user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -27,6 +27,6 @@ import { FileSystemModule } from '../filesystem/fileSystem.module';
     FileSystemModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppGateway],
 })
 export class AppModule {}

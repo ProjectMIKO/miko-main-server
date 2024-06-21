@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsArray, ArrayNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateNodeDto {
+export class NodeCreateDto {
   @ApiProperty({ description: 'Node keyword' })
   @IsString()
   @IsNotEmpty()

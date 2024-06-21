@@ -15,16 +15,25 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { OpenviduService } from '../service/openvidu.service';
+import { RecordService } from '../service/record.service';
 import { SessionPropertiesDto } from '../dto/session.request.dto';
 import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
 import { ConnectionResponseDto } from '../dto/connection.response.dto';
 import { SessionResponseDto } from '../dto/session.response.dto';
 import { ModeratorRequestDto } from '../dto/moderator.request.dto';
+import {
+  StartRecordingDto,
+  StopRecordingDto,
+} from '../dto/recording.request.dto';
+import { RecordingResponseDto } from '../dto/recording.response.dto';
 
 @ApiTags('OpenVidu')
 @Controller('api/openvidu')
 export class OpenviduController {
-  constructor(private readonly openviduService: OpenviduService) {}
+  constructor(
+    private readonly openviduService: OpenviduService,
+    private readonly recordService: RecordService,
+  ) {}
 
   @Post('sessions')
   @ApiOperation({ summary: 'Create a new session' })
@@ -201,5 +210,40 @@ export class OpenviduController {
         throw error;
       }
     }
+  }
+
+  @Post('recordings/start')
+  @ApiOperation({ summary: 'Start a recording' })
+  @ApiResponse({
+    status: 201,
+    description: 'Recording started successfully',
+    type: RecordingResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiBody({ type: StartRecordingDto })
+  async startRecording(
+    @Body() startRecordingDto: StartRecordingDto,
+  ): Promise<RecordingResponseDto> {
+    const recordingResponseDto =
+      await this.recordService.startRecording(startRecordingDto);
+    return recordingResponseDto;
+  }
+
+  @Post('recordings/stop')
+  @ApiOperation({ summary: 'Stop a recording' })
+  @ApiResponse({
+    status: 200,
+    description: 'Recording stopped successfully',
+    type: RecordingResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Recording not found' })
+  @ApiBody({ type: StopRecordingDto })
+  async stopRecording(
+    @Body() stopRecordingDto: StopRecordingDto,
+  ): Promise<RecordingResponseDto> {
+    const recordingResponseDto = await this.recordService.stopRecording(
+      stopRecordingDto.recordingId,
+    );
+    return recordingResponseDto;
   }
 }

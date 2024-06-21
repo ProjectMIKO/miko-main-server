@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OpenVidu, Session, Connection } from 'openvidu-node-client';
 import { SessionPropertiesDto } from '../dto/session.request.dto';
@@ -83,13 +88,13 @@ export class OpenviduService implements OnModuleInit {
       ip,
       platform,
       clientData,
+      connectionProperties,
       token,
       publishers,
       subscribers,
-      connectionProperties,
     } = connection;
     return plainToClass(ConnectionResponseDto, {
-      id: connectionId,
+      connectionId,
       status,
       createdAt,
       activeAt,
@@ -97,19 +102,9 @@ export class OpenviduService implements OnModuleInit {
       ip,
       platform,
       clientData,
+      connectionProperties,
       token,
-      record: connectionProperties.record,
-      publishers: publishers.map((p) => ({
-        streamId: p.streamId,
-        createdAt: p.createdAt,
-        hasAudio: p.hasAudio,
-        hasVideo: p.hasVideo,
-        audioActive: p.audioActive,
-        videoActive: p.videoActive,
-        frameRate: p.frameRate,
-        typeOfVideo: p.typeOfVideo,
-        videoDimensions: p.videoDimensions,
-      })),
+      publishers,
       subscribers,
     });
   }
@@ -125,7 +120,7 @@ export class OpenviduService implements OnModuleInit {
   }
 
   async fetchSession(sessionId: string): Promise<SessionResponseDto> {
-    // Fetch all session info from OpenVidu Server
+    // Fetch the session info from OpenVidu Server
     await this.openvidu.fetch();
     const session: Session = this.openvidu.activeSessions.find(
       (s) => s.sessionId === sessionId,
@@ -134,5 +129,34 @@ export class OpenviduService implements OnModuleInit {
       throw new NotFoundException('Session not found');
     }
     return this.toSessionResponseDto(session);
+  }
+
+  async closeSession(sessionId: string, token: string): Promise<void> {
+    // Fetch the session info from OpenVidu Server
+    await this.openvidu.fetch();
+    const session: Session = this.openvidu.activeSessions.find(
+      (s) => s.sessionId === sessionId,
+    );
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    // Verify user authorization by checking the token
+    const authorized = this.checkUserAuthorization(token, session);
+    if (!authorized) {
+      throw new ForbiddenException('User not authorized to close this session');
+    }
+
+    // Close the session
+    await session.close();
+  }
+
+  private checkUserAuthorization(token: string, session: Session): boolean {
+    // Check if the token matches any of the active connections' tokens in the session
+    return session.activeConnections.some( // activeConnections 대신 connections 사용해도 됨
+      (connection) =>{
+        return connection.token === token && connection.connectionProperties.role === 'MODERATOR'
+      }
+    );
   }
 }

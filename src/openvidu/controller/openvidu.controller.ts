@@ -5,6 +5,7 @@ import {
   Param,
   NotFoundException,
   Get,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import { SessionPropertiesDto } from '../dto/session.request.dto';
 import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
 import { ConnectionResponseDto } from '../dto/connection.response.dto';
 import { SessionResponseDto } from '../dto/session.response.dto';
+import { ModeratorRequestDto } from '../dto/moderator.request.dto';
 
 @ApiTags('OpenVidu')
 @Controller('api/openvidu')
@@ -94,6 +96,33 @@ export class OpenviduController {
       return sessionResponseDto;
     } catch (error) {
       throw new NotFoundException('Session not found');
+    }
+  }
+
+  @Post('sessions/:sessionId/close')
+  @ApiOperation({ summary: 'Close a specific session' })
+  @ApiResponse({
+    status: 204,
+    description: 'Session closed successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  @ApiBody({ type: ModeratorRequestDto })
+  async closeSession(
+    @Param('sessionId') sessionId: string,
+    @Body() moderatorRequestDto: ModeratorRequestDto,
+  ): Promise<void> {
+    try {
+      await this.openviduService.closeSession(sessionId, moderatorRequestDto.token);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Session not found');
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException('User not authorized to close this session');
+      } else {
+        throw error;
+      }
     }
   }
 }

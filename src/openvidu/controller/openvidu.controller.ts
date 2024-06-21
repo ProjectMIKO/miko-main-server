@@ -100,7 +100,7 @@ export class OpenviduController {
   }
 
   @Post('sessions/:sessionId/close')
-  @ApiOperation({ summary: 'Close a specific session' })
+  @ApiOperation({ summary: 'Close a specific session (admin only)' })
   @ApiResponse({
     status: 204,
     description: 'Session closed successfully',
@@ -120,6 +120,35 @@ export class OpenviduController {
         throw new NotFoundException('Session not found');
       } else if (error instanceof ForbiddenException) {
         throw new ForbiddenException('User not authorized to close this session');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  @Post('sessions/:sessionId/connections/:connectionId/destroy')
+  @ApiOperation({ summary: 'Destroy a specific connection (admin only)' })
+  @ApiResponse({
+    status: 204,
+    description: 'Connection destroyed successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Session or connection not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
+  @ApiParam({ name: 'connectionId', description: 'The ID of the connection' })
+  @ApiBody({ type: ModeratorRequestDto })
+  async destroyConnection(
+    @Param('sessionId') sessionId: string,
+    @Param('connectionId') connectionId: string,
+    @Body() moderatorRequestDto: ModeratorRequestDto,
+  ): Promise<void> {
+    try {
+      await this.openviduService.destroyConnection(sessionId, connectionId, moderatorRequestDto.token);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Session or connection not found');
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException('User not authorized to destroy this connection');
       } else {
         throw error;
       }

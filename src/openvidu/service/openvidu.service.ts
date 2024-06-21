@@ -159,4 +159,29 @@ export class OpenviduService implements OnModuleInit {
       }
     );
   }
+
+  async destroyConnection(sessionId: string, connectionId: string, token: string): Promise<void> {
+    // Fetch the session info from OpenVidu Server
+    await this.openvidu.fetch();
+    const session: Session = this.openvidu.activeSessions.find(
+      (s) => s.sessionId === sessionId,
+    );
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    // Verify user authorization by checking the token and role
+    const authorized = this.checkUserAuthorization(token, session);
+    if (!authorized) {
+      throw new ForbiddenException('User not authorized to destroy this connection');
+    }
+
+    const connection = session.connections.find((conn) => conn.connectionId === connectionId);
+    if (!connection) {
+      throw new NotFoundException('Connection not found');
+    }
+
+    // Destroy the connection
+    await session.forceDisconnect(connection);
+  }
 }

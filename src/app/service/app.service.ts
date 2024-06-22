@@ -122,12 +122,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('stt')
-  async handleRecord(
-    client: Socket,
-    room: string,
-    data: { file: ArrayBuffer },
-  ) {
-    if (!data.file) {
+  async handleRecord(client: Socket, [room, file]: [string, ArrayBuffer]) {
+    if (!file) {
       console.error('ERROR#001: Received undefined file');
       client.emit('error', {
         message: 'ERROR#001: Received undefined file',
@@ -136,9 +132,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     const currentTime = new Date();
-    const buffer = Buffer.from(new Uint8Array(data.file));
+    const buffer = Buffer.from(new Uint8Array(file));
 
-    const file: Express.Multer.File = {
+    const newFile: Express.Multer.File = {
       buffer: buffer,
       originalname: 'temp.wav',
       mimetype: 'audio/wav',
@@ -149,7 +145,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let result: SummarizeRequestDto;
     try {
       const convertResponseDto: ConvertResponseDto =
-        await this.middlewareService.convertStt(file);
+        await this.middlewareService.convertStt(newFile);
 
       client.emit('script', `${client.id}: ${convertResponseDto.script}`);
       client

@@ -59,7 +59,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('enter_room')
-  handleEnterRoom(client: Socket, [roomName, done]: [string, Function]) {
+  handleEnterRoom(client: Socket, roomName: string) {
     const isNewRoom = !this.rooms().includes(roomName);
 
     client.join(roomName);

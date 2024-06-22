@@ -3,6 +3,10 @@ import { MeetingCreateDto } from '../dto/meeting.create.dto';
 
 @Injectable()
 export class MeetingService {
+  static createNewMeeting() {
+    return 'Created meeting successfully.'
+  }
+
   create(createMeetingDto: MeetingCreateDto) {
     return 'This action adds a new meeting';
   }

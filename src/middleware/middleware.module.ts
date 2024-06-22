@@ -4,6 +4,7 @@ import { MiddlewareController } from './controller/middleware.controller';
 
 @Module({
     providers: [MiddlewareService],
-    controllers: [MiddlewareController]
+    controllers: [MiddlewareController],
+    exports: [MiddlewareService]
 })
 export class MiddlewareModule {}

@@ -10,13 +10,5 @@ export class MeetingCreateDto {
   @ApiProperty({ description: 'Host ID' })
   @IsString()
   @IsNotEmpty()
-  hostId: string;
-
-  @ApiProperty({ description: 'Start time' })
-  @IsDateString()
-  startTime: Date;
-
-  @ApiProperty({ description: 'End time' })
-  @IsDateString()
-  endTime: Date;
+  owner: string;
 }

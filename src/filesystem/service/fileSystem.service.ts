@@ -32,7 +32,7 @@ export class FileSystemService {
     });
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<UploadResponseDto> {
+  public async uploadFile(file: Express.Multer.File): Promise<UploadResponseDto> {
     const key = `${uuidv4()}-${file.originalname}`;
 
     const uploadParams = {
@@ -50,7 +50,7 @@ export class FileSystemService {
     });
   }
 
-  async downloadFile(key: string): Promise<DownloadResponseDto> {
+  public async downloadFile(key: string): Promise<DownloadResponseDto> {
     const downloadParams = {
       Bucket: this.bucketName,
       Key: key,
@@ -64,7 +64,7 @@ export class FileSystemService {
     });
   }
 
-  async deleteFile(key: string): Promise<void> {
+  public async deleteFile(key: string): Promise<void> {
     const deleteParams = {
       Bucket: this.bucketName,
       Key: key,

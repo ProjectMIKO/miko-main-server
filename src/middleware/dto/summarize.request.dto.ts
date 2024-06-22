@@ -7,5 +7,5 @@ export class SummarizeRequestDto {
     example: 'This is a sample text that needs to be summarized.',
   })
   @IsString()
-  readonly message: string;
+  readonly script: string;
 }

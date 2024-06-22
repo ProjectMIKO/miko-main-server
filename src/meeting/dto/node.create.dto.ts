@@ -17,5 +17,5 @@ export class NodeCreateDto {
   })
   @IsArray()
   @ArrayNotEmpty()
-  conversationIds: number[];
+  conversationIds: string[];
 }

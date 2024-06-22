@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsDate } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ConversationCreateDto {
@@ -11,4 +11,9 @@ export class ConversationCreateDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+
+  @ApiProperty({ description: 'Conversation time' })
+  @IsDate()
+  @IsNotEmpty()
+  timestamp: Date;
 }

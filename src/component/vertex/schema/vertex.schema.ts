@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type NodeDocument = Node & Document;
+export type VertexDocument = Vertex & Document;
 
 @Schema()
-export class Node {
+export class Vertex {
   @Prop({ required: true })
   id: number; // 고유 ID
 
@@ -18,4 +18,4 @@ export class Node {
   conversationIds: number[];
 }
 
-export const NodeSchema = SchemaFactory.createForClass(Node);
+export const VertexSchema = SchemaFactory.createForClass(Vertex);

@@ -38,35 +38,27 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NodeModule = void 0;
+exports.NodeController = void 0;
 var common_1 = require("@nestjs/common");
-var node_service_1 = require("./service/node.service");
-var node_controller_1 = require("./controller/node.controller");
-var mongoose_1 = require("@nestjs/mongoose");
-var node_schema_1 = require("@schema/node.schema");
-var NodeModule = function () {
-    var _classDecorators = [(0, common_1.Module)({
-            imports: [mongoose_1.MongooseModule.forFeature([{ name: node_schema_1.Node.name, schema: node_schema_1.NodeSchema }])],
-            controllers: [node_controller_1.NodeController],
-            providers: [node_service_1.NodeService],
-            exports: [node_service_1.NodeService],
-        })];
+var VertexController = function () {
+    var _classDecorators = [(0, common_1.Controller)('node')];
     var _classDescriptor;
     var _classExtraInitializers = [];
     var _classThis;
-    var NodeModule = _classThis = /** @class */ (function () {
-        function NodeModule_1() {
+    var NodeController = _classThis = /** @class */ (function () {
+        function NodeController_1(nodeService) {
+            this.nodeService = nodeService;
         }
-        return NodeModule_1;
+        return NodeController_1;
     }());
-    __setFunctionName(_classThis, "NodeModule");
+    __setFunctionName(_classThis, "NodeController");
     (function () {
         var _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
         __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-        NodeModule = _classThis = _classDescriptor.value;
+        NodeController = _classThis = _classDescriptor.value;
         if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         __runInitializers(_classThis, _classExtraInitializers);
     })();
-    return NodeModule = _classThis;
+    return NodeController = _classThis;
 }();
-exports.NodeModule = NodeModule;
+exports.NodeController = VertexController;

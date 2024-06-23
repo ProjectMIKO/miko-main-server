@@ -13,7 +13,7 @@ import { MeetingService } from '@service/meeting.service';
 import { MiddlewareService } from '@service/middleware.service';
 import { MeetingCreateDto } from '@dto/meeting.create.dto';
 import { Edge } from '@schema/edge.schema';
-import { NodeCreateDto } from '@component/node/dto/node.create.dto';
+import { VertexCreateDto } from '@dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
 import { SummarizeResponseDto } from '@dto/summarize.response.dto';
@@ -24,7 +24,7 @@ import { FileNotFoundException } from '@global/exception/findNotFound.exception'
 import { RoomConversations } from '@meeting/interface/roomConversation.interface';
 import { ConversationCreateDto } from '@dto/conversation.create.dto';
 import { ConversationService } from '@service/conversation.service';
-import { NodeService } from '@service/node.service';
+import { VertexService } from '@service/vertex.service';
 import { EdgeService } from '@service/edge.service';
 
 @Injectable()
@@ -54,7 +54,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly meetingService: MeetingService,
     private readonly middlewareService: MiddlewareService,
     private readonly conversationService: ConversationService,
-    private readonly nodeService: NodeService,
+    private readonly nodeService: VertexService,
     private readonly edgeService: EdgeService,
   ) {}
 
@@ -192,10 +192,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new InvalidMiddlewareException('SummarizeScript');
       })
       .then((summarizeResponseDto: SummarizeResponseDto) => {
-        client.emit('summarize', `${client.id}: ${summarizeResponseDto}`);
+        client.emit(
+          'summarize',
+          `{"user": ${client.id}, "keyword": ${summarizeResponseDto.keyword}, "subtitle": ${summarizeResponseDto.subtitle}}`,
+        );
         client
           .to(room)
-          .emit('summarize', `${client.id}: ${summarizeResponseDto}`);
+          .emit(
+            'summarize',
+            `{"user": ${client.id}, "keyword": ${summarizeResponseDto.keyword}, "subtitle": ${summarizeResponseDto.subtitle}}`,
+          );
 
         this.handleNode(client, [
           room,
@@ -205,7 +211,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
   }
 
-  @SubscribeMessage('Node')
+  @SubscribeMessage('vertex')
   handleNode(
     client: Socket,
     [room, summarizeRequestDto, summarizeResponseDto]: [
@@ -214,14 +220,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       SummarizeResponseDto,
     ],
   ) {
-    const nodeCreateDto: NodeCreateDto = {
+    const nodeCreateDto: VertexCreateDto = {
       keyword: summarizeResponseDto.keyword,
-      summary: summarizeResponseDto.subtitle,
+      subtitle: summarizeResponseDto.subtitle,
       conversationIds: [this.roomConversations[room].toString()],
     };
-    this.nodeService.createNewNode(nodeCreateDto).then(r => {});
-    client.emit('Node', nodeCreateDto);
-    client.to(room).emit('Node', nodeCreateDto);
+    this.nodeService.createNewNode(nodeCreateDto).then((r) => {});
+    client.emit(
+      'vertex',
+      `{"keyword": ${nodeCreateDto.keyword}, "subtitle": ${nodeCreateDto.subtitle}, conversationIds: ${nodeCreateDto.conversationIds}}`,
+    );
+    client
+      .to(room)
+      .emit(
+        'vertex',
+        `{"keyword": ${nodeCreateDto.keyword}, "subtitle": ${nodeCreateDto.subtitle}, conversationIds: ${nodeCreateDto.conversationIds}}`,
+      );
   }
 
   @SubscribeMessage('Edge')

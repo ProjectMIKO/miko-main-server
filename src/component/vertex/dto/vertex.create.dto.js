@@ -37,7 +37,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeCreateDto = void 0;
 var class_validator_1 = require("class-validator");
 var swagger_1 = require("@nestjs/swagger");
-var NodeCreateDto = function () {
+var VertexCreateDto = function () {
     var _a;
     var _keyword_decorators;
     var _keyword_initializers = [];
@@ -71,4 +71,4 @@ var NodeCreateDto = function () {
         })(),
         _a;
 }();
-exports.NodeCreateDto = NodeCreateDto;
+exports.NodeCreateDto = VertexCreateDto;

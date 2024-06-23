@@ -76,7 +76,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeService = void 0;
 var common_1 = require("@nestjs/common");
-var NodeService = function () {
+var VertexService = function () {
     var _classDecorators = [(0, common_1.Injectable)()];
     var _classDescriptor;
     var _classExtraInitializers = [];
@@ -104,4 +104,4 @@ var NodeService = function () {
     })();
     return NodeService = _classThis;
 }();
-exports.NodeService = NodeService;
+exports.NodeService = VertexService;

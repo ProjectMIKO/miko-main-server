@@ -76,4 +76,27 @@ export class MiddlewareService {
         return convertResponse;
       });
   }
+
+  async convertStt(file: Express.Multer.File): Promise<ConvertResponseDto> {
+    const formData = new FormData();
+    // @ts-ignore
+    formData.append('file', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+    });
+
+    return axios
+      .post(`${this.NLP_SERVER_URL}/api/stt/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then((response) => {
+        const responseData = response.data;
+        const convertResponse: ConvertResponseDto = {
+          text: responseData.text,
+        };
+        return convertResponse;
+      });
+  }
 }

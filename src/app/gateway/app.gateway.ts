@@ -152,18 +152,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .createNewConversation(conversationCreateDto)
       .then((contentId) => {
         this.roomConversations[room][contentId] = [conversationCreateDto];
-
-        // 전체 Room Conversation 출력
-
-        console.log(`Room: ${room}`);
-        for (const contentId in this.roomConversations[room]) {
-          console.log(`  Content ID: ${contentId}`);
-          for (const message of this.roomConversations[room][contentId]) {
-            console.log(
-              `    User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
-            );
-          }
-        }
       })
       .catch((error) => {
         throw new InvalidResponseException('CreateNewConversation');

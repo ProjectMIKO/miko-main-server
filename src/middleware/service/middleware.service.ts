@@ -22,6 +22,9 @@ export class MiddlewareService {
   public async summarizeScript(
     summarizeRequestDto: SummarizeRequestDto,
   ): Promise<SummarizeResponseDto> {
+    console.log(summarizeRequestDto.conversations);
+    console.log(summarizeRequestDto.conversations.toString());
+
     return axios
       .post(`${this.NLP_SERVER_URL}/api/keyword/`, summarizeRequestDto)
       .then((response) => {
@@ -32,9 +35,6 @@ export class MiddlewareService {
           cost: responseData.cost,
         };
         return summarizeResponse;
-      })
-      .catch((error) => {
-        throw new InvalidResponseException('SummarizeScript')
       });
   }
 

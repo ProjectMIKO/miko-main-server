@@ -5,8 +5,8 @@ export type ConversationDocument = Conversation & Document;
 
 @Schema()
 export class Conversation {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
-  user: Types.ObjectId;
+  @Prop({ required: true, ref: 'User' })
+  user: string;
 
   @Prop({ required: true })
   content: string;

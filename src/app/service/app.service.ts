@@ -103,31 +103,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     done();
   }
 
-  @SubscribeMessage('receiveNode')
-  handleNode(
-    client: Socket,
-    [room, summarizeRequestDto, summarizeResponseDto]: [
-      string,
-      SummarizeRequestDto,
-      SummarizeResponseDto,
-    ],
-  ) {
-    const nodeCreateDto: NodeCreateDto = {
-      keyword: summarizeResponseDto.keyword,
-      summary: summarizeResponseDto.subtitle,
-      conversationIds: [this.roomConversations[room].toString()],
-    };
-    this.meetingService.createNewNode(nodeCreateDto);
-    client.emit('sendNode', nodeCreateDto);
-    client.to(room).emit('sendNode', nodeCreateDto);
-  }
-
-  @SubscribeMessage('receiveEdge')
-  handleEdge(client: Socket, [room, edge, done]: [string, Edge, Function]) {
-    client.to(room).emit('sendEdge', edge);
-    done();
-  }
-
   @SubscribeMessage('stt')
   async handleRecord(client: Socket, [room, file]: [string, ArrayBuffer]) {
     if (!file) throw new FileNotFoundException();
@@ -160,13 +135,18 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       timestamp: currentTime,
     };
 
+    console.log('user: ' + client.id);
+    console.log('content: ' + convertResponseDto.script);
+    console.log('timestamp: ' + currentTime);
+
     this.meetingService
       .createNewConversation(conversationCreateDto)
+      .then((contentId) => {
+        console.log('done create conversation');
+        // this.roomConversations[room][contentId].push(conversationCreateDto);
+      })
       .catch((error) => {
         throw new InvalidResponseException('CreateNewConversation');
-      })
-      .then((contentId) => {
-        this.roomConversations[room][contentId].push(conversationCreateDto);
       });
   }
 
@@ -175,7 +155,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let summarizeRequestDto: SummarizeRequestDto = {
       conversations: this.roomConversations[room],
     };
-    
+
     for (const room in this.roomConversations) {
       console.log(`Room: ${room}`);
       for (const contentId in this.roomConversations[room]) {
@@ -200,6 +180,31 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
           summarizeResponseDto,
         ]);
       });
+  }
+
+  @SubscribeMessage('receiveNode')
+  handleNode(
+    client: Socket,
+    [room, summarizeRequestDto, summarizeResponseDto]: [
+      string,
+      SummarizeRequestDto,
+      SummarizeResponseDto,
+    ],
+  ) {
+    const nodeCreateDto: NodeCreateDto = {
+      keyword: summarizeResponseDto.keyword,
+      summary: summarizeResponseDto.subtitle,
+      conversationIds: [this.roomConversations[room].toString()],
+    };
+    this.meetingService.createNewNode(nodeCreateDto);
+    client.emit('sendNode', nodeCreateDto);
+    client.to(room).emit('sendNode', nodeCreateDto);
+  }
+
+  @SubscribeMessage('receiveEdge')
+  handleEdge(client: Socket, [room, edge, done]: [string, Edge, Function]) {
+    client.to(room).emit('sendEdge', edge);
+    done();
   }
 
   private rooms(): string[] {

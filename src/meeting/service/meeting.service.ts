@@ -51,10 +51,18 @@ export class MeetingService {
   public async createNewConversation(
     conversationCreateDto: ConversationCreateDto,
   ): Promise<string> {
-    const conversationModel = new this.conversationModel(conversationCreateDto);
-    await conversationModel.save();
+    try {
+      const conversationModel = new this.conversationModel({
+        ...conversationCreateDto,
+      });
+      await conversationModel.save();
 
-    return conversationModel._id.toString();
+      console.log('CreateNewConversation: ' + conversationModel._id.toString());
+
+      return conversationModel._id.toString();
+    } catch (error) {
+      return 'error';
+    }
   }
 
   public createNewNode(nodeCreateDto: NodeCreateDto) {

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Conversation, ConversationSchema } from './conversation.schema';
+import { Conversation, ConversationSchema } from '../../conversation/entities/conversation.schema';
 import { Node, NodeSchema } from './node.schema';
 import { Edge, EdgeSchema } from './edge.schema';
 

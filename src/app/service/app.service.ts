@@ -22,7 +22,8 @@ import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/inval
 import { InvalidResponseException } from '../../global/exception/invalidResponse.exception';
 import { FileNotFoundException } from '../../global/exception/findNotFound.exception';
 import { RoomConversations } from '../../meeting/interface/roomConversation.interface';
-import { ConversationCreateDto } from '../../meeting/dto/conversation.create.dto';
+import { ConversationCreateDto } from '../../conversation/dto/conversation.create.dto';
+import { ConversationService } from '../../conversation/service/conversation.service';
 
 @Injectable()
 export class AppService {
@@ -50,6 +51,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly meetingService: MeetingService,
     private readonly middlewareService: MiddlewareService,
+    private readonly conversationService: ConversationService,
   ) {}
 
   afterInit() {
@@ -139,11 +141,23 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log('content: ' + convertResponseDto.script);
     console.log('timestamp: ' + currentTime);
 
-    this.meetingService
+    this.conversationService
       .createNewConversation(conversationCreateDto)
       .then((contentId) => {
-        console.log('done create conversation');
-        // this.roomConversations[room][contentId].push(conversationCreateDto);
+        this.roomConversations[room][contentId].push(conversationCreateDto);
+
+        // 전체 Room Conversation 출력
+        for (const room in this.roomConversations) {
+          console.log(`Room: ${room}`);
+          for (const contentId in this.roomConversations[room]) {
+            console.log(`  Content ID: ${contentId}`);
+            for (const message of this.roomConversations[room][contentId]) {
+              console.log(
+                `    User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+              );
+            }
+          }
+        }
       })
       .catch((error) => {
         throw new InvalidResponseException('CreateNewConversation');

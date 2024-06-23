@@ -6,9 +6,18 @@ import { VertexCreateDto } from '@dto/vertex.create.dto';
 
 @Injectable()
 export class VertexService {
-  constructor(@InjectModel(Vertex.name) private nodeModel: Model<VertexDocument>) {}
+  constructor(
+    @InjectModel(Vertex.name) private vertexModel: Model<VertexDocument>,
+  ) {}
 
-  public async createNewNode(nodeCreateDto: VertexCreateDto) {
+  public async createNewNode(
+    vertexCreateDto: VertexCreateDto,
+  ): Promise<string> {
+    const vertexModel = new this.vertexModel(vertexCreateDto);
+    await vertexModel.save();
 
+    console.log('CreateNewVertex ID: ' + vertexModel._id.toString());
+
+    return vertexModel._id.toString();
   }
 }

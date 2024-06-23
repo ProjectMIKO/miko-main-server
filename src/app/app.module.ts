@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './controller/app.controller';
-import { AppService } from './service/app.service';
-import { UserModule } from '../user/user.module';
+import { AppService, AppGateway } from './gateway/app.gateway';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { getMongoConfig } from '../config/mongoose.config';
-import { AuthModule } from '../auth/auth.module';
-import { OpenviduModule } from '../openvidu/openvidu.module';
-import { MiddlewareModule } from '../middleware/middleware.module';
-import { FileSystemModule } from '../filesystem/fileSystem.module';
+import { getMongoConfig } from '@global/config/mongoose.config';
+import { AuthModule } from '@auth/auth.module';
+import { OpenviduModule } from '@openvidu/openvidu.module';
+import { MiddlewareModule } from '@middleware/middleware.module';
+import { FileSystemModule } from '@filesystem/fileSystem.module';
+import { MeetingModule } from '@meeting/meeting.module';
+import { ComponentModule } from '@component/component.module';
 
 @Module({
   imports: [
@@ -20,13 +21,14 @@ import { FileSystemModule } from '../filesystem/fileSystem.module';
       inject: [ConfigService],
       useFactory: getMongoConfig,
     }),
-    UserModule,
     AuthModule,
     OpenviduModule,
     MiddlewareModule,
     FileSystemModule,
+    MeetingModule,
+    ComponentModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppGateway],
 })
 export class AppModule {}

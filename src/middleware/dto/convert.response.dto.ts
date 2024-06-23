@@ -1,3 +1,3 @@
 export class ConvertResponseDto {
-  text: string;
-}
+    script: string;
+  }

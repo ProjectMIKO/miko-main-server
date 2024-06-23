@@ -6,7 +6,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const port = process.env.PORT || 8080; // env.PORT는 heroku 배포용 
+  const PORT = process.env.PORT || 8080; // env.PORT는 heroku 배포용
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -35,7 +36,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
 
-  await app.listen(port);
+  await app.listen(PORT);
 }
 
 bootstrap();

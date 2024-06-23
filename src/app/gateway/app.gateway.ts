@@ -150,15 +150,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.roomConversations[room][contentId] = [conversationCreateDto];
 
         // 전체 Room Conversation 출력
-        for (const room in this.roomConversations) {
-          console.log(`Room: ${room}`);
-          for (const contentId in this.roomConversations[room]) {
-            console.log(`  Content ID: ${contentId}`);
-            for (const message of this.roomConversations[room][contentId]) {
-              console.log(
-                `    User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
-              );
-            }
+
+        console.log(`Room: ${room}`);
+        for (const contentId in this.roomConversations[room]) {
+          console.log(`  Content ID: ${contentId}`);
+          for (const message of this.roomConversations[room][contentId]) {
+            console.log(
+              `    User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+            );
           }
         }
       })
@@ -173,15 +172,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversations: this.roomConversations[room],
     };
 
-    for (const room in this.roomConversations) {
-      console.log(`Room: ${room}`);
-      for (const contentId in this.roomConversations[room]) {
-        console.log(`  Content ID: ${contentId}`);
-        for (const message of this.roomConversations[room][contentId]) {
-          console.log(
-            `    User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
-          );
-        }
+    console.log(`Room: ${room}`);
+    for (const contentId in this.roomConversations[room]) {
+      console.log(`Content ID: ${contentId}`);
+      for (const message of this.roomConversations[room][contentId]) {
+        console.log(
+          `User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+        );
       }
     }
 
@@ -190,7 +187,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .catch((error) => {
         throw new InvalidMiddlewareException('SummarizeScript');
       })
-      .then((summarizeResponseDto) => {
+      .then((summarizeResponseDto: SummarizeResponseDto) => {
+        client.emit('summarize', `${client.id}: ${summarizeResponseDto}`);
+        client
+          .to(room)
+          .emit('summarize', `${client.id}: ${summarizeResponseDto}`);
+
         this.handleNode(client, [
           room,
           summarizeRequestDto,
@@ -199,7 +201,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
   }
 
-  @SubscribeMessage('receiveNode')
+  @SubscribeMessage('Node')
   handleNode(
     client: Socket,
     [room, summarizeRequestDto, summarizeResponseDto]: [
@@ -214,13 +216,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversationIds: [this.roomConversations[room].toString()],
     };
     this.meetingService.createNewNode(nodeCreateDto);
-    client.emit('sendNode', nodeCreateDto);
-    client.to(room).emit('sendNode', nodeCreateDto);
+    client.emit('Node', nodeCreateDto);
+    client.to(room).emit('Node', nodeCreateDto);
   }
 
-  @SubscribeMessage('receiveEdge')
+  @SubscribeMessage('Edge')
   handleEdge(client: Socket, [room, edge, done]: [string, Edge, Function]) {
-    client.to(room).emit('sendEdge', edge);
+    client.to(room).emit('Edge', edge);
     done();
   }
 

@@ -10,7 +10,7 @@ export class VertexService {
     @InjectModel(Vertex.name) private vertexModel: Model<VertexDocument>,
   ) {}
 
-  public async createNewNode(
+  public async createNewVertex(
     vertexCreateDto: VertexCreateDto,
   ): Promise<string> {
     const vertexModel = new this.vertexModel(vertexCreateDto);

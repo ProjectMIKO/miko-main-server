@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, UseFilters } from '@nestjs/common';
+import { Injectable, UseFilters } from '@nestjs/common';
 import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -22,20 +22,34 @@ export class MiddlewareService {
   public async summarizeScript(
     summarizeRequestDto: SummarizeRequestDto,
   ): Promise<SummarizeResponseDto> {
-    console.log(summarizeRequestDto.conversations);
-    console.log(summarizeRequestDto.conversations.toString());
-
-    return axios
-      .post(`${this.NLP_SERVER_URL}/api/keyword/`, summarizeRequestDto)
-      .then((response) => {
-        const responseData = response.data;
-        const summarizeResponse: SummarizeResponseDto = {
-          keyword: responseData.keyword,
-          subtitle: responseData.subtitle,
-          cost: responseData.cost,
-        };
-        return summarizeResponse;
-      });
+    try {
+      const response = await axios.post(
+        `${this.NLP_SERVER_URL}/api/keyword/`,
+        summarizeRequestDto,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      return {
+        keyword: response.data.keyword,
+        subtitle: response.data.subtitle,
+        cost: response.data.cost,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // AxiosError 처리
+        throw new InvalidResponseException(
+          `Error occurred while summarizing script: ${error.message}`,
+        );
+      } else {
+        // 일반 에러 처리
+        throw new InvalidResponseException(
+          `An unexpected error occurred: ${error.message}`,
+        );
+      }
+    }
   }
 
   public async convertStt(

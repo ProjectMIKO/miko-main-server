@@ -65,8 +65,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  handleConnection(socket: Socket, username: string) {
-    socket['nickname'] = username;
+  handleConnection(client: Socket, username: string) {
+    client['nickname'] = client.handshake.auth.nickname;
+    console.log(`${client['nickname']}: connected to server`);
   }
 
   @SubscribeMessage('disconnecting')
@@ -79,7 +80,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    // Todo: 유저 접속 종료시 로직 추가
+    console.log(`${client['nickname']}: disconnected from server`);
   }
 
   @SubscribeMessage('enter_room')
@@ -93,7 +94,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // 최초 룸 개설 시 수행할 로직
       const meetingCreateDto: MeetingCreateDto = {
         title: `Room: ${room}`,
-        owner: client.id,
+        owner: client['nickname'],
       };
       this.meetingService.createNewMeeting(meetingCreateDto).catch((error) => {
         throw new InvalidResponseException('CreateNewMeeting');
@@ -130,8 +131,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const convertResponseDto: ConvertResponseDto =
       await this.middlewareService.convertStt(newFile); // STT 변환 요청
 
-    if (convertResponseDto.script === '')
-      throw new InvalidMiddlewareException('ConvertStt');
+    if (convertResponseDto.script === '') return; // throw new InvalidMiddlewareException('ConvertStt');
 
     client.emit('script', `${client.id}: ${convertResponseDto.script}`);
     client
@@ -144,35 +144,37 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       timestamp: currentTime,
     };
 
-    console.log('user: ' + client.id);
-    console.log('content: ' + convertResponseDto.script);
-    console.log('timestamp: ' + currentTime);
+    console.log(
+      `Created STT: user: ${client.id}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
+    );
 
     this.conversationService
       .createNewConversation(conversationCreateDto)
       .then((contentId) => {
+        // Session 에 Conversations 저장
         this.roomConversations[room][contentId] = [conversationCreateDto];
       })
-      .catch((error) => {
-        throw new InvalidResponseException('CreateNewConversation');
+      .catch((Exception) => {
+        throw new InvalidMiddlewareException('CreateNewConversation');
       });
   }
 
   @SubscribeMessage('summarize')
-  handleSummarize(client: Socket, room: string) {
-    let summarizeRequestDto: SummarizeRequestDto = {
-      conversations: this.roomConversations[room],
-    };
+  public handleSummarize(client: Socket, room: string) {
+    // room = testModule(); // Test Module
 
     console.log(`Room: ${room}`);
     for (const contentId in this.roomConversations[room]) {
-      console.log(`Content ID: ${contentId}`);
       for (const message of this.roomConversations[room][contentId]) {
         console.log(
-          `User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+          `Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
         );
       }
     }
+
+    let summarizeRequestDto: SummarizeRequestDto = {
+      conversations: this.roomConversations[room],
+    };
 
     this.middlewareService
       .summarizeScript(summarizeRequestDto)
@@ -180,6 +182,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new InvalidMiddlewareException('SummarizeScript');
       })
       .then((summarizeResponseDto: SummarizeResponseDto) => {
+        console.log(
+          `Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`,
+        );
+
         const responsePayload = {
           keyword: summarizeResponseDto.keyword,
           subtitle: summarizeResponseDto.subtitle,
@@ -188,16 +194,18 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.emit('summarize', responsePayload);
         client.to(room).emit('summarize', responsePayload);
 
-        this.handleNode(client, [
+        this.handleVertex(client, [
           room,
           summarizeRequestDto,
           summarizeResponseDto,
         ]);
       });
+
+    this.roomConversations[room] = {}; // 임시 저장한 대화 flush
   }
 
   @SubscribeMessage('vertex')
-  handleNode(
+  handleVertex(
     client: Socket,
     [room, summarizeRequestDto, summarizeResponseDto]: [
       string,
@@ -205,21 +213,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       SummarizeResponseDto,
     ],
   ) {
-    const nodeCreateDto: VertexCreateDto = {
+    const vertexCreateDto: VertexCreateDto = {
       keyword: summarizeResponseDto.keyword,
       subtitle: summarizeResponseDto.subtitle,
-      conversationIds: [this.roomConversations[room].toString()],
+      conversationIds: Object.keys(this.roomConversations[room]),
     };
-    this.nodeService.createNewNode(nodeCreateDto).then((r) => {});
+
+    this.nodeService.createNewVertex(vertexCreateDto).then((r) => {});
     client.emit(
       'vertex',
-      `{"keyword": ${nodeCreateDto.keyword}, "subtitle": ${nodeCreateDto.subtitle}, conversationIds: ${nodeCreateDto.conversationIds}}`,
+      `{"keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
     );
     client
       .to(room)
       .emit(
         'vertex',
-        `{"keyword": ${nodeCreateDto.keyword}, "subtitle": ${nodeCreateDto.subtitle}, conversationIds: ${nodeCreateDto.conversationIds}}`,
+        `{"keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
       );
   }
 
@@ -247,5 +256,38 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private countMember(room: string): number {
     return this.server.sockets.adapter.rooms.get(room)?.size ?? 0;
+  }
+
+  /** Test Module
+   *
+   * @private Summarize Test Module
+   * @return roomName(TEST)
+   */
+  private testModule(): string {
+    this.roomConversations['Test'] = {
+      ID1: [
+        {
+          user: 'USER1',
+          content: '안녕하세요 회의시작할게요',
+          timestamp: new Date(),
+        },
+      ],
+      ID2: [
+        {
+          user: 'USER2',
+          content: '그럼 우리가 만들 프로젝트의 아이디어를 말해볼까요?',
+          timestamp: new Date(),
+        },
+      ],
+      ID3: [
+        {
+          user: 'USER1',
+          content: '좋습니다 빨리 이야기해보죠',
+          timestamp: new Date(),
+        },
+      ],
+    };
+
+    return 'Test';
   }
 }

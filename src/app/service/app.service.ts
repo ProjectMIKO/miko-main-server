@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UseFilters } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
@@ -16,6 +17,10 @@ import { NodeCreateDto } from '../../meeting/dto/node.create.dto';
 import { SummarizeRequestDto } from '../../middleware/dto/summarize.request.dto';
 import { ConvertResponseDto } from '../../middleware/dto/convert.response.dto';
 import { SummarizeResponseDto } from '../../middleware/dto/summarize.response.dto';
+import { WebSocketExceptionsFilter } from '../../global/filter/webSocketExceptions.filter';
+import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
+import { InvalidResponseException } from '../../global/exception/invalidResponse.exception';
+import { FileNotFoundException } from '../../global/exception/findNotFound.exception';
 
 @Injectable()
 export class AppService {
@@ -35,6 +40,7 @@ export class AppService {
     credentials: true,
   },
 })
+@UseFilters(new WebSocketExceptionsFilter())
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
@@ -50,8 +56,17 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  handleConnection(socket: Socket) {
-    socket['nickname'] = 'MIKOUser' + Math.floor(100 + Math.random() * 900);
+  handleConnection(socket: Socket, username: string) {
+    socket['nickname'] = username;
+  }
+
+  @SubscribeMessage('disconnecting')
+  handleDisconnecting(client: Socket, reason: string) {
+    client.rooms.forEach((room) =>
+      client
+        .to(room)
+        .emit('exit', client['nickname'], this.countMember(room) - 1),
+    );
   }
 
   handleDisconnect(client: Socket) {
@@ -81,15 +96,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client
       .to(roomName)
       .emit('welcome', client['nickname'], this.countMember(roomName));
-  }
-
-  @SubscribeMessage('disconnecting')
-  handleDisconnecting(client: Socket, reason: string) {
-    client.rooms.forEach((room) =>
-      client
-        .to(room)
-        .emit('exit', client['nickname'], this.countMember(room) - 1),
-    );
   }
 
   @SubscribeMessage('message')
@@ -123,13 +129,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('stt')
   async handleRecord(client: Socket, [room, file]: [string, ArrayBuffer]) {
-    if (!file) {
-      console.error('ERROR#001: Received undefined file');
-      client.emit('error', {
-        message: 'ERROR#001: Received undefined file',
-      });
-      return;
-    }
+    if (!file) throw new FileNotFoundException();
 
     const currentTime = new Date();
     const buffer = Buffer.from(new Uint8Array(file));
@@ -142,23 +142,18 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       size: buffer.length,
     } as Express.Multer.File;
 
-    let result: SummarizeRequestDto;
-    try {
-      const convertResponseDto: ConvertResponseDto =
-        await this.middlewareService.convertStt(newFile);
+    const convertResponseDto: ConvertResponseDto =
+      await this.middlewareService.convertStt(newFile); // STT 변환 요청
 
-      client.emit('script', `${client.id}: ${convertResponseDto.script}`);
-      client
-        .to(room)
-        .emit('script', `${client.id}: ${convertResponseDto.script}`);
+    if (convertResponseDto.script === '')
+      throw new InvalidMiddlewareException('ConvertStt');
 
-      result = { script: convertResponseDto.script };
-    } catch (error) {
-      console.error('ERROR#002: Failed to process audio file');
-      client.emit('error', {
-        message: 'ERROR#002: Failed to process audio file',
-      });
-    }
+    client.emit('script', `${client.id}: ${convertResponseDto.script}`);
+    client
+      .to(room)
+      .emit('script', `${client.id}: ${convertResponseDto.script}`);
+
+    let result: SummarizeRequestDto = { script: convertResponseDto.script };
 
     this.meetingService
       .createNewConversation({
@@ -166,25 +161,24 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         content: result.script,
         timestamp: currentTime,
       })
+      .catch((error) => {
+        throw new InvalidResponseException('CreateNewConversation');
+      })
       .then(async (id) => {
-        try {
-          const summarizeResponseDto: SummarizeResponseDto =
-            await this.middlewareService.summarizeScript(result);
+        const summarizeResponseDto: SummarizeResponseDto =
+          await this.middlewareService
+            .summarizeScript(result)
+            .catch((error) => {
+              throw new InvalidMiddlewareException('SummarizeScript');
+            });
 
-          this.handleNode(client, room, summarizeResponseDto, id);
-        } catch (error) {
-          console.error('ERROR#003: Failed to summarize script');
-          client.emit('error', {
-            message: 'ERROR#003: Failed to summarize script',
-          });
-        }
+        this.handleNode(client, room, summarizeResponseDto, id);
       });
   }
 
   private rooms(): string[] {
-    if (!this.server || !this.server.sockets || !this.server.sockets.adapter) {
+    if (!this.server || !this.server.sockets || !this.server.sockets.adapter)
       return [];
-    }
 
     const { sids, rooms } = this.server.sockets.adapter;
 

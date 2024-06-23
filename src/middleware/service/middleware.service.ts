@@ -29,16 +29,12 @@ export class MiddlewareService {
           cost: responseData.cost,
         };
         return summarizeResponse;
-      })
-      .catch((error) => {
-        throw new HttpException(
-          `Failed to summarize text: ${error.message}`,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
       });
   }
 
-  public async convertStt(file: Express.Multer.File): Promise<ConvertResponseDto> {
+  public async convertStt(
+    file: Express.Multer.File,
+  ): Promise<ConvertResponseDto> {
     const formData = new FormData();
     // @ts-ignore
     formData.append('file', file.buffer, {

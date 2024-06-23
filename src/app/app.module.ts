@@ -4,7 +4,7 @@ import { AppService, AppGateway } from './service/app.service';
 import { UserModule } from '../user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { getMongoConfig } from '../config/mongoose.config';
+import { getMongoConfig } from '../global/config/mongoose.config';
 import { AuthModule } from '../auth/auth.module';
 import { OpenviduModule } from '../openvidu/openvidu.module';
 import { MiddlewareModule } from '../middleware/middleware.module';

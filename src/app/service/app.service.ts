@@ -94,6 +94,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.meetingService.createNewMeeting(meetingCreateDto).catch((error) => {
         throw new InvalidResponseException('CreateNewMeeting');
       });
+
+      // Room 추가
+      this.roomConversations[room] = {};
     }
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));
@@ -144,7 +147,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.conversationService
       .createNewConversation(conversationCreateDto)
       .then((contentId) => {
-        this.roomConversations[room][contentId].push(conversationCreateDto);
+        this.roomConversations[room][contentId] = [conversationCreateDto];
 
         // 전체 Room Conversation 출력
         for (const room in this.roomConversations) {

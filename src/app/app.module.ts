@@ -10,6 +10,7 @@ import { OpenviduModule } from '../openvidu/openvidu.module';
 import { MiddlewareModule } from '../middleware/middleware.module';
 import { FileSystemModule } from '../filesystem/fileSystem.module';
 import { MeetingModule } from '../meeting/meeting.module';
+import { ConversationModule } from '../conversation/conversation.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MeetingModule } from '../meeting/meeting.module';
     MiddlewareModule,
     FileSystemModule,
     MeetingModule,
+    ConversationModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppGateway],

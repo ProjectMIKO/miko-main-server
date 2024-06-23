@@ -3,11 +3,6 @@ import { Meeting, MeetingDocument } from '../schema/meeting.schema';
 import { MeetingCreateDto } from '../dto/meeting.create.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import {
-  Conversation,
-  ConversationDocument,
-} from '../../conversation/entities/conversation.schema';
-import { ConversationCreateDto } from '../../conversation/dto/conversation.create.dto';
 import { NodeCreateDto } from '../dto/node.create.dto';
 import { Node, NodeDocument } from '../schema/node.schema';
 

@@ -21,6 +21,8 @@ import { WebSocketExceptionsFilter } from '../../global/filter/webSocketExceptio
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
 import { InvalidResponseException } from '../../global/exception/invalidResponse.exception';
 import { FileNotFoundException } from '../../global/exception/findNotFound.exception';
+import { RoomConversations } from '../../meeting/interface/roomConversation.interface';
+import { ConversationCreateDto } from '../../meeting/dto/conversation.create.dto';
 
 @Injectable()
 export class AppService {
@@ -42,6 +44,7 @@ export class AppService {
 })
 @UseFilters(new WebSocketExceptionsFilter())
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private roomConversations: RoomConversations = {};
   @WebSocketServer() server: Server;
 
   constructor(
@@ -74,28 +77,24 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('enter_room')
-  handleEnterRoom(client: Socket, roomName: string) {
-    const isNewRoom = !this.rooms().includes(roomName);
+  handleEnterRoom(client: Socket, room: string) {
+    const isNewRoom = !this.rooms().includes(room);
 
-    client.join(roomName);
+    client.join(room);
     client.emit('entered_room');
 
     if (isNewRoom) {
       // 최초 룸 개설 시 수행할 로직
       const meetingCreateDto: MeetingCreateDto = {
-        title: `Room: ${roomName}`,
-        owner: client.id, // This assumes the client's ID can be used as the owner
+        title: `Room: ${room}`,
+        owner: client.id,
       };
-      this.meetingService.createNewMeeting(meetingCreateDto).then((res) => {
-        if (!res) {
-          client.emit('error', 'Meeting document creation failed.');
-        }
+      this.meetingService.createNewMeeting(meetingCreateDto).catch((error) => {
+        throw new InvalidResponseException('CreateNewMeeting');
       });
     }
 
-    client
-      .to(roomName)
-      .emit('welcome', client['nickname'], this.countMember(roomName));
+    client.to(room).emit('welcome', client['nickname'], this.countMember(room));
   }
 
   @SubscribeMessage('message')
@@ -107,14 +106,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('receiveNode')
   handleNode(
     client: Socket,
-    room: string,
-    summarizeResponseDto: SummarizeResponseDto,
-    id: string,
+    [room, summarizeRequestDto, summarizeResponseDto]: [
+      string,
+      SummarizeRequestDto,
+      SummarizeResponseDto,
+    ],
   ) {
     const nodeCreateDto: NodeCreateDto = {
       keyword: summarizeResponseDto.keyword,
       summary: summarizeResponseDto.subtitle,
-      conversationIds: [id],
+      conversationIds: [this.roomConversations[room].toString()],
     };
     this.meetingService.createNewNode(nodeCreateDto);
     client.emit('sendNode', nodeCreateDto);
@@ -153,26 +154,51 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .to(room)
       .emit('script', `${client.id}: ${convertResponseDto.script}`);
 
-    let result: SummarizeRequestDto = { script: convertResponseDto.script };
+    let conversationCreateDto: ConversationCreateDto = {
+      user: client.id,
+      content: convertResponseDto.script,
+      timestamp: currentTime,
+    };
 
     this.meetingService
-      .createNewConversation({
-        user: client.id,
-        content: result.script,
-        timestamp: currentTime,
-      })
+      .createNewConversation(conversationCreateDto)
       .catch((error) => {
         throw new InvalidResponseException('CreateNewConversation');
       })
-      .then(async (id) => {
-        const summarizeResponseDto: SummarizeResponseDto =
-          await this.middlewareService
-            .summarizeScript(result)
-            .catch((error) => {
-              throw new InvalidMiddlewareException('SummarizeScript');
-            });
+      .then((contentId) => {
+        this.roomConversations[room][contentId].push(conversationCreateDto);
+      });
+  }
 
-        this.handleNode(client, room, summarizeResponseDto, id);
+  @SubscribeMessage('summarize')
+  handleSummarize(client: Socket, room: string) {
+    let summarizeRequestDto: SummarizeRequestDto = {
+      conversations: this.roomConversations[room],
+    };
+    
+    for (const room in this.roomConversations) {
+      console.log(`Room: ${room}`);
+      for (const contentId in this.roomConversations[room]) {
+        console.log(`  Content ID: ${contentId}`);
+        for (const message of this.roomConversations[room][contentId]) {
+          console.log(
+            `    User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+          );
+        }
+      }
+    }
+
+    this.middlewareService
+      .summarizeScript(summarizeRequestDto)
+      .catch((error) => {
+        throw new InvalidMiddlewareException('SummarizeScript');
+      })
+      .then((summarizeResponseDto) => {
+        this.handleNode(client, [
+          room,
+          summarizeRequestDto,
+          summarizeResponseDto,
+        ]);
       });
   }
 
@@ -192,7 +218,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return publicRooms;
   }
 
-  private countMember(roomName: string): number {
-    return this.server.sockets.adapter.rooms.get(roomName)?.size ?? 0;
+  private countMember(room: string): number {
+    return this.server.sockets.adapter.rooms.get(room)?.size ?? 0;
   }
 }

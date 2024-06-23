@@ -50,7 +50,7 @@ export class MeetingService {
 
   public async createNewConversation(
     conversationCreateDto: ConversationCreateDto,
-  ) {
+  ): Promise<string> {
     const conversationModel = new this.conversationModel(conversationCreateDto);
     await conversationModel.save();
 

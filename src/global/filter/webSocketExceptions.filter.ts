@@ -23,10 +23,10 @@ export class WebSocketExceptionsFilter<T> implements ExceptionFilter {
       case FileNotFoundException:
         message = `ERROR#001: ${(exception as FileNotFoundException).message}`;
         break;
-      case InvalidMiddlewareException:
+      case InvalidMiddlewareException: // Middleware Error
         message = `ERROR#002: ${(exception as InvalidMiddlewareException).name} failed`;
         break;
-      case InvalidResponseException:
+      case InvalidResponseException: // Invalid DB Response
         message = `ERROR#003: ${(exception as InvalidResponseException).message} failed`;
         break;
     }

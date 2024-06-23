@@ -192,16 +192,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new InvalidMiddlewareException('SummarizeScript');
       })
       .then((summarizeResponseDto: SummarizeResponseDto) => {
-        client.emit(
-          'summarize',
-          `{"user": ${client.id}, "keyword": ${summarizeResponseDto.keyword}, "subtitle": ${summarizeResponseDto.subtitle}}`,
-        );
-        client
-          .to(room)
-          .emit(
-            'summarize',
-            `{"user": ${client.id}, "keyword": ${summarizeResponseDto.keyword}, "subtitle": ${summarizeResponseDto.subtitle}}`,
-          );
+        const responsePayload = {
+          keyword: summarizeResponseDto.keyword,
+          subtitle: summarizeResponseDto.subtitle,
+        };
+
+        client.emit('summarize', responsePayload);
+        client.to(room).emit('summarize', responsePayload);
 
         this.handleNode(client, [
           room,

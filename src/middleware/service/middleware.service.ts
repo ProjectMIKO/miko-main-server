@@ -1,12 +1,15 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UseFilters } from '@nestjs/common';
 import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { SummarizeResponseDto } from '@dto/summarize.response.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
-import * as FormData from 'form-data'; // 전체 모듈을 가져옵니다.
+import * as FormData from 'form-data';
+import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
+import { WebSocketExceptionsFilter } from '@global/filter/webSocketExceptions.filter'; // 전체 모듈을 가져옵니다.
 
 @Injectable()
+@UseFilters(new WebSocketExceptionsFilter())
 export class MiddlewareService {
   private NLP_SERVER_URL: string;
 
@@ -29,6 +32,9 @@ export class MiddlewareService {
           cost: responseData.cost,
         };
         return summarizeResponse;
+      })
+      .catch((error) => {
+        throw new InvalidResponseException('SummarizeScript')
       });
   }
 

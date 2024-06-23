@@ -9,7 +9,83 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "baseUrl": "./src",
+    "paths": {
+      "@global/*": [
+        "global/*"
+      ],
+      "@component/*": [
+        "component/*"
+      ],
+      "@filesystem/*": [
+        "filesystem/*"
+      ],
+      "@user/*": [
+        "component/user/*"
+      ],
+      "@conversation/*": [
+        "component/conversation/*"
+      ],
+      "@node/*": [
+        "component/node/*"
+      ],
+      "@edge/*": [
+        "component/edge/*"
+      ],
+      "@middleware/*": [
+        "middleware/*"
+      ],
+      "@meeting/*": [
+        "meeting/*"
+      ],
+      "@auth/*": [
+        "auth/*"
+      ],
+      "@openvidu/*": [
+        "openvidu/*"
+      ],
+      "@controller/*": [
+        "component/user/controller/*",
+        "component/conversation/controller/*",
+        "component/node/controller/*",
+        "component/edge/controller/*",
+        "middleware/controller/*",
+        "filesystem/controller/*",
+        "meeting/controller/*",
+        "auth/controller/*",
+        "openvidu/controller/*"
+      ],
+      "@service/*": [
+        "component/user/service/*",
+        "component/conversation/service/*",
+        "component/node/service/*",
+        "component/edge/service/*",
+        "middleware/service/*",
+        "filesystem/service/*"
+        "meeting/service/*",
+        "auth/service/*",
+        "openvidu/service/*"
+      ],
+      "@dto/*": [
+        "component/user/dto/*",
+        "component/conversation/dto/*",
+        "component/node/dto/*",
+        "component/edge/dto/*",
+        ,
+        "middleware/dto/*",
+        "filesystem/dto/*",
+        "meeting/dto/*",
+        "auth/dto/*",
+        "openvidu/dto/*"
+      ],
+      "@schema/*": [
+        "component/user/schema/*",
+        "component/conversation/schema/*",
+        "component/node/schema/*",
+        "component/edge/schema/*",
+        "meeting/schema/*"
+      ]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -17,5 +93,14 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts"
+  ]
 }

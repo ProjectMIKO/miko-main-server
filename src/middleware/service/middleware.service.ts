@@ -1,9 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { SummarizeRequestDto } from '../dto/summarize.request.dto';
+import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { SummarizeResponseDto } from '../dto/summarize.response.dto';
-import { ConvertResponseDto } from '../dto/convert.response.dto';
+import { SummarizeResponseDto } from '@dto/summarize.response.dto';
+import { ConvertResponseDto } from '@dto/convert.response.dto';
 import * as FormData from 'form-data'; // 전체 모듈을 가져옵니다.
 
 @Injectable()

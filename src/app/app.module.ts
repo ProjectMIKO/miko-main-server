@@ -1,16 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './controller/app.controller';
 import { AppService, AppGateway } from './gateway/app.gateway';
-import { UserModule } from '../user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { getMongoConfig } from '../global/config/mongoose.config';
-import { AuthModule } from '../auth/auth.module';
-import { OpenviduModule } from '../openvidu/openvidu.module';
-import { MiddlewareModule } from '../middleware/middleware.module';
-import { FileSystemModule } from '../filesystem/fileSystem.module';
-import { MeetingModule } from '../meeting/meeting.module';
-import { ConversationModule } from '../conversation/conversation.module';
+import { getMongoConfig } from '@global/config/mongoose.config';
+import { AuthModule } from '@auth/auth.module';
+import { OpenviduModule } from '@openvidu/openvidu.module';
+import { MiddlewareModule } from '@middleware/middleware.module';
+import { FileSystemModule } from '@filesystem/fileSystem.module';
+import { MeetingModule } from '@meeting/meeting.module';
+import { ComponentModule } from '@component/component.module';
 
 @Module({
   imports: [
@@ -22,13 +21,12 @@ import { ConversationModule } from '../conversation/conversation.module';
       inject: [ConfigService],
       useFactory: getMongoConfig,
     }),
-    UserModule,
     AuthModule,
     OpenviduModule,
     MiddlewareModule,
     FileSystemModule,
     MeetingModule,
-    ConversationModule,
+    ComponentModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppGateway],

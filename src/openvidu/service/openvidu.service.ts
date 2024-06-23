@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OpenVidu, Session, Connection } from 'openvidu-node-client';
-import { SessionPropertiesDto } from '../dto/session.request.dto';
-import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
-import { SessionResponseDto } from '../dto/session.response.dto';
-import { ConnectionResponseDto } from '../dto/connection.response.dto';
+import { SessionPropertiesDto } from '@dto/session.request.dto';
+import { ConnectionPropertiesDto } from '@dto/connection.request.dto';
+import { SessionResponseDto } from '@dto/session.response.dto';
+import { ConnectionResponseDto } from '@dto/connection.response.dto';
 import { plainToClass } from 'class-transformer';
 
 @Injectable()

@@ -9,21 +9,23 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
-import { MeetingService } from '../../meeting/service/meeting.service';
-import { MiddlewareService } from '../../middleware/service/middleware.service';
-import { MeetingCreateDto } from '../../meeting/dto/meeting.create.dto';
-import { Edge } from '../../meeting/schema/edge.schema';
-import { NodeCreateDto } from '../../meeting/dto/node.create.dto';
-import { SummarizeRequestDto } from '../../middleware/dto/summarize.request.dto';
-import { ConvertResponseDto } from '../../middleware/dto/convert.response.dto';
-import { SummarizeResponseDto } from '../../middleware/dto/summarize.response.dto';
-import { WebSocketExceptionsFilter } from '../../global/filter/webSocketExceptions.filter';
+import { MeetingService } from '@service/meeting.service';
+import { MiddlewareService } from '@service/middleware.service';
+import { MeetingCreateDto } from '@dto/meeting.create.dto';
+import { Edge } from '@schema/edge.schema';
+import { NodeCreateDto } from '@component/node/dto/node.create.dto';
+import { SummarizeRequestDto } from '@dto/summarize.request.dto';
+import { ConvertResponseDto } from '@dto/convert.response.dto';
+import { SummarizeResponseDto } from '@dto/summarize.response.dto';
+import { WebSocketExceptionsFilter } from '@global/filter/webSocketExceptions.filter';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
-import { InvalidResponseException } from '../../global/exception/invalidResponse.exception';
-import { FileNotFoundException } from '../../global/exception/findNotFound.exception';
-import { RoomConversations } from '../../meeting/interface/roomConversation.interface';
-import { ConversationCreateDto } from '../../conversation/dto/conversation.create.dto';
-import { ConversationService } from '../../conversation/service/conversation.service';
+import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
+import { FileNotFoundException } from '@global/exception/findNotFound.exception';
+import { RoomConversations } from '@meeting/interface/roomConversation.interface';
+import { ConversationCreateDto } from '@dto/conversation.create.dto';
+import { ConversationService } from '@service/conversation.service';
+import { NodeService } from '@service/node.service';
+import { EdgeService } from '@service/edge.service';
 
 @Injectable()
 export class AppService {
@@ -52,6 +54,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly meetingService: MeetingService,
     private readonly middlewareService: MiddlewareService,
     private readonly conversationService: ConversationService,
+    private readonly nodeService: NodeService,
+    private readonly edgeService: EdgeService,
   ) {}
 
   afterInit() {
@@ -215,7 +219,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       summary: summarizeResponseDto.subtitle,
       conversationIds: [this.roomConversations[room].toString()],
     };
-    this.meetingService.createNewNode(nodeCreateDto);
+    this.nodeService.createNewNode(nodeCreateDto).then(r => {});
     client.emit('Node', nodeCreateDto);
     client.to(room).emit('Node', nodeCreateDto);
   }

@@ -15,12 +15,12 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { OpenviduService } from '../service/openvidu.service';
-import { SessionPropertiesDto } from '../dto/session.request.dto';
-import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
-import { ConnectionResponseDto } from '../dto/connection.response.dto';
-import { SessionResponseDto } from '../dto/session.response.dto';
-import { ModeratorRequestDto } from '../dto/moderator.request.dto';
+import { OpenviduService } from '@service/openvidu.service';
+import { SessionPropertiesDto } from '@dto/session.request.dto';
+import { ConnectionPropertiesDto } from '@dto/connection.request.dto';
+import { ConnectionResponseDto } from '@dto/connection.response.dto';
+import { SessionResponseDto } from '@dto/session.response.dto';
+import { ModeratorRequestDto } from '@dto/moderator.request.dto';
 
 @ApiTags('OpenVidu')
 @Controller('api/openvidu')

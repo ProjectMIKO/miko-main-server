@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { MiddlewareService } from './service/middleware.service';
-import { MiddlewareController } from './controller/middleware.controller';
+import { MiddlewareService } from '@service/middleware.service';
+import { MiddlewareController } from '@controller/middleware.controller';
 
 @Module({
     providers: [MiddlewareService],

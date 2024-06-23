@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Conversation, ConversationSchema } from '../../conversation/schema/conversation.schema';
-import { Node, NodeSchema } from './node.schema';
-import { Edge, EdgeSchema } from './edge.schema';
+import { Conversation, ConversationSchema } from '@schema/conversation.schema';
+import { Node, NodeSchema } from '@schema/node.schema';
+import { Edge, EdgeSchema } from '@schema/edge.schema';
 
 export type MeetingDocument = Meeting & Document;
 

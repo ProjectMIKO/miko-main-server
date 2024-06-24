@@ -116,7 +116,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('stt')
   async handleRecord(client: Socket, [room, file]: [string, ArrayBuffer]) {
     if (!file) throw new BadRequestException('File Not Found');
-
     if (!room) throw new BadRequestException('Room is empty');
 
     const currentTime = new Date();

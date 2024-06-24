@@ -1,5 +1,5 @@
 import {
-  ArgumentsHost,
+  ArgumentsHost, BadRequestException,
   Catch,
   ExceptionFilter,
   InternalServerErrorException, Logger,
@@ -31,6 +31,9 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         break;
       case InvalidResponseException: // Invalid DB Response
         message = `Error#003(InvalidResponseException): ${(exception as InvalidResponseException).message}`;
+        break;
+      case BadRequestException:
+        message = `Error#004(BadRequestException): ${(exception as BadRequestException).message}`;
         break;
       case EmptyDataWarning:
         status = 'warning';

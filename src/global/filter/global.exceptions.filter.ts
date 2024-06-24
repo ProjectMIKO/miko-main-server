@@ -14,6 +14,7 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToWs();
     const client = ctx.getClient<Socket>();
+    let status = 'error';
     let message = 'Error#000(InternalServerError)';
 
     switch (exception.constructor) {
@@ -28,11 +29,15 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Error#003(InvalidResponseException): ${(exception as InvalidResponseException).message}`;
         break;
       case EmptyDataWarning:
+        status = 'warning';
         message = `Warning#001(EmptyDataException): ${(exception as EmptyDataWarning).message}`;
         break;
     }
 
-    console.error(`${message}`);
-    client.emit('error', `${message}`);
+    console.error(message);
+    if (status == 'error')
+      client.emit('error', message);
+    else
+      client.emit('warning', message);
   }
 }

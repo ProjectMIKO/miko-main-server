@@ -46,7 +46,6 @@ export class AppService {
     credentials: true,
   },
 })
-@UseFilters(new GlobalExceptionsFilter())
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private roomConversations: RoomConversations = {};
   @WebSocketServer() server: Server;

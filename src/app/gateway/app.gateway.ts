@@ -81,6 +81,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('enter_room')
   async handleEnterRoom(client: Socket, room: string) {
+    if (!room) throw new BadRequestException('Room is empty');
+
     const isNewRoom = !this.rooms().includes(room);
 
     client.join(room);
@@ -108,9 +110,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('message')
-  handleMessage(client: Socket, [room, msg, done]: [string, string, Function]) {
+  handleMessage(client: Socket, [room, msg]: [string, string]) {
+    if (!room) throw new BadRequestException('Room is empty');
+    if (!msg) throw new BadRequestException('Message is empty');
+
     client.to(room).emit('message', `${client['nickname']}: ${msg}`);
-    done();
   }
 
   @SubscribeMessage('stt')
@@ -165,6 +169,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
+    if (!room) throw new BadRequestException('Room is empty');
     // room = testModule(); // Test Module
 
     this.printRoomConversations(room);
@@ -209,6 +214,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       SummarizeResponseDto,
     ],
   ) {
+    if (!room) throw new BadRequestException('Room is empty');
+    if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
+    if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
+
     const vertexCreateDto: VertexCreateDto = {
       keyword: summarizeResponseDto.keyword,
       subtitle: summarizeResponseDto.subtitle,

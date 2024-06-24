@@ -1,20 +1,28 @@
-import { Injectable, UseFilters } from '@nestjs/common';
+import { Injectable, NestMiddleware, UseFilters } from '@nestjs/common';
 import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { SummarizeResponseDto } from '@dto/summarize.response.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
 import * as FormData from 'form-data';
-import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
 import { WebSocketExceptionsFilter } from '@global/filter/webSocketExceptions.filter';
-import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception'; // 전체 모듈을 가져옵니다.
+import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
+import { NextFunction } from 'express';
 
 @Injectable()
 @UseFilters(new WebSocketExceptionsFilter())
-export class MiddlewareService {
+export class MiddlewareService implements NestMiddleware {
   private NLP_SERVER_URL: string;
 
   constructor(private configService: ConfigService) {}
+
+  async use(request: Request, _: Response, next: NextFunction) {
+    try {
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }
 
   onModuleInit() {
     this.NLP_SERVER_URL = this.configService.get<string>('NLP_SERVER_URL');
@@ -23,41 +31,32 @@ export class MiddlewareService {
   public async summarizeScript(
     summarizeRequestDto: SummarizeRequestDto,
   ): Promise<SummarizeResponseDto> {
-    try {
-      const response = await axios.post(
-        `${this.NLP_SERVER_URL}/api/keyword/`,
-        summarizeRequestDto,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+    return axios
+      .post(`${this.NLP_SERVER_URL}/api/keyword/`, summarizeRequestDto, {
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
-      return {
-        keyword: response.data.keyword,
-        subtitle: response.data.subtitle,
-        cost: response.data.cost,
-      };
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        // AxiosError 처리
-        throw new InvalidResponseException(
-          `Error occurred while summarizing script: ${error.message}`,
-        );
-      } else {
-        // 일반 에러 처리
+      })
+      .then((response) => {
+        const responseData = response.data;
+        const summarizeResponseDto: SummarizeResponseDto = {
+          keyword: responseData.keyword,
+          subtitle: responseData.subtitle,
+          cost: responseData.cost,
+        };
+        return summarizeResponseDto;
+      })
+      .catch((error) => {
         throw new InvalidMiddlewareException(
-          `An unexpected error occurred: ${error.message}`,
+          `SummarizeScript: ${error.message}`,
         );
-      }
-    }
+      });
   }
 
   public async convertStt(
     file: Express.Multer.File,
   ): Promise<ConvertResponseDto> {
     const formData = new FormData();
-    // @ts-ignore
     formData.append('file', file.buffer, {
       filename: file.originalname,
       contentType: file.mimetype,
@@ -71,23 +70,13 @@ export class MiddlewareService {
       })
       .then((response) => {
         const responseData = response.data;
-        const convertResponse: ConvertResponseDto = {
+        const convertResponseDto: ConvertResponseDto = {
           script: responseData.text,
         };
-        return convertResponse;
+        return convertResponseDto;
       })
       .catch((error) => {
-        // if (axios.isAxiosError(error)) {
-        //   // AxiosError 처리
-        //   throw new InvalidResponseException(
-        //     `Error occurred while summarizing script: ${error.message}`,
-        //   );
-        // } else {
-          // 일반 에러 처리
-          throw new InvalidMiddlewareException(
-            `An unexpected error occurred: ${error.message}`,
-          );
-        // }
+        throw new InvalidMiddlewareException(`ConvertStt: ${error.message}`);
       });
   }
 }

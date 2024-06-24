@@ -26,7 +26,7 @@ export class MiddlewareController {
   async summarizeText(
     @Body() summarizeRequestDto: SummarizeRequestDto,
   ): Promise<SummarizeResponseDto> {
-    return this.middlewareService.summarizeScript(summarizeRequestDto);
+    return await this.middlewareService.summarizeScript(summarizeRequestDto);
   }
 
   @Post('stt')

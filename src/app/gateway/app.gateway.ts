@@ -100,7 +100,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new InvalidResponseException('CreateNewMeeting');
       });
 
-      // Room 추가
       this.roomConversations[room] = {};
     }
 
@@ -131,7 +130,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const convertResponseDto: ConvertResponseDto =
       await this.middlewareService.convertStt(newFile); // STT 변환 요청
 
-    if (convertResponseDto.script === '') return; // throw new InvalidMiddlewareException('ConvertStt');
+    if (convertResponseDto.script === '') return;
 
     client.emit('script', `${client.id}: ${convertResponseDto.script}`);
     client
@@ -154,9 +153,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Session 에 Conversations 저장
         this.roomConversations[room][contentId] = [conversationCreateDto];
       })
-      .catch((Exception) => {
-        throw new InvalidMiddlewareException('CreateNewConversation');
-      });
   }
 
   @SubscribeMessage('summarize')
@@ -178,9 +174,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.middlewareService
       .summarizeScript(summarizeRequestDto)
-      .catch((error) => {
-        throw new InvalidMiddlewareException('SummarizeScript');
-      })
       .then((summarizeResponseDto: SummarizeResponseDto) => {
         console.log(
           `Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`,

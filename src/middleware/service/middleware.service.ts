@@ -74,6 +74,19 @@ export class MiddlewareService {
           script: responseData.text,
         };
         return convertResponse;
+      })
+      .catch((error) => {
+        if (axios.isAxiosError(error)) {
+          // AxiosError 처리
+          throw new InvalidResponseException(
+            `Error occurred while summarizing script: ${error.message}`,
+          );
+        } else {
+          // 일반 에러 처리
+          throw new InvalidResponseException(
+            `An unexpected error occurred: ${error.message}`,
+          );
+        }
       });
   }
 }

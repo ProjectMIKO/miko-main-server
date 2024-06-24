@@ -4,6 +4,11 @@ import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
+import * as dotenv from 'dotenv';
+
+dotenv.config({
+  path: `.env.${process.env.NODE_ENV || 'local'}`,
+});
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

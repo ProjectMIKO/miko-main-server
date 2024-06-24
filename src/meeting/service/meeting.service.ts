@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Meeting, MeetingDocument } from '@schema/meeting.schema';
 import { MeetingCreateDto } from '@dto/meeting.create.dto';
 import { Model } from 'mongoose';
@@ -10,6 +14,16 @@ export class MeetingService {
   constructor(
     @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
   ) {}
+
+  validateField(field: string) {
+    if (!['conversations', 'vertexes', 'edges'].includes(field))
+      throw new BadRequestException(`Invalid field: ${field}`);
+  }
+
+  validateAction(action: string) {
+    if (!['$push', '$pull'].includes(action))
+      throw new BadRequestException(`Invalid action: ${action}`);
+  }
 
   public async createNewMeeting(
     meetingCreateDto: MeetingCreateDto,
@@ -38,23 +52,28 @@ export class MeetingService {
     return this.meetingModel.findByIdAndDelete(id).exec();
   }
 
-  public async addConversationToMeeting(meetingId: string, conversationId: string): Promise<string> {
-    const meetingModel = await this.meetingModel.findByIdAndUpdate(
-      meetingId,
-      { $push: { conversations: conversationId } },
-      { new: true, useFindAndModify: false },
-    ).populate('conversations').exec();
+  async updateMeetingField(
+    meetingId: string,
+    contentId: string,
+    field: string,
+    action: string,
+  ): Promise<string> {
+    this.validateField(field);
+    this.validateAction(action);
 
-    return meetingModel._id.toString() ;
-  }
+    const update = { [action]: { [field]: contentId } };
+    const meetingModel = await this.meetingModel
+      .findByIdAndUpdate(meetingId, update, {
+        new: true,
+        useFindAndModify: false,
+      })
+      .populate(field)
+      .exec();
 
-  public async addVertexToMeeting(meetingId: string, vertexId: string): Promise<string> {
-    const meetingModel = await this.meetingModel.findByIdAndUpdate(
-      meetingId,
-      { $push: { vertexes: vertexId } },
-      { new: true, useFindAndModify: false },
-    ).populate('vertexes').exec();
+    if (!meetingModel) {
+      throw new NotFoundException(`Meeting ID ${meetingId}: Not found`);
+    }
 
-    return meetingModel._id.toString() ;
+    return meetingModel._id.toString();
   }
 }

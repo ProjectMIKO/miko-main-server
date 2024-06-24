@@ -11,7 +11,6 @@ import { instrument } from '@socket.io/admin-ui';
 import { MeetingService } from '@service/meeting.service';
 import { MiddlewareService } from '@service/middleware.service';
 import { MeetingCreateDto } from '@dto/meeting.create.dto';
-import { Edge } from '@schema/edge.schema';
 import { VertexCreateDto } from '@dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
@@ -22,6 +21,7 @@ import { ConversationService } from '@service/conversation.service';
 import { VertexService } from '@service/vertex.service';
 import { EdgeService } from '@service/edge.service';
 import { EmptyDataWarning } from '@global/warning/emptyData.warning';
+import { EdgeRequestDto } from '@dto/edge.create.dto';
 
 @Injectable()
 export class AppService {
@@ -51,7 +51,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly meetingService: MeetingService,
     private readonly middlewareService: MiddlewareService,
     private readonly conversationService: ConversationService,
-    private readonly nodeService: VertexService,
+    private readonly vertexService: VertexService,
     private readonly edgeService: EdgeService,
   ) {}
 
@@ -62,13 +62,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  handleConnection(client: Socket, username: string) {
+  handleConnection(client: Socket) {
     client['nickname'] = client.handshake.auth.nickname;
     this.logger.log(`${client['nickname']}: connected to server`);
   }
 
   @SubscribeMessage('disconnecting')
-  handleDisconnecting(client: Socket, reason: string) {
+  handleDisconnecting(client: Socket) {
     client.rooms.forEach((room) =>
       client
         .to(room)
@@ -111,7 +111,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));
 
-    this.logger.log(`Enter Room: Finished`)
+    this.logger.log(`Enter Room: Finished`);
   }
 
   @SubscribeMessage('message')
@@ -146,10 +146,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!convertResponseDto.script)
       throw new EmptyDataWarning(`ConvertSTT: Empty script`);
 
-    client.emit('script', `${client.id}: ${convertResponseDto.script}`);
+    client.emit('script', `${client['nickname']}: ${convertResponseDto.script}`);
     client
       .to(room)
-      .emit('script', `${client.id}: ${convertResponseDto.script}`);
+      .emit('script', `${client['nickname']}: ${convertResponseDto.script}`);
 
     let conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],
@@ -167,9 +167,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Session 에 Conversations 저장
         this.roomConversations[room][contentId] = [conversationCreateDto];
         // Meeting 에 Conversation 저장
-        this.meetingService.addConversationToMeeting(
+        this.meetingService.updateMeetingField(
           this.roomMeetingMap[room],
           contentId,
+          'conversations',
+          '$push',
         );
       });
 
@@ -179,7 +181,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
     if (!room) throw new BadRequestException('Room is empty');
-    // room = testModule(); // Test Module
 
     this.logger.log(`Summarize Method: Start`);
 
@@ -218,7 +219,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('vertex')
-  public async handleVertex(
+  async handleVertex(
     client: Socket,
     [room, summarizeRequestDto, summarizeResponseDto]: [
       string,
@@ -227,8 +228,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
-    if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
-    if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
+    if (!summarizeRequestDto)
+      throw new BadRequestException('SummarizeRequestDto is empty');
+    if (!summarizeResponseDto)
+      throw new BadRequestException('SummarizeResponseDto is empty');
 
     this.logger.log(`Vertex Creation Method: Start`);
 
@@ -238,32 +241,70 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
+    const contentId = await this.vertexService.createNewVertex(vertexCreateDto);
+
     client.emit(
       'vertex',
-      `{"keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
+      `{"id": ${contentId}, "keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
     );
     client
       .to(room)
       .emit(
         'vertex',
-        `{"keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
+        `{"id": ${contentId}, "keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
       );
 
-    this.nodeService.createNewVertex(vertexCreateDto).then((contentId) => {
-      // Meeting 에 Vertex 저장
-      this.meetingService.addVertexToMeeting(
-        this.roomMeetingMap[room],
-        contentId,
-      );
-    });
+    // Meeting 에 Vertex 저장
+    await this.meetingService.updateMeetingField(
+      this.roomMeetingMap[room],
+      contentId,
+      'vertexes',
+      '$push',
+    );
 
     this.logger.log(`Vertex Creation Method: Finished`);
   }
 
-  @SubscribeMessage('Edge')
-  handleEdge(client: Socket, [room, edge, done]: [string, Edge, Function]) {
-    client.to(room).emit('Edge', edge);
-    done();
+  @SubscribeMessage('edge')
+  async handleEdge(
+    client: Socket,
+    [room, vertex1, vertex2, action]: [string, string, string, string],
+  ) {
+    if (!room) throw new BadRequestException('Room is empty');
+    if (!vertex1 || !vertex2)
+      throw new BadRequestException('Vertex ID is empty');
+    if (action !== '$push' && action !== '$pull')
+      throw new BadRequestException('Invalid Action');
+
+    this.logger.log(`Edge ${action} Method: Start`);
+
+    const edgeRequestDto: EdgeRequestDto = {
+      vertex1: vertex1,
+      vertex2: vertex2,
+      action: action,
+    };
+
+    const contentId = await this.edgeService.updateEdge(edgeRequestDto);
+
+    client.emit(
+      'edge',
+      `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}, "action": ${action}`,
+    );
+    client
+      .to(room)
+      .emit(
+        'edge',
+        `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}\`,`,
+      );
+
+    await this.meetingService.updateMeetingField(
+      this.roomMeetingMap[room],
+      contentId,
+      'edges',
+      action,
+    );
+
+    this.logger.log(`Edge ${action} Method: Finished`);
   }
 
   private rooms(): string[] {
@@ -295,38 +336,5 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
     }
-  }
-
-  /** Test Module
-   *
-   * @private Summarize Test Module
-   * @return roomName(TEST)
-   */
-  private testModule(): string {
-    this.roomConversations['Test'] = {
-      ID1: [
-        {
-          user: 'USER1',
-          content: '안녕하세요 회의시작할게요',
-          timestamp: new Date(),
-        },
-      ],
-      ID2: [
-        {
-          user: 'USER2',
-          content: '그럼 우리가 만들 프로젝트의 아이디어를 말해볼까요?',
-          timestamp: new Date(),
-        },
-      ],
-      ID3: [
-        {
-          user: 'USER1',
-          content: '좋습니다 빨리 이야기해보죠',
-          timestamp: new Date(),
-        },
-      ],
-    };
-
-    return 'Test';
   }
 }

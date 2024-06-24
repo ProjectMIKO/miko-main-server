@@ -2,7 +2,7 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
-  InternalServerErrorException,
+  InternalServerErrorException, Logger,
 } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
@@ -12,7 +12,8 @@ import { EmptyDataWarning } from '@global/warning/emptyData.warning';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
+  private readonly logger = new Logger(GlobalExceptionsFilter.name);
+  catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToWs();
     const client = ctx.getClient<Socket>();
     let status = 'error';
@@ -39,7 +40,7 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Error#000(InternalServerError): ${(exception as InternalServerErrorException).message}`;
     }
 
-    console.error(message);
+    this.logger.error(message);
     if (status == 'error') client.emit('error', message);
     else client.emit('warning', message);
   }

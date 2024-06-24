@@ -43,7 +43,17 @@ export class MeetingService {
       meetingId,
       { $push: { conversations: conversationId } },
       { new: true, useFindAndModify: false },
-    ).exec();
+    ).populate('conversations').exec();
+
+    return meetingModel._id.toString() ;
+  }
+
+  public async addVertexToMeeting(meetingId: string, vertexId: string): Promise<string> {
+    const meetingModel = await this.meetingModel.findByIdAndUpdate(
+      meetingId,
+      { $push: { vertexes: vertexId } },
+      { new: true, useFindAndModify: false },
+    ).populate('vertexes').exec();
 
     return meetingModel._id.toString() ;
   }

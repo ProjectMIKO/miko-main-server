@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Conversation, ConversationSchema } from '@schema/conversation.schema';
-import { Vertex, VertexSchema } from '@schema/vertex.schema';
+import { Conversation } from '@schema/conversation.schema';
+import { Vertex } from '@schema/vertex.schema';
 import { Edge, EdgeSchema } from '@schema/edge.schema';
 
 export type MeetingDocument = Meeting & Document;
@@ -21,10 +21,10 @@ export class Meeting {
   endTime: Date;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Conversation' }], default: [] })
-  conversations: Types.ObjectId[];
+  conversations: Conversation[];
 
-  @Prop({ type: [VertexSchema], default: [] })
-  nodes: Vertex[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Vertex' }], default: [] })
+  vertexes: Vertex[];
 
   @Prop({ type: [EdgeSchema], default: [] })
   edges: Edge[];

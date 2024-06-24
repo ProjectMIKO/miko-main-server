@@ -6,7 +6,8 @@ import { SummarizeResponseDto } from '@dto/summarize.response.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
 import * as FormData from 'form-data';
 import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
-import { WebSocketExceptionsFilter } from '@global/filter/webSocketExceptions.filter'; // 전체 모듈을 가져옵니다.
+import { WebSocketExceptionsFilter } from '@global/filter/webSocketExceptions.filter';
+import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception'; // 전체 모듈을 가져옵니다.
 
 @Injectable()
 @UseFilters(new WebSocketExceptionsFilter())
@@ -45,7 +46,7 @@ export class MiddlewareService {
         );
       } else {
         // 일반 에러 처리
-        throw new InvalidResponseException(
+        throw new InvalidMiddlewareException(
           `An unexpected error occurred: ${error.message}`,
         );
       }
@@ -76,17 +77,17 @@ export class MiddlewareService {
         return convertResponse;
       })
       .catch((error) => {
-        if (axios.isAxiosError(error)) {
-          // AxiosError 처리
-          throw new InvalidResponseException(
-            `Error occurred while summarizing script: ${error.message}`,
-          );
-        } else {
+        // if (axios.isAxiosError(error)) {
+        //   // AxiosError 처리
+        //   throw new InvalidResponseException(
+        //     `Error occurred while summarizing script: ${error.message}`,
+        //   );
+        // } else {
           // 일반 에러 처리
-          throw new InvalidResponseException(
+          throw new InvalidMiddlewareException(
             `An unexpected error occurred: ${error.message}`,
           );
-        }
+        // }
       });
   }
 }

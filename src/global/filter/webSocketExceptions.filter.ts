@@ -24,14 +24,14 @@ export class WebSocketExceptionsFilter<T> implements ExceptionFilter {
         message = `ERROR#001: ${(exception as FileNotFoundException).message}`;
         break;
       case InvalidMiddlewareException: // Middleware Error
-        message = `ERROR#002: ${(exception as InvalidMiddlewareException).name} failed`;
+        message = `ERROR#002: ${(exception as InvalidMiddlewareException).message} failed`;
         break;
       case InvalidResponseException: // Invalid DB Response
         message = `ERROR#003: ${(exception as InvalidResponseException).message} failed`;
         break;
     }
 
-    console.error(`${exception.constructor}: ${message}`);
-    client.emit('error', `${exception.constructor}: ${message}`);
+    console.error(`${message}`);
+    client.emit('error', `${message}`);
   }
 }

@@ -28,33 +28,4 @@ export class MiddlewareController {
   ): Promise<SummarizeResponseDto> {
     return await this.middlewareService.summarizeScript(summarizeRequestDto);
   }
-
-  @Post('stt')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'Audio file to upload',
-    required: true,
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'The file has been successfully uploaded.',
-    type: UploadResponseDto,
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async convertStt(
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<ConvertResponseDto> {
-    return await this.middlewareService.convertStt(file);
-  }
 }

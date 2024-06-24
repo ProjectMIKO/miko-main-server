@@ -1,11 +1,10 @@
-import { BadRequestException, Injectable, UseFilters } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
@@ -17,9 +16,6 @@ import { VertexCreateDto } from '@dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
 import { SummarizeResponseDto } from '@dto/summarize.response.dto';
-import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
-import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
-import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
 import { FileNotFoundException } from '@global/exception/findNotFound.exception';
 import { RoomConversations } from '@meeting/interface/roomConversation.interface';
 import { ConversationCreateDto } from '@dto/conversation.create.dto';
@@ -48,6 +44,7 @@ export class AppService {
 })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private roomConversations: RoomConversations = {};
+  private roomMeetingMap: { [key: string]: string } = {};
   @WebSocketServer() server: Server;
 
   constructor(
@@ -84,7 +81,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('enter_room')
-  handleEnterRoom(client: Socket, room: string) {
+  async handleEnterRoom(client: Socket, room: string) {
     const isNewRoom = !this.rooms().includes(room);
 
     client.join(room);
@@ -93,13 +90,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (isNewRoom) {
       // 최초 룸 개설 시 수행할 로직
       const meetingCreateDto: MeetingCreateDto = {
-        title: `Room: ${room}`,
+        title: room,
         owner: client['nickname'],
       };
-      this.meetingService.createNewMeeting(meetingCreateDto).catch((error) => {
-        throw new InvalidResponseException('CreateNewMeeting');
-      });
 
+      this.roomMeetingMap[room] =
+        await this.meetingService.createNewMeeting(meetingCreateDto);
       this.roomConversations[room] = {};
     }
 
@@ -153,6 +149,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .then((contentId) => {
         // Session 에 Conversations 저장
         this.roomConversations[room][contentId] = [conversationCreateDto];
+        // Meeting 에 Conversation 저장
+        const meetingId = this.meetingService.addConversationToMeeting(
+          this.roomMeetingMap[room],
+          contentId,
+        );
+
+        console.log(`Actual MeetingId: ${this.roomMeetingMap[room]} & Saved MeetingId: ${meetingId}`);
       });
   }
 
@@ -252,6 +255,17 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private countMember(room: string): number {
     return this.server.sockets.adapter.rooms.get(room)?.size ?? 0;
+  }
+
+  private printRoomConversations(room: string) {
+    console.log(`Room: ${room}`);
+    for (const contentId in this.roomConversations[room]) {
+      for (const message of this.roomConversations[room][contentId]) {
+        console.log(
+          `Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+        );
+      }
+    }
   }
 
   /** Test Module

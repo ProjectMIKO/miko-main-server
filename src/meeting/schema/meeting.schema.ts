@@ -20,8 +20,8 @@ export class Meeting {
   @Prop()
   endTime: Date;
 
-  @Prop({ type: [ConversationSchema], default: [] })
-  conversations: Conversation[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Conversation' }], default: [] })
+  conversations: Types.ObjectId[];
 
   @Prop({ type: [VertexSchema], default: [] })
   nodes: Vertex[];

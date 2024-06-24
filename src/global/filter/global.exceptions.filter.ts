@@ -2,6 +2,7 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
@@ -15,14 +16,16 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToWs();
     const client = ctx.getClient<Socket>();
     let status = 'error';
-    let message = 'Error#000(InternalServerError)';
+    let message: string;
 
     switch (exception.constructor) {
       case FileNotFoundException:
         message = `Error#001(FileNotFoundException): ${(exception as FileNotFoundException).message}`;
         break;
       case InvalidMiddlewareException: // Middleware Error
-        const response = (exception as InvalidMiddlewareException).message.match(/\((.*?)\)/)[1];
+        const response = (
+          exception as InvalidMiddlewareException
+        ).message.match(/\((.*?)\)/)[1];
         message = `Error#002(InvalidMiddlewareException): ${response}`;
         break;
       case InvalidResponseException: // Invalid DB Response
@@ -32,12 +35,12 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         status = 'warning';
         message = `Warning#001(EmptyDataException): ${(exception as EmptyDataWarning).message}`;
         break;
+      default:
+        message = `Error#000(InternalServerError): ${(exception as InternalServerErrorException).message}`;
     }
 
     console.error(message);
-    if (status == 'error')
-      client.emit('error', message);
-    else
-      client.emit('warning', message);
+    if (status == 'error') client.emit('error', message);
+    else client.emit('warning', message);
   }
 }

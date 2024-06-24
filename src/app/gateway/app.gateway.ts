@@ -146,10 +146,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!convertResponseDto.script)
       throw new EmptyDataWarning(`ConvertSTT: Empty script`);
 
-    client.emit('script', `${client.id}: ${convertResponseDto.script}`);
+    client.emit('script', `${client['nickname']}: ${convertResponseDto.script}`);
     client
       .to(room)
-      .emit('script', `${client.id}: ${convertResponseDto.script}`);
+      .emit('script', `${client['nickname']}: ${convertResponseDto.script}`);
 
     let conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],

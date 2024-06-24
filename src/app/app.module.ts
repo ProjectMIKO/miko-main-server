@@ -10,6 +10,8 @@ import { MiddlewareModule } from '@middleware/middleware.module';
 import { FileSystemModule } from '@filesystem/fileSystem.module';
 import { MeetingModule } from '@meeting/meeting.module';
 import { ComponentModule } from '@component/component.module';
+import { APP_FILTER } from '@nestjs/core';
+import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
 
 @Module({
   imports: [
@@ -29,6 +31,10 @@ import { ComponentModule } from '@component/component.module';
     ComponentModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppGateway],
+  providers: [
+    AppService,
+    AppGateway,
+    { provide: APP_FILTER, useClass: GlobalExceptionsFilter },
+  ],
 })
 export class AppModule {}

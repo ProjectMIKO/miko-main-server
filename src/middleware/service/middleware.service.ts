@@ -5,24 +5,14 @@ import axios from 'axios';
 import { SummarizeResponseDto } from '@dto/summarize.response.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
 import * as FormData from 'form-data';
-import { WebSocketExceptionsFilter } from '@global/filter/webSocketExceptions.filter';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
-import { NextFunction } from 'express';
+import { EmptyDataWarning } from '@global/warning/emptyData.warning';
 
 @Injectable()
-@UseFilters(new WebSocketExceptionsFilter())
-export class MiddlewareService implements NestMiddleware {
+export class MiddlewareService {
   private NLP_SERVER_URL: string;
 
   constructor(private configService: ConfigService) {}
-
-  async use(request: Request, _: Response, next: NextFunction) {
-    try {
-      next();
-    } catch (error) {
-      next(error);
-    }
-  }
 
   onModuleInit() {
     this.NLP_SERVER_URL = this.configService.get<string>('NLP_SERVER_URL');

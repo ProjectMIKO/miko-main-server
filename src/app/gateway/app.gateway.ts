@@ -164,6 +164,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.conversationService
       .createNewConversation(conversationCreateDto)
       .then((contentId) => {
+        this.printRoomConversations(room);
         // Session 에 Conversations 저장
         this.roomConversations[room][contentId] = [conversationCreateDto];
         // Meeting 에 Conversation 저장

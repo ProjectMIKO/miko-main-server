@@ -17,7 +17,7 @@ import { VertexCreateDto } from '@dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@dto/summarize.request.dto';
 import { ConvertResponseDto } from '@dto/convert.response.dto';
 import { SummarizeResponseDto } from '@dto/summarize.response.dto';
-import { WebSocketExceptionsFilter } from '@global/filter/webSocketExceptions.filter';
+import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
 import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
 import { FileNotFoundException } from '@global/exception/findNotFound.exception';
@@ -26,6 +26,7 @@ import { ConversationCreateDto } from '@dto/conversation.create.dto';
 import { ConversationService } from '@service/conversation.service';
 import { VertexService } from '@service/vertex.service';
 import { EdgeService } from '@service/edge.service';
+import { EmptyDataWarning } from '@global/warning/emptyData.warning';
 
 @Injectable()
 export class AppService {
@@ -45,7 +46,6 @@ export class AppService {
     credentials: true,
   },
 })
-@UseFilters(new WebSocketExceptionsFilter())
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private roomConversations: RoomConversations = {};
   @WebSocketServer() server: Server;
@@ -100,7 +100,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new InvalidResponseException('CreateNewMeeting');
       });
 
-      // Room 추가
       this.roomConversations[room] = {};
     }
 
@@ -131,7 +130,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const convertResponseDto: ConvertResponseDto =
       await this.middlewareService.convertStt(newFile); // STT 변환 요청
 
-    if (convertResponseDto.script === '') return; // throw new InvalidMiddlewareException('ConvertStt');
+    if (!convertResponseDto.script)
+      throw new EmptyDataWarning(`ConvertSTT: Empty script`);
 
     client.emit('script', `${client.id}: ${convertResponseDto.script}`);
     client
@@ -139,13 +139,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .emit('script', `${client.id}: ${convertResponseDto.script}`);
 
     let conversationCreateDto: ConversationCreateDto = {
-      user: client.id,
+      user: client['nickname'],
       content: convertResponseDto.script,
       timestamp: currentTime,
     };
 
     console.log(
-      `Created STT: user: ${client.id}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
+      `Created STT: user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
     );
 
     this.conversationService
@@ -153,14 +153,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .then((contentId) => {
         // Session 에 Conversations 저장
         this.roomConversations[room][contentId] = [conversationCreateDto];
-      })
-      .catch((Exception) => {
-        throw new InvalidMiddlewareException('CreateNewConversation');
       });
   }
 
   @SubscribeMessage('summarize')
-  public handleSummarize(client: Socket, room: string) {
+  public async handleSummarize(client: Socket, room: string) {
     // room = testModule(); // Test Module
 
     console.log(`Room: ${room}`);
@@ -172,34 +169,33 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
-    let summarizeRequestDto: SummarizeRequestDto = {
+    if (!this.roomConversations[room])
+      throw new EmptyDataWarning(`SummarizeScript: Empty conversations`);
+
+    const summarizeRequestDto: SummarizeRequestDto = {
       conversations: this.roomConversations[room],
     };
 
-    this.middlewareService
-      .summarizeScript(summarizeRequestDto)
-      .catch((error) => {
-        throw new InvalidMiddlewareException('SummarizeScript');
-      })
-      .then((summarizeResponseDto: SummarizeResponseDto) => {
-        console.log(
-          `Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`,
-        );
+    const summarizeResponseDto: SummarizeResponseDto =
+      await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-        const responsePayload = {
-          keyword: summarizeResponseDto.keyword,
-          subtitle: summarizeResponseDto.subtitle,
-        };
+    console.log(
+      `Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`,
+    );
 
-        client.emit('summarize', responsePayload);
-        client.to(room).emit('summarize', responsePayload);
+    const responsePayload = {
+      keyword: summarizeResponseDto.keyword,
+      subtitle: summarizeResponseDto.subtitle,
+    };
 
-        this.handleVertex(client, [
-          room,
-          summarizeRequestDto,
-          summarizeResponseDto,
-        ]);
-      });
+    client.emit('summarize', responsePayload);
+    client.to(room).emit('summarize', responsePayload);
+
+    this.handleVertex(client, [
+      room,
+      summarizeRequestDto,
+      summarizeResponseDto,
+    ]);
 
     this.roomConversations[room] = {}; // 임시 저장한 대화 flush
   }

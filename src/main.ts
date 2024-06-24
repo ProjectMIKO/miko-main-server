@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,12 +16,11 @@ async function bootstrap() {
     }),
   );
 
+  app.useGlobalFilters(new GlobalExceptionsFilter());
+
   // cors 설정
   app.enableCors({
-    origin: [
-      "https://miko-frontend-i3vt.vercel.app",
-      "http://localhost:3000"
-    ],
+    origin: ['https://miko-frontend-i3vt.vercel.app', 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept',
     credentials: true, // 서버가 자격 증명을 허용하도록 설정

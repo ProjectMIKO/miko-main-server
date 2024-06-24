@@ -3,6 +3,7 @@ import { Meeting, MeetingDocument } from '@schema/meeting.schema';
 import { MeetingCreateDto } from '@dto/meeting.create.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
 
 @Injectable()
 export class MeetingService {
@@ -17,7 +18,10 @@ export class MeetingService {
       ...meetingCreateDto,
       startTime: new Date(),
     });
-    await meetingModel.save();
+
+    meetingModel.save().catch((error) => {
+      throw new InvalidResponseException('CreateNewMeeting');
+    });
 
     return meetingModel._id.toString();
   }
@@ -32,5 +36,25 @@ export class MeetingService {
 
   async remove(id: string): Promise<any> {
     return this.meetingModel.findByIdAndDelete(id).exec();
+  }
+
+  public async addConversationToMeeting(meetingId: string, conversationId: string): Promise<string> {
+    const meetingModel = await this.meetingModel.findByIdAndUpdate(
+      meetingId,
+      { $push: { conversations: conversationId } },
+      { new: true, useFindAndModify: false },
+    ).populate('conversations').exec();
+
+    return meetingModel._id.toString() ;
+  }
+
+  public async addVertexToMeeting(meetingId: string, vertexId: string): Promise<string> {
+    const meetingModel = await this.meetingModel.findByIdAndUpdate(
+      meetingId,
+      { $push: { vertexes: vertexId } },
+      { new: true, useFindAndModify: false },
+    ).populate('vertexes').exec();
+
+    return meetingModel._id.toString() ;
   }
 }

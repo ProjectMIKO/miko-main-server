@@ -43,8 +43,13 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Error#000(InternalServerError): ${(exception as InternalServerErrorException).message}`;
     }
 
-    this.logger.error(message);
-    if (status == 'error') client.emit('error', message);
-    else client.emit('warning', message);
+    if (status == 'error') {
+      this.logger.error(message);
+      client.emit('error', message);
+    }
+    else {
+      this.logger.warn(message);
+      client.emit('warning', message);
+    }
   }
 }

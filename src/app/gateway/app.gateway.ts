@@ -146,10 +146,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!convertResponseDto.script)
       throw new EmptyDataWarning(`ConvertSTT: Empty script`);
 
-    client.emit('script', `${client['nickname']}: ${convertResponseDto.script}`);
-    client
-      .to(room)
-      .emit('script', `${client['nickname']}: ${convertResponseDto.script}`);
+    this.emitMessage(
+      client,
+      room,
+      'script',
+      `${client['nickname']}: ${convertResponseDto.script}`,
+    );
 
     let conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],
@@ -205,8 +207,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       subtitle: summarizeResponseDto.subtitle,
     };
 
-    client.emit('summarize', responsePayload);
-    client.to(room).emit('summarize', responsePayload);
+    this.emitMessage(client, room, 'summarize', responsePayload);
 
     await this.handleVertex(client, [
       room,
@@ -243,16 +244,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const contentId = await this.vertexService.createNewVertex(vertexCreateDto);
 
-    client.emit(
+    this.emitMessage(
+      client,
+      room,
       'vertex',
       `{"id": ${contentId}, "keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
     );
-    client
-      .to(room)
-      .emit(
-        'vertex',
-        `{"id": ${contentId}, "keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
-      );
 
     // Meeting 에 Vertex 저장
     await this.meetingService.updateMeetingField(
@@ -286,16 +283,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const contentId = await this.edgeService.updateEdge(edgeRequestDto);
 
-    client.emit(
+    this.emitMessage(
+      client,
+      room,
       'edge',
-      `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}, "action": ${action}`,
+      `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}}`,
     );
-    client
-      .to(room)
-      .emit(
-        'edge',
-        `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}\`,`,
-      );
 
     await this.meetingService.updateMeetingField(
       this.roomMeetingMap[room],
@@ -305,6 +298,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     this.logger.log(`Edge ${action} Method: Finished`);
+  }
+
+  private emitMessage(client: Socket, room: string, ev: string, args: any) {
+    client.emit(ev, args);
+    client.to(room).emit(ev, args);
   }
 
   private rooms(): string[] {

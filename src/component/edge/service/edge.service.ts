@@ -28,7 +28,7 @@ export class EdgeService {
     if (!deletedEdge) {
       throw new NotFoundException('Edge not found');
     }
-
+    
     console.log('DeleteEdge: Success');
 
     return deletedEdge._id.toString();

@@ -1,11 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import {
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
-} from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
 import { MeetingService } from '@meeting/service/meeting.service';
@@ -32,11 +26,7 @@ export class AppService {
 
 @WebSocketGateway({
   cors: {
-    origin: [
-      'https://admin.socket.io',
-      'https://miko-frontend-i3vt.vercel.app',
-      'http://localhost:3000',
-    ],
+    origin: ['https://admin.socket.io', 'https://miko-frontend-i3vt.vercel.app', 'http://localhost:3000'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -69,11 +59,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('disconnecting')
   handleDisconnecting(client: Socket) {
-    client.rooms.forEach((room) =>
-      client
-        .to(room)
-        .emit('exit', client['nickname'], this.countMember(room) - 1),
-    );
+    client.rooms.forEach((room) => client.to(room).emit('exit', client['nickname'], this.countMember(room) - 1));
   }
 
   handleDisconnect(client: Socket) {
@@ -98,8 +84,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         owner: client['nickname'],
       };
 
-      this.roomMeetingMap[room] =
-        await this.meetingService.createNewMeeting(meetingCreateDto);
+      this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
 
       console.log(`Create New Meeting Completed: ${this.roomMeetingMap[room]}`);
 
@@ -140,18 +125,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       size: buffer.length,
     } as Express.Multer.File;
 
-    const convertResponseDto: ConvertResponseDto =
-      await this.middlewareService.convertStt(newFile); // STT 변환 요청
+    const convertResponseDto: ConvertResponseDto = await this.middlewareService.convertStt(newFile); // STT 변환 요청
 
-    if (!convertResponseDto.script)
-      throw new EmptyDataWarning(`ConvertSTT: Empty script`);
+    if (!convertResponseDto.script) throw new EmptyDataWarning(`ConvertSTT: Empty script`);
 
-    this.emitMessage(
-      client,
-      room,
-      'script',
-      `${client['nickname']}: ${convertResponseDto.script}`,
-    );
+    this.emitMessage(client, room, 'script', `${client['nickname']}: ${convertResponseDto.script}`);
 
     let conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],
@@ -159,23 +137,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       timestamp: currentTime,
     };
 
-    console.log(
-      `Created STT: user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
-    );
+    console.log(`Created STT: user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`);
 
-    this.conversationService
-      .createConversation(conversationCreateDto)
-      .then((contentId) => {
-        // Session 에 Conversations 저장
-        this.roomConversations[room][contentId] = [conversationCreateDto];
-        // Meeting 에 Conversation 저장
-        this.meetingService.updateMeetingField(
-          this.roomMeetingMap[room],
-          contentId,
-          'conversations',
-          '$push',
-        );
-      });
+    this.conversationService.createConversation(conversationCreateDto).then((contentId) => {
+      // Session 에 Conversations 저장
+      this.roomConversations[room][contentId] = [conversationCreateDto];
+      // Meeting 에 Conversation 저장
+      this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'conversations', '$push');
+    });
 
     this.logger.log(`Convert STT Method: Finished`);
   }
@@ -188,19 +157,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.printRoomConversations(room);
 
-    if (!this.roomConversations[room])
-      throw new EmptyDataWarning(`SummarizeScript: Empty conversations`);
+    if (!this.roomConversations[room]) throw new EmptyDataWarning(`SummarizeScript: Empty conversations`);
 
     const summarizeRequestDto: SummarizeRequestDto = {
       conversations: this.roomConversations[room],
     };
 
-    const summarizeResponseDto: SummarizeResponseDto =
-      await this.middlewareService.summarizeScript(summarizeRequestDto);
+    const summarizeResponseDto: SummarizeResponseDto = await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-    this.logger.log(
-      `Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`,
-    );
+    this.logger.log(`Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`);
 
     const responsePayload = {
       keyword: summarizeResponseDto.keyword,
@@ -209,30 +174,17 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.emitMessage(client, room, 'summarize', responsePayload);
 
-    await this.handleVertex(client, [
-      room,
-      summarizeRequestDto,
-      summarizeResponseDto,
-    ]);
+    await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto]);
 
     this.roomConversations[room] = {}; // 임시 저장한 대화 flush
     this.logger.log(`Summarize Method: Finished`);
   }
 
   @SubscribeMessage('vertex')
-  async handleVertex(
-    client: Socket,
-    [room, summarizeRequestDto, summarizeResponseDto]: [
-      string,
-      SummarizeRequestDto,
-      SummarizeResponseDto,
-    ],
-  ) {
+  async handleVertex(client: Socket, [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, SummarizeResponseDto]) {
     if (!room) throw new BadRequestException('Room is empty');
-    if (!summarizeRequestDto)
-      throw new BadRequestException('SummarizeRequestDto is empty');
-    if (!summarizeResponseDto)
-      throw new BadRequestException('SummarizeResponseDto is empty');
+    if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
+    if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
 
     this.logger.log(`Vertex Creation Method: Start`);
 
@@ -252,26 +204,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     // Meeting 에 Vertex 저장
-    await this.meetingService.updateMeetingField(
-      this.roomMeetingMap[room],
-      contentId,
-      'vertexes',
-      '$push',
-    );
+    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'vertexes', '$push');
 
     this.logger.log(`Vertex Creation Method: Finished`);
   }
 
   @SubscribeMessage('edge')
-  async handleEdge(
-    client: Socket,
-    [room, vertex1, vertex2, action]: [string, string, string, string],
-  ) {
+  async handleEdge(client: Socket, [room, vertex1, vertex2, action]: [string, string, string, string]) {
     if (!room) throw new BadRequestException('Room is empty');
-    if (!vertex1 || !vertex2)
-      throw new BadRequestException('Vertex ID is empty');
-    if (action !== '$push' && action !== '$pull')
-      throw new BadRequestException('Invalid Action');
+    if (!vertex1 || !vertex2) throw new BadRequestException('Vertex ID is empty');
+    if (action !== '$push' && action !== '$pull') throw new BadRequestException('Invalid Action');
 
     this.logger.log(`Edge ${action} Method: Start`);
 
@@ -283,19 +225,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const contentId = await this.edgeService.updateEdge(edgeRequestDto);
 
-    this.emitMessage(
-      client,
-      room,
-      'edge',
-      `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}}`,
-    );
+    this.emitMessage(client, room, 'edge', `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}}`);
 
-    await this.meetingService.updateMeetingField(
-      this.roomMeetingMap[room],
-      contentId,
-      'edges',
-      action,
-    );
+    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'edges', action);
 
     this.logger.log(`Edge ${action} Method: Finished`);
   }
@@ -306,8 +238,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private rooms(): string[] {
-    if (!this.server || !this.server.sockets || !this.server.sockets.adapter)
-      return [];
+    if (!this.server || !this.server.sockets || !this.server.sockets.adapter) return [];
 
     const { sids, rooms } = this.server.sockets.adapter;
 
@@ -329,9 +260,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`Room: ${room}`);
     for (const contentId in this.roomConversations[room]) {
       for (const message of this.roomConversations[room][contentId]) {
-        console.log(
-          `Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
-        );
+        console.log(`Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`);
       }
     }
   }

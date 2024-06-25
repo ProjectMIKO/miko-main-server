@@ -17,9 +17,7 @@ export class MiddlewareService {
     this.NLP_SERVER_URL = this.configService.get<string>('NLP_SERVER_URL');
   }
 
-  public async summarizeScript(
-    summarizeRequestDto: SummarizeRequestDto,
-  ): Promise<SummarizeResponseDto> {
+  public async summarizeScript(summarizeRequestDto: SummarizeRequestDto): Promise<SummarizeResponseDto> {
     return axios
       .post(`${this.NLP_SERVER_URL}/api/keyword/`, summarizeRequestDto, {
         headers: {
@@ -36,15 +34,11 @@ export class MiddlewareService {
         return summarizeResponseDto;
       })
       .catch((error) => {
-        throw new InvalidMiddlewareException(
-          `SummarizeScript: ${error.message}`,
-        );
+        throw new InvalidMiddlewareException(`SummarizeScript: ${error.message}`);
       });
   }
-  
-  public async convertStt(
-    file: Express.Multer.File,
-  ): Promise<ConvertResponseDto> {
+
+  public async convertStt(file: Express.Multer.File): Promise<ConvertResponseDto> {
     const formData = new FormData();
     formData.append('file', file.buffer, {
       filename: file.originalname,

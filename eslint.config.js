@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const tsParser = require('@typescript-eslint/parser');
-const tsPlugin = require('@typescript-eslint/eslint-plugin');
-const prettierPlugin = require('eslint-plugin-prettier');
+import tsParser from '@typescript-eslint/parser';
+import tsPlugin, { configs } from '@typescript-eslint/eslint-plugin';
+import prettierPlugin from 'eslint-plugin-prettier';
 
-module.exports = [
+export default [
   {
     files: ['**/*.ts', '**/*.js'],
     ignores: ['.eslintrc.js'],
@@ -20,7 +20,7 @@ module.exports = [
       prettier: prettierPlugin,
     },
     rules: {
-      ...tsPlugin.configs.recommended.rules,
+      ...configs.recommended.rules,
       'prettier/prettier': 'error',
       '@typescript-eslint/interface-name-prefix': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',

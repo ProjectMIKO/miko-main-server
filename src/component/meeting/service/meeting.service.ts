@@ -71,16 +71,4 @@ export class MeetingService {
 
     return meetingModel._id.toString();
   }
-
-  async updateMeetingRecordKey(meetingId: string, recordKey: string): Promise<void> {
-    const update = { $set: { recordKey: recordKey } };
-    const meetingModel = await this.meetingModel.findByIdAndUpdate(meetingId, update, {
-      new: true,
-      useFindAndModify: false,
-    }).exec();
-
-    if (!meetingModel) {
-      throw new NotFoundException(`Meeting ID ${meetingId}: Not found`);
-    }
-  }
 }

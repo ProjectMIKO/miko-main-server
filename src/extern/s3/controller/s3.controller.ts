@@ -51,6 +51,31 @@ export class S3Controller {
     return await this.fileSystemService.uploadFile(file);
   }
 
+  @Post('upload-from-url')
+  @ApiBody({
+    description: 'URL of the file to upload',
+    required: true,
+    schema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          format: 'url',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'The file has been successfully uploaded.',
+    type: UploadResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async uploadFileFromUrl(@Body('url') url: string): Promise<UploadResponseDto> {
+    return await this.fileSystemService.uploadFileFromUrl(url);
+  }
+
   @Get('download')
   @ApiBody({ type: FileSystemRequestDto })
   @ApiResponse({

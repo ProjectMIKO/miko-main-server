@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { plainToClass } from 'class-transformer';
 import { UploadResponseDto } from '../dto/upload.response.dto';
 import { DownloadResponseDto } from '../dto/download.response.dto';
+import axios from 'axios';
 
 @Injectable()
 export class S3Service {
@@ -40,6 +41,36 @@ export class S3Service {
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
+    };
+
+    await this.s3.send(new PutObjectCommand(uploadParams));
+
+    return plainToClass(UploadResponseDto, {
+      result: true,
+      key: key,
+    });
+  }
+
+  public async uploadFileFromUrl(url: string): Promise<UploadResponseDto> {
+    const key = `${uuidv4()}-${url.split('/').pop()}`;
+
+    const response = await axios({
+      url,
+      method: 'GET',
+      responseType: 'stream'
+    })
+
+    const chunks = [];
+    for await (const chunk of response.data) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+  
+    const uploadParams = {
+      Bucket: this.bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: response.headers['content-type'],
     };
 
     await this.s3.send(new PutObjectCommand(uploadParams));

@@ -13,7 +13,7 @@ import { UploadResponseDto } from '../dto/upload.response.dto';
 import { DownloadResponseDto } from '../dto/download.response.dto';
 
 @Injectable()
-export class FileSystemService {
+export class S3Service {
   private readonly s3: S3Client;
   private readonly bucketName: string;
   private readonly region: string;

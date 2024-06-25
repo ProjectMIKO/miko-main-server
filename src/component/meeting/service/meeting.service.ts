@@ -3,8 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Meeting, MeetingDocument } from '@schema/meeting.schema';
-import { MeetingCreateDto } from '@dto/meeting.create.dto';
+import { Meeting, MeetingDocument } from '../schema/meeting.schema';
+import { MeetingCreateDto } from '../dto/meeting.create.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { InvalidResponseException } from '@global/exception/invalidResponse.exception';

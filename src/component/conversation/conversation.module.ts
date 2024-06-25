@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConversationService } from '@service/conversation.service';
-import { ConversationController } from '@controller/conversation.controller';
+import { ConversationService } from './service/conversation.service';
+import { ConversationController } from './controller/conversation.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Conversation, ConversationSchema } from '@schema/conversation.schema';
+import { Conversation, ConversationSchema } from './schema/conversation.schema';
 
 @Module({
   imports: [

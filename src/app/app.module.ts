@@ -7,7 +7,7 @@ import { getMongoConfig } from '@global/config/mongoose.config';
 import { AuthModule } from '@auth/auth.module';
 import { OpenviduModule } from '@openvidu/openvidu.module';
 import { MiddlewareModule } from '@middleware/middleware.module';
-import { FileSystemModule } from '@filesystem/fileSystem.module';
+import { S3Module } from '@s3/s3.module';
 import { MeetingModule } from '@meeting/meeting.module';
 import { ComponentModule } from '@component/component.module';
 import { APP_FILTER } from '@nestjs/core';
@@ -26,7 +26,7 @@ import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter'
     AuthModule,
     OpenviduModule,
     MiddlewareModule,
-    FileSystemModule,
+    S3Module,
     MeetingModule,
     ComponentModule,
   ],

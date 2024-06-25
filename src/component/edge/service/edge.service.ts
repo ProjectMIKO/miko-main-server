@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EdgeRequestDto } from '@dto/edge.create.dto';
+import { EdgeRequestDto } from '../dto/edge.request.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Edge, EdgeDocument } from '@schema/edge.schema';
+import { Edge, EdgeDocument } from '../schema/edge.schema';
 
 @Injectable()
 export class EdgeService {
@@ -28,7 +28,7 @@ export class EdgeService {
     if (!deletedEdge) {
       throw new NotFoundException('Edge not found');
     }
-    
+
     console.log('DeleteEdge: Success');
 
     return deletedEdge._id.toString();

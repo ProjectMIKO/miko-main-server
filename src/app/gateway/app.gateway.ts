@@ -1,5 +1,11 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
 import { MeetingService } from '@meeting/service/meeting.service';
@@ -137,7 +143,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       timestamp: currentTime,
     };
 
-    console.log(`Created STT: user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`);
+    console.log(
+      `Created STT: user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
+    );
 
     this.conversationService.createConversation(conversationCreateDto).then((contentId) => {
       // Session 에 Conversations 저장
@@ -163,7 +171,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversations: this.roomConversations[room],
     };
 
-    const summarizeResponseDto: SummarizeResponseDto = await this.middlewareService.summarizeScript(summarizeRequestDto);
+    const summarizeResponseDto: SummarizeResponseDto =
+      await this.middlewareService.summarizeScript(summarizeRequestDto);
 
     this.logger.log(`Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`);
 
@@ -181,7 +190,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('vertex')
-  async handleVertex(client: Socket, [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, SummarizeResponseDto]) {
+  async handleVertex(
+    client: Socket,
+    [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, SummarizeResponseDto],
+  ) {
     if (!room) throw new BadRequestException('Room is empty');
     if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
     if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
@@ -225,7 +237,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const contentId = await this.edgeService.updateEdge(edgeRequestDto);
 
-    this.emitMessage(client, room, 'edge', `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}}`);
+    this.emitMessage(
+      client,
+      room,
+      'edge',
+      `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}}`,
+    );
 
     await this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'edges', action);
 
@@ -260,7 +277,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`Room: ${room}`);
     for (const contentId in this.roomConversations[room]) {
       for (const message of this.roomConversations[room][contentId]) {
-        console.log(`Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`);
+        console.log(
+          `Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+        );
       }
     }
   }

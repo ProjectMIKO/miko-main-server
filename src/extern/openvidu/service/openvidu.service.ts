@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  OnModuleInit,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OpenVidu, Session, Connection } from 'openvidu-node-client';
 import { SessionPropertiesDto } from '../dto/session.request.dto';
@@ -19,39 +14,20 @@ export class OpenviduService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
-    const OPENVIDU_URL = this.configService.get<string>(
-      'OPENVIDU_URL',
-      'http://localhost:4443',
-    );
-    const OPENVIDU_SECRET = this.configService.get<string>(
-      'OPENVIDU_SECRET',
-      'MY_SECRET',
-    );
+    const OPENVIDU_URL = this.configService.get<string>('OPENVIDU_URL', 'http://localhost:4443');
+    const OPENVIDU_SECRET = this.configService.get<string>('OPENVIDU_SECRET', 'MY_SECRET');
     this.openvidu = new OpenVidu(OPENVIDU_URL, OPENVIDU_SECRET);
   }
 
-  async createSession(
-    properties?: SessionPropertiesDto,
-  ): Promise<SessionResponseDto> {
+  async createSession(properties?: SessionPropertiesDto): Promise<SessionResponseDto> {
     const session: Session = await this.openvidu.createSession(properties);
     return this.toSessionResponseDto(session);
   }
 
   private toSessionResponseDto(session: Session): SessionResponseDto {
-    const {
-      sessionId,
-      createdAt,
-      connections,
-      activeConnections,
-      recording,
-      broadcasting,
-    } = session;
-    const connectionDtos = connections.map((conn) =>
-      this.toConnectionResponseDto(conn),
-    );
-    const activeConnectionDtos = activeConnections.map((conn) =>
-      this.toConnectionResponseDto(conn),
-    );
+    const { sessionId, createdAt, connections, activeConnections, recording, broadcasting } = session;
+    const connectionDtos = connections.map((conn) => this.toConnectionResponseDto(conn));
+    const activeConnectionDtos = activeConnections.map((conn) => this.toConnectionResponseDto(conn));
     return plainToClass(SessionResponseDto, {
       sessionId,
       createdAt,
@@ -62,13 +38,8 @@ export class OpenviduService implements OnModuleInit {
     });
   }
 
-  async createConnection(
-    sessionId: string,
-    properties?: ConnectionPropertiesDto,
-  ): Promise<ConnectionResponseDto> {
-    const session = this.openvidu.activeSessions.find(
-      (s) => s.sessionId === sessionId,
-    );
+  async createConnection(sessionId: string, properties?: ConnectionPropertiesDto): Promise<ConnectionResponseDto> {
+    const session = this.openvidu.activeSessions.find((s) => s.sessionId === sessionId);
     if (!session) {
       throw new Error('Session not found');
     }
@@ -76,9 +47,7 @@ export class OpenviduService implements OnModuleInit {
     return this.toConnectionResponseDto(connection);
   }
 
-  private toConnectionResponseDto(
-    connection: Connection,
-  ): ConnectionResponseDto {
+  private toConnectionResponseDto(connection: Connection): ConnectionResponseDto {
     const {
       connectionId,
       status,
@@ -113,18 +82,14 @@ export class OpenviduService implements OnModuleInit {
     // Fetch all session info from OpenVidu Server
     await this.openvidu.fetch();
     const sessions: Session[] = this.openvidu.activeSessions;
-    const sessionResponseDtoArr = sessions.map((session) =>
-      this.toSessionResponseDto(session),
-    );
+    const sessionResponseDtoArr = sessions.map((session) => this.toSessionResponseDto(session));
     return sessionResponseDtoArr;
   }
 
   async fetchSession(sessionId: string): Promise<SessionResponseDto> {
     // Fetch the session info from OpenVidu Server
     await this.openvidu.fetch();
-    const session: Session = this.openvidu.activeSessions.find(
-      (s) => s.sessionId === sessionId,
-    );
+    const session: Session = this.openvidu.activeSessions.find((s) => s.sessionId === sessionId);
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -134,9 +99,7 @@ export class OpenviduService implements OnModuleInit {
   async closeSession(sessionId: string, token: string): Promise<void> {
     // Fetch the session info from OpenVidu Server
     await this.openvidu.fetch();
-    const session: Session = this.openvidu.activeSessions.find(
-      (s) => s.sessionId === sessionId,
-    );
+    const session: Session = this.openvidu.activeSessions.find((s) => s.sessionId === sessionId);
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -153,19 +116,18 @@ export class OpenviduService implements OnModuleInit {
 
   private checkUserAuthorization(token: string, session: Session): boolean {
     // Check if the token matches any of the active connections' tokens in the session
-    return session.activeConnections.some( // activeConnections 대신 connections 사용해도 됨
-      (connection) =>{
-        return connection.token === token && connection.connectionProperties.role === 'MODERATOR'
-      }
+    return session.activeConnections.some(
+      // activeConnections 대신 connections 사용해도 됨
+      (connection) => {
+        return connection.token === token && connection.connectionProperties.role === 'MODERATOR';
+      },
     );
   }
 
   async destroyConnection(sessionId: string, connectionId: string, token: string): Promise<void> {
     // Fetch the session info from OpenVidu Server
     await this.openvidu.fetch();
-    const session: Session = this.openvidu.activeSessions.find(
-      (s) => s.sessionId === sessionId,
-    );
+    const session: Session = this.openvidu.activeSessions.find((s) => s.sessionId === sessionId);
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -188,9 +150,7 @@ export class OpenviduService implements OnModuleInit {
   async unpublishStream(sessionId: string, connectionId: string, token: string): Promise<void> {
     // Fetch the session info from OpenVidu Server
     await this.openvidu.fetch();
-    const session: Session = this.openvidu.activeSessions.find(
-      (s) => s.sessionId === sessionId,
-    );
+    const session: Session = this.openvidu.activeSessions.find((s) => s.sessionId === sessionId);
     if (!session) {
       throw new NotFoundException('Session not found');
     }

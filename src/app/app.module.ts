@@ -31,10 +31,6 @@ import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter'
     ComponentModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    AppGateway,
-    { provide: APP_FILTER, useClass: GlobalExceptionsFilter },
-  ],
+  providers: [AppService, AppGateway, { provide: APP_FILTER, useClass: GlobalExceptionsFilter }],
 })
 export class AppModule {}

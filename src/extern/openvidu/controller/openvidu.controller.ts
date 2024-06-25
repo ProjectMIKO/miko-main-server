@@ -1,20 +1,5 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Param,
-  NotFoundException,
-  Get,
-  ForbiddenException,
-  Delete,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
-} from '@nestjs/swagger';
+import { Controller, Post, Body, Param, NotFoundException, Get, ForbiddenException, Delete } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { OpenviduService } from '../service/openvidu.service';
 import { RecordService } from '../service/record.service';
 import { SessionPropertiesDto } from '../dto/session.request.dto';
@@ -22,10 +7,7 @@ import { ConnectionPropertiesDto } from '../dto/connection.request.dto';
 import { ConnectionResponseDto } from '../dto/connection.response.dto';
 import { SessionResponseDto } from '../dto/session.response.dto';
 import { ModeratorRequestDto } from '../dto/moderator.request.dto';
-import {
-  StartRecordingDto,
-  StopRecordingDto,
-} from '../dto/recording.request.dto';
+import { StartRecordingDto, StopRecordingDto } from '../dto/recording.request.dto';
 import { RecordingResponseDto } from '../dto/recording.response.dto';
 
 @ApiTags('OpenVidu')
@@ -45,9 +27,7 @@ export class OpenviduController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiBody({ type: SessionPropertiesDto })
-  async createSession(
-    @Body() body: SessionPropertiesDto,
-  ): Promise<SessionResponseDto> {
+  async createSession(@Body() body: SessionPropertiesDto): Promise<SessionResponseDto> {
     const sessionResponseDto = await this.openviduService.createSession(body);
     return sessionResponseDto;
   }
@@ -67,10 +47,7 @@ export class OpenviduController {
     @Body() body: ConnectionPropertiesDto,
   ): Promise<ConnectionResponseDto> {
     try {
-      const connectionResponseDto = await this.openviduService.createConnection(
-        sessionId,
-        body,
-      );
+      const connectionResponseDto = await this.openviduService.createConnection(sessionId, body);
       return connectionResponseDto;
     } catch (error) {
       throw new NotFoundException('Session not found');
@@ -85,8 +62,7 @@ export class OpenviduController {
     type: [SessionResponseDto],
   })
   async fetchAllSessions(): Promise<SessionResponseDto[]> {
-    const sessionResponseDtoArr: SessionResponseDto[] =
-      await this.openviduService.fetchAllSessions();
+    const sessionResponseDtoArr: SessionResponseDto[] = await this.openviduService.fetchAllSessions();
     return sessionResponseDtoArr;
   }
 
@@ -99,12 +75,9 @@ export class OpenviduController {
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
-  async fetchSession(
-    @Param('sessionId') sessionId: string,
-  ): Promise<SessionResponseDto> {
+  async fetchSession(@Param('sessionId') sessionId: string): Promise<SessionResponseDto> {
     try {
-      const sessionResponseDto =
-        await this.openviduService.fetchSession(sessionId);
+      const sessionResponseDto = await this.openviduService.fetchSession(sessionId);
       return sessionResponseDto;
     } catch (error) {
       throw new NotFoundException('Session not found');
@@ -126,17 +99,12 @@ export class OpenviduController {
     @Body() moderatorRequestDto: ModeratorRequestDto,
   ): Promise<void> {
     try {
-      await this.openviduService.closeSession(
-        sessionId,
-        moderatorRequestDto.token,
-      );
+      await this.openviduService.closeSession(sessionId, moderatorRequestDto.token);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Session not found');
       } else if (error instanceof ForbiddenException) {
-        throw new ForbiddenException(
-          'User not authorized to close this session',
-        );
+        throw new ForbiddenException('User not authorized to close this session');
       } else {
         throw error;
       }
@@ -160,18 +128,12 @@ export class OpenviduController {
     @Body() moderatorRequestDto: ModeratorRequestDto,
   ): Promise<void> {
     try {
-      await this.openviduService.destroyConnection(
-        sessionId,
-        connectionId,
-        moderatorRequestDto.token,
-      );
+      await this.openviduService.destroyConnection(sessionId, connectionId, moderatorRequestDto.token);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Session or connection not found');
       } else if (error instanceof ForbiddenException) {
-        throw new ForbiddenException(
-          'User not authorized to destroy this connection',
-        );
+        throw new ForbiddenException('User not authorized to destroy this connection');
       } else {
         throw error;
       }
@@ -195,18 +157,12 @@ export class OpenviduController {
     @Body() moderatorRequestDto: ModeratorRequestDto,
   ): Promise<void> {
     try {
-      await this.openviduService.unpublishStream(
-        sessionId,
-        connectionId,
-        moderatorRequestDto.token,
-      );
+      await this.openviduService.unpublishStream(sessionId, connectionId, moderatorRequestDto.token);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Session or connection not found');
       } else if (error instanceof ForbiddenException) {
-        throw new ForbiddenException(
-          'User not authorized to unpublish this stream',
-        );
+        throw new ForbiddenException('User not authorized to unpublish this stream');
       } else {
         throw error;
       }
@@ -222,11 +178,8 @@ export class OpenviduController {
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiBody({ type: StartRecordingDto })
-  async startRecording(
-    @Body() startRecordingDto: StartRecordingDto,
-  ): Promise<RecordingResponseDto> {
-    const recordingResponseDto =
-      await this.recordService.startRecording(startRecordingDto);
+  async startRecording(@Body() startRecordingDto: StartRecordingDto): Promise<RecordingResponseDto> {
+    const recordingResponseDto = await this.recordService.startRecording(startRecordingDto);
     return recordingResponseDto;
   }
 
@@ -239,12 +192,8 @@ export class OpenviduController {
   })
   @ApiResponse({ status: 404, description: 'Recording not found' })
   @ApiBody({ type: StopRecordingDto })
-  async stopRecording(
-    @Body() stopRecordingDto: StopRecordingDto,
-  ): Promise<RecordingResponseDto> {
-    const recordingResponseDto = await this.recordService.stopRecording(
-      stopRecordingDto.recordingId,
-    );
+  async stopRecording(@Body() stopRecordingDto: StopRecordingDto): Promise<RecordingResponseDto> {
+    const recordingResponseDto = await this.recordService.stopRecording(stopRecordingDto.recordingId);
     return recordingResponseDto;
   }
 
@@ -257,12 +206,9 @@ export class OpenviduController {
   })
   @ApiResponse({ status: 404, description: 'Recording not found' })
   @ApiParam({ name: 'recordingId', description: 'The ID of the recording' })
-  async getRecording(
-    @Param('recordingId') recordingId: string,
-  ): Promise<RecordingResponseDto> {
+  async getRecording(@Param('recordingId') recordingId: string): Promise<RecordingResponseDto> {
     try {
-      const recordingResponseDto =
-        await this.recordService.getRecording(recordingId);
+      const recordingResponseDto = await this.recordService.getRecording(recordingId);
       return recordingResponseDto;
     } catch (error) {
       throw new NotFoundException('Recording not found');
@@ -279,7 +225,7 @@ export class OpenviduController {
   @ApiParam({ name: 'recordingId', description: 'The ID of the recording' })
   async deleteRecording(@Param('recordingId') recordingId: string): Promise<void> {
     try {
-        await this.recordService.deleteRecording(recordingId);
+      await this.recordService.deleteRecording(recordingId);
     } catch (error) {
       throw new NotFoundException('Recording not found');
     }

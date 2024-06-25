@@ -22,6 +22,9 @@ import { VertexService } from '@vertex/service/vertex.service';
 import { EdgeService } from '@edge/service/edge.service';
 import { EmptyDataWarning } from '@global/warning/emptyData.warning';
 import { EdgeEditDto } from '@edge/dto/edge.edit.dto';
+import { RecordService } from '@openvidu/service/record.service';
+import { StartRecordingDto } from '@openvidu/dto/recording.request.dto';
+import { S3Service } from '@s3/service/s3.service';
 
 @Injectable()
 export class AppService {
@@ -49,6 +52,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly conversationService: ConversationService,
     private readonly vertexService: VertexService,
     private readonly edgeService: EdgeService,
+    private readonly recordService: RecordService,
+    private readonly s3Service: S3Service
   ) {}
 
   afterInit() {
@@ -64,8 +69,21 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('disconnecting')
-  handleDisconnecting(client: Socket) {
-    client.rooms.forEach((room) => client.to(room).emit('exit', client['nickname'], this.countMember(room) - 1));
+  async handleDisconnecting(client: Socket) {
+    for (const room of client.rooms) {
+      client.to(room).emit('exit', client['nickname'], this.countMember(room) - 1);
+
+      if (this.countMember(room) === 0) {
+        await this.recordService.stopRecording(room);
+        // const recordingResponseDto = await this.recordService.getRecording(room);
+        // const uploadResponseDto = await this.s3Service.uploadFileFromUrl(recordingResponseDto.url);
+
+        // await this.meetingService.updateMeetingRecordKey(
+        //   this.roomMeetingMap[room],
+        //   uploadResponseDto.key
+        // );
+      }
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -88,13 +106,20 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const meetingCreateDto: MeetingCreateDto = {
         title: room,
         owner: client['nickname'],
+        record_key: ''
       };
 
       this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
 
       console.log(`Create New Meeting Completed: ${this.roomMeetingMap[room]}`);
 
-      this.roomConversations[room] = {};
+      const startRecordingDto: StartRecordingDto = {
+        sessionId: room, // 세션 ID를 room으로 사용한다고 가정
+        name: `${room}_recording`,
+        hasAudio: true,
+        hasVideo: false
+      };
+      this.recordService.startRecording(startRecordingDto);
     } else {
       // Room 중간에 입장했을 경우
       client.emit('load_meeting', this.roomMeetingMap[room]);

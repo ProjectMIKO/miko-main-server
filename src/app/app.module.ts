@@ -26,7 +26,7 @@ import { join } from 'path';
       useFactory: getMongoConfig,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'asset', 'public'),
+      rootPath: join(__dirname, '..', 'asset', 'public', 'favicon'),
       serveRoot: '/',
     }),
     AuthModule,

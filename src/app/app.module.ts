@@ -26,8 +26,8 @@ import { join } from 'path';
       useFactory: getMongoConfig,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'asset', 'public', 'favicon'), // favicon 파일이 위치한 폴더
-      serveRoot: '/favicon.ico',
+      rootPath: join(__dirname, '..', 'asset', 'public'),
+      serveRoot: '/',
     }),
     AuthModule,
     OpenviduModule,

@@ -10,11 +10,6 @@ import { MeetingService } from '../service/meeting.service';
 export class MeetingController {
   constructor(private readonly meetingService: MeetingService) {}
 
-  @Get()
-  findAll() {
-    return this.meetingService.findAll();
-  }
-
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.meetingService.findOne(id);

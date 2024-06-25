@@ -113,6 +113,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       console.log(`Create New Meeting Completed: ${this.roomMeetingMap[room]}`);
 
+      this.roomConversations[room] = {};
       const startRecordingDto: StartRecordingDto = {
         sessionId: room, // 세션 ID를 room으로 사용한다고 가정
         name: `${room}_recording`,

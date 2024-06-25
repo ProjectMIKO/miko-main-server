@@ -40,7 +40,7 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Warning#001(EmptyDataException): ${(exception as EmptyDataWarning).message}`;
         break;
       default:
-        message = `Error#000(InternalServerError): ${(exception as InternalServerErrorException).message}`;
+        message = `Error#000(InternalServerError): ${(exception).message}`;
     }
 
     if (status == 'error') {

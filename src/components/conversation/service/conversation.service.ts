@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConversationCreateDto } from '../dto/conversation.create.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Conversation, ConversationDocument } from '@conversation/schema/conversation.schema';
-import { ConversationRequestDto } from '@conversation/dto/conversation.request.dto';
+import { Conversation, ConversationDocument } from 'components/conversation/schema/conversation.schema';
+import { ConversationRequestDto } from 'components/conversation/dto/conversation.request.dto';
 
 @Injectable()
 export class ConversationService {

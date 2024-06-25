@@ -3,7 +3,7 @@ import { Meeting, MeetingDocument } from '../schema/meeting.schema';
 import { MeetingCreateDto } from '../dto/meeting.create.dto';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
+import { InvalidResponseException } from 'assets/global/exception/invalidResponse.exception';
 
 @Injectable()
 export class MeetingService {
@@ -70,17 +70,5 @@ export class MeetingService {
     }
 
     return meetingModel._id.toString();
-  }
-
-  async updateMeetingRecordKey(meetingId: string, recordKey: string): Promise<void> {
-    const update = { $set: { recordKey: recordKey } };
-    const meetingModel = await this.meetingModel.findByIdAndUpdate(meetingId, update, {
-      new: true,
-      useFindAndModify: false,
-    }).exec();
-
-    if (!meetingModel) {
-      throw new NotFoundException(`Meeting ID ${meetingId}: Not found`);
-    }
   }
 }

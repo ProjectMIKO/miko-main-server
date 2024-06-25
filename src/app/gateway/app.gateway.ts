@@ -8,23 +8,25 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
-import { MeetingService } from '@meeting/service/meeting.service';
+import { MeetingService } from 'components/meeting/service/meeting.service';
 import { MiddlewareService } from '@middleware/service/middleware.service';
-import { MeetingCreateDto } from '@meeting/dto/meeting.create.dto';
-import { VertexCreateDto } from '@vertex/dto/vertex.create.dto';
+import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
+import { VertexCreateDto } from 'components/vertex/dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@middleware/dto/summarize.request.dto';
 import { ConvertResponseDto } from '@middleware/dto/convert.response.dto';
 import { SummarizeResponseDto } from '@middleware/dto/summarize.response.dto';
-import { RoomConversations } from '@meeting/interface/roomConversation.interface';
-import { ConversationCreateDto } from '@conversation/dto/conversation.create.dto';
-import { ConversationService } from '@conversation/service/conversation.service';
-import { VertexService } from '@vertex/service/vertex.service';
-import { EdgeService } from '@edge/service/edge.service';
-import { EmptyDataWarning } from '@global/warning/emptyData.warning';
-import { EdgeEditDto } from '@edge/dto/edge.edit.dto';
+import { RoomConversations } from 'components/meeting/interface/roomConversation.interface';
+import { ConversationCreateDto } from 'components/conversation/dto/conversation.create.dto';
+import { ConversationService } from 'components/conversation/service/conversation.service';
+import { VertexService } from 'components/vertex/service/vertex.service';
+import { EdgeService } from 'components/edge/service/edge.service';
+import { EmptyDataWarning } from 'assets/global/warning/emptyData.warning';
+import { EdgeEditDto } from 'components/edge/dto/edge.edit.dto';
 import { RecordService } from '@openvidu/service/record.service';
 import { StartRecordingDto } from '@openvidu/dto/recording.request.dto';
 import { S3Service } from '@s3/service/s3.service';
+import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
+import { UploadResponseDto } from '@s3/dto/upload.response.dto';
 
 @Injectable()
 export class AppService {
@@ -44,6 +46,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(AppGateway.name);
   private roomConversations: RoomConversations = {};
   private roomMeetingMap: { [key: string]: string } = {};
+  private roomHostManager: { [key: string]: string } = {};
   @WebSocketServer() server: Server;
 
   constructor(
@@ -53,7 +56,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly vertexService: VertexService,
     private readonly edgeService: EdgeService,
     private readonly recordService: RecordService,
-    private readonly s3Service: S3Service
+    private readonly s3Service: S3Service,
   ) {}
 
   afterInit() {
@@ -73,11 +76,34 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const room of client.rooms) {
       client.to(room).emit('exit', client['nickname'], this.countMember(room) - 1);
 
+      console.log(
+        `${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`,
+      );
+
+      if (this.roomHostManager[room] === client['nickname']) {
+        this.logger.log('Room destruction logic start');
+
+        client.to(room).emit('host_exit');
+
+        // Todo: Record 외에도 남아있는 conversation, vertex -> 업로드 해야함.
+
+        const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(room);
+        const uploadResponseDto: UploadResponseDto = await this.s3Service.uploadFileFromUrl(responseRecordingDto.url);
+        await this.meetingService.updateMeetingField(
+          this.roomMeetingMap[room],
+          uploadResponseDto.key,
+          'record',
+          '$push',
+        );
+
+        this.logger.log('Room destruction logic end');
+
+        client.to(room).emit('result_page', this.roomMeetingMap[room]);
+      }
+
       if (this.countMember(room) === 0) {
-        await this.recordService.stopRecording(room);
         // const recordingResponseDto = await this.recordService.getRecording(room);
         // const uploadResponseDto = await this.s3Service.uploadFileFromUrl(recordingResponseDto.url);
-
         // await this.meetingService.updateMeetingRecordKey(
         //   this.roomMeetingMap[room],
         //   uploadResponseDto.key
@@ -86,7 +112,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     this.logger.log(`${client['nickname']}: disconnected from server`);
   }
 
@@ -106,24 +132,26 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const meetingCreateDto: MeetingCreateDto = {
         title: room,
         owner: client['nickname'],
-        record_key: ''
+        record_key: '',
       };
 
       this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
-
-      console.log(`Create New Meeting Completed: ${this.roomMeetingMap[room]}`);
-
+      this.roomHostManager[room] = client['nickname'];
       this.roomConversations[room] = {};
+
+      console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
+
       const startRecordingDto: StartRecordingDto = {
-        sessionId: room, // 세션 ID를 room으로 사용한다고 가정
+        sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
         name: `${room}_recording`,
         hasAudio: true,
-        hasVideo: false
+        hasVideo: false,
       };
-      this.recordService.startRecording(startRecordingDto);
+
+      await this.recordService.startRecording(startRecordingDto);
     } else {
       // Room 중간에 입장했을 경우
-      client.emit('load_meeting', this.roomMeetingMap[room]);
+      client.emit('load_meeting', this.meetingService.findOne(this.roomMeetingMap[room]));
     }
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));
@@ -163,15 +191,20 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.emitMessage(client, room, 'script', `${client['nickname']}: ${convertResponseDto.script}`);
 
-    let conversationCreateDto: ConversationCreateDto = {
+    const conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],
       content: convertResponseDto.script,
       timestamp: currentTime,
     };
 
     console.log(
-      `Created STT: user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
+      `Created STT: room:${room}  user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
     );
+
+    if (!this.roomConversations[room]) {
+      this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
+      this.roomConversations[room] = {};
+    }
 
     this.conversationService.createConversation(conversationCreateDto).then((contentId) => {
       // Session 에 Conversations 저장

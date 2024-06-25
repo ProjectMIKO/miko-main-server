@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get } from '@nestjs/common';
-import { ConversationService } from '@conversation/service/conversation.service';
+import { ConversationService } from 'components/conversation/service/conversation.service';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ConversationRequestDto } from '@conversation/dto/conversation.request.dto';
-import { Conversation } from '@conversation/schema/conversation.schema';
+import { ConversationRequestDto } from 'components/conversation/dto/conversation.request.dto';
+import { Conversation } from 'components/conversation/schema/conversation.schema';
 
 @Controller('conversation')
 export class ConversationController {

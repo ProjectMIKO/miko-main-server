@@ -1,8 +1,8 @@
 import { Controller, Get, Body, Delete } from '@nestjs/common';
 import { EdgeService } from '../service/edge.service';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { EdgeRequestDto } from '@edge/dto/edge.request.dto';
-import { Edge } from '@edge/schema/edge.schema';
+import { EdgeRequestDto } from 'components/edge/dto/edge.request.dto';
+import { Edge } from 'components/edge/schema/edge.schema';
 
 @Controller('edge')
 export class EdgeController {

@@ -3,7 +3,7 @@ import { EdgeEditDto } from '../dto/edge.edit.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Edge, EdgeDocument } from '../schema/edge.schema';
-import { EdgeRequestDto } from '@edge/dto/edge.request.dto';
+import { EdgeRequestDto } from 'components/edge/dto/edge.request.dto';
 
 @Injectable()
 export class EdgeService {

@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { EdgeService } from '@service/edge.service';
-import { EdgeRequestDto } from '@dto/edge.create.dto';
+import { EdgeService } from '../service/edge.service';
 
 @Controller('edge')
 export class EdgeController {

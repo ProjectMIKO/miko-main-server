@@ -1,13 +1,8 @@
-import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { MiddlewareService } from '@service/middleware.service';
-import { SummarizeRequestDto } from '@dto/summarize.request.dto';
-import { ApiBody, ApiConsumes, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { SummarizeResponseDto } from '@dto/summarize.response.dto';
-import { UploadResponseDto } from '@dto/upload.response.dto';
-import { Express } from 'express';
-import { ConvertResponseDto } from '@dto/convert.response.dto';
-
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Post } from '@nestjs/common';
+import { MiddlewareService } from '../service/middleware.service';
+import { SummarizeRequestDto } from '../dto/summarize.request.dto';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { SummarizeResponseDto } from '../dto/summarize.response.dto';
 
 @ApiTags('middleware')
 @Controller('api/middleware')

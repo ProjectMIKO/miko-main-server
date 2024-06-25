@@ -4,7 +4,7 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { MeetingService } from '../service/meeting.service';
+import { MeetingService } from '@service/meeting.service';
 
 @Controller('meeting')
 export class MeetingController {

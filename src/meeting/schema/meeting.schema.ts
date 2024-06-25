@@ -3,6 +3,7 @@ import { Document, Types } from 'mongoose';
 import { Conversation } from '@schema/conversation.schema';
 import { Vertex } from '@schema/vertex.schema';
 import { Edge, EdgeSchema } from '@schema/edge.schema';
+import { IsString } from 'class-validator';
 
 export type MeetingDocument = Meeting & Document;
 
@@ -28,6 +29,9 @@ export class Meeting {
 
   @Prop({ type: [EdgeSchema], default: [] })
   edges: Edge[];
+
+  @IsString()
+  record: string;
 }
 
 export const MeetingSchema = SchemaFactory.createForClass(Meeting);

@@ -11,4 +11,8 @@ export class MeetingCreateDto {
   @IsString()
   @IsNotEmpty()
   owner: string;
+
+  @ApiProperty({ description: 'Record file S3 Key' })
+  @IsString()
+  record_key: string;
 }

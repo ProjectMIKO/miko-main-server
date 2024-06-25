@@ -34,6 +34,10 @@ export class RecordingResponseDto {
   @IsNumber()
   readonly frameRate: number;
 
+  @ApiProperty({ description: 'URL to access the recording' })
+  @IsString()
+  readonly url: string;
+  
   @ApiProperty({
     enum: RecordingLayout,
     description: 'Layout used for the recording',

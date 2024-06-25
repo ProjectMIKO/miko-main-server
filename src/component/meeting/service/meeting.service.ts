@@ -1,19 +1,13 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Meeting, MeetingDocument } from '../schema/meeting.schema';
 import { MeetingCreateDto } from '../dto/meeting.create.dto';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
 
 @Injectable()
 export class MeetingService {
-  constructor(
-    @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
-  ) {}
+  constructor(@InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>) {}
 
   validateField(field: string) {
     if (!['conversations', 'vertexes', 'edges'].includes(field))
@@ -21,13 +15,10 @@ export class MeetingService {
   }
 
   validateAction(action: string) {
-    if (!['$push', '$pull'].includes(action))
-      throw new BadRequestException(`Invalid action: ${action}`);
+    if (!['$push', '$pull'].includes(action)) throw new BadRequestException(`Invalid action: ${action}`);
   }
 
-  public async createNewMeeting(
-    meetingCreateDto: MeetingCreateDto,
-  ): Promise<string> {
+  public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
     const meetingModel = new this.meetingModel({
       ...meetingCreateDto,
       startTime: new Date(),
@@ -40,8 +31,17 @@ export class MeetingService {
     return meetingModel._id.toString();
   }
 
-  async findAll(): Promise<Meeting[]> {
-    return this.meetingModel.find().exec();
+  public async findAllByOwner(ownerId: string): Promise<Meeting[]> {
+    if (!Types.ObjectId.isValid(ownerId)) {
+      throw new NotFoundException('Invalid owner ID');
+    }
+
+    const meetings = await this.meetingModel.find({ owner: ownerId }).exec();
+    if (!meetings.length) {
+      throw new NotFoundException('No meetings found for this owner');
+    }
+
+    return meetings;
   }
 
   async findOne(id: string): Promise<Meeting> {
@@ -52,12 +52,7 @@ export class MeetingService {
     return this.meetingModel.findByIdAndDelete(id).exec();
   }
 
-  async updateMeetingField(
-    meetingId: string,
-    contentId: string,
-    field: string,
-    action: string,
-  ): Promise<string> {
+  async updateMeetingField(meetingId: string, contentId: string, field: string, action: string): Promise<string> {
     this.validateField(field);
     this.validateAction(action);
 

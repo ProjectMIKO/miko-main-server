@@ -21,7 +21,7 @@ import { ConversationService } from '@conversation/service/conversation.service'
 import { VertexService } from '@vertex/service/vertex.service';
 import { EdgeService } from '@edge/service/edge.service';
 import { EmptyDataWarning } from '@global/warning/emptyData.warning';
-import { EdgeRequestDto } from '@edge/dto/edge.request.dto';
+import { EdgeEditDto } from '@edge/dto/edge.edit.dto';
 
 @Injectable()
 export class AppService {
@@ -229,7 +229,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Edge ${action} Method: Start`);
 
-    const edgeRequestDto: EdgeRequestDto = {
+    const edgeRequestDto: EdgeEditDto = {
       vertex1: vertex1,
       vertex2: vertex2,
       action: action,

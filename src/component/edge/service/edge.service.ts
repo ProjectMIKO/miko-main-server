@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EdgeRequestDto } from '../dto/edge.request.dto';
+import { EdgeEditDto } from '../dto/edge.edit.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Edge, EdgeDocument } from '../schema/edge.schema';
+import { EdgeRequestDto } from '@edge/dto/edge.request.dto';
 
 @Injectable()
 export class EdgeService {
@@ -34,9 +35,40 @@ export class EdgeService {
     return deletedEdge._id.toString();
   }
 
-  async updateEdge(edgeRequestDto: EdgeRequestDto) {
-    if (edgeRequestDto.action === '$push')
-      return this.createEdge(edgeRequestDto.vertex1, edgeRequestDto.vertex2);
+  async updateEdge(edgeRequestDto: EdgeEditDto) {
+    if (edgeRequestDto.action === '$push') return this.createEdge(edgeRequestDto.vertex1, edgeRequestDto.vertex2);
     else return this.deleteEdge(edgeRequestDto.vertex1, edgeRequestDto.vertex2);
+  }
+
+  public async findEdges(edgeRequestDto: EdgeRequestDto): Promise<Edge[]> {
+    const { edgeIdList } = edgeRequestDto;
+
+    const edges = await this.edgeModel
+      .find({
+        _id: {
+          $in: edgeIdList,
+        },
+      })
+      .exec();
+
+    if (edges.length === 0) throw new NotFoundException('Edges not found');
+
+    return edges;
+  }
+
+  public async deleteEdges(edgeRequestDto: EdgeRequestDto): Promise<{ deletedCount: number }> {
+    const { edgeIdList } = edgeRequestDto;
+
+    const result = await this.edgeModel
+      .deleteMany({
+        _id: {
+          $in: edgeIdList,
+        },
+      })
+      .exec();
+
+    if (result.deletedCount === 0) throw new NotFoundException('No edges were deleted');
+
+    return { deletedCount: result.deletedCount };
   }
 }

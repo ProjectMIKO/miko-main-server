@@ -12,6 +12,8 @@ import { MeetingModule } from '@meeting/meeting.module';
 import { ComponentModule } from '@component/component.module';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -22,6 +24,10 @@ import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter'
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: getMongoConfig,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'asset', 'public', 'favicon'), // favicon 파일이 위치한 폴더
+      serveRoot: '/favicon.ico',
     }),
     AuthModule,
     OpenviduModule,

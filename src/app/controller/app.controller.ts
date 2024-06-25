@@ -9,7 +9,7 @@ export class AppController {
 
   @Get('favicon.ico')
   sendFavicon(@Res() res: Response) {
-    res.sendFile(join(__dirname, '..', 'asset', 'public', 'favicon.ico'));
+    res.sendFile(join(__dirname, '..', 'asset', 'public', 'favicon', 'favicon.ico'));
   }
 
   @Get()

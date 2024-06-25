@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build && copyfiles -u 1 src/asset/public/favicon/favicon.ico dist/assets/public",
+    "build": "nest build && copyfiles -u 1 src/asset/public/favicon/favicon.ico dist/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:local": "cross-env NODE_ENV=local nest start --watch",

@@ -12,7 +12,7 @@
     "outDir": "./dist",
     "baseUrl": "./src",
     "paths": {
-      "@global/*": ["asset/global/*"],
+      "@global/*": ["assets/global/*"],
       "@component/*": ["component/*"],
       "@s3/*": ["extern/s3/*"],
       "@user/*": ["component/user/*"],

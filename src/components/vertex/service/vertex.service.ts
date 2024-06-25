@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Vertex, VertexDocument } from '../schema/vertex.schema';
 import { Model } from 'mongoose';
 import { VertexCreateDto } from '../dto/vertex.create.dto';
-import { VertexRequestDto } from '@vertex/dto/vertex.request.dto';
+import { VertexRequestDto } from 'components/vertex/dto/vertex.request.dto';
 
 @Injectable()
 export class VertexService {

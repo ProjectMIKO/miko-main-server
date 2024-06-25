@@ -3,7 +3,7 @@ import { Meeting, MeetingDocument } from '../schema/meeting.schema';
 import { MeetingCreateDto } from '../dto/meeting.create.dto';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { InvalidResponseException } from '@global/exception/invalidResponse.exception';
+import { InvalidResponseException } from 'assets/global/exception/invalidResponse.exception';
 
 @Injectable()
 export class MeetingService {

@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
+import { GlobalExceptionsFilter } from 'assets/global/filter/global.exceptions.filter';
 import * as dotenv from 'dotenv';
 
 dotenv.config({

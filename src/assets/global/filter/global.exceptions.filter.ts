@@ -4,12 +4,13 @@ import {
   Catch,
   ExceptionFilter,
   InternalServerErrorException,
-  Logger, NotFoundException,
+  Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
 import { InvalidResponseException } from '../exception/invalidResponse.exception';
-import { EmptyDataWarning } from '@global/warning/emptyData.warning';
+import { EmptyDataWarning } from 'assets/global/warning/emptyData.warning';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
@@ -39,7 +40,7 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Warning#001(EmptyDataException): ${(exception as EmptyDataWarning).message}`;
         break;
       default:
-        message = `Error#000(InternalServerError): ${(exception).message}`;
+        message = `Error#000(InternalServerError): ${exception.message}`;
     }
 
     if (status == 'error') {

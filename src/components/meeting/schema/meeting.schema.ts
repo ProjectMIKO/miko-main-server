@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Conversation } from '@conversation/schema/conversation.schema';
-import { Vertex } from '@vertex/schema/vertex.schema';
-import { Edge, EdgeSchema } from '@edge/schema/edge.schema';
+import { Conversation } from 'components/conversation/schema/conversation.schema';
+import { Vertex } from 'components/vertex/schema/vertex.schema';
+import { Edge, EdgeSchema } from 'components/edge/schema/edge.schema';
 import { IsString } from 'class-validator';
 
 export type MeetingDocument = Meeting & Document;

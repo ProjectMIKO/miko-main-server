@@ -8,20 +8,20 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
-import { MeetingService } from '@meeting/service/meeting.service';
+import { MeetingService } from 'components/meeting/service/meeting.service';
 import { MiddlewareService } from '@middleware/service/middleware.service';
-import { MeetingCreateDto } from '@meeting/dto/meeting.create.dto';
-import { VertexCreateDto } from '@vertex/dto/vertex.create.dto';
+import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
+import { VertexCreateDto } from 'components/vertex/dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@middleware/dto/summarize.request.dto';
 import { ConvertResponseDto } from '@middleware/dto/convert.response.dto';
 import { SummarizeResponseDto } from '@middleware/dto/summarize.response.dto';
-import { RoomConversations } from '@meeting/interface/roomConversation.interface';
-import { ConversationCreateDto } from '@conversation/dto/conversation.create.dto';
-import { ConversationService } from '@conversation/service/conversation.service';
-import { VertexService } from '@vertex/service/vertex.service';
-import { EdgeService } from '@edge/service/edge.service';
-import { EmptyDataWarning } from '@global/warning/emptyData.warning';
-import { EdgeEditDto } from '@edge/dto/edge.edit.dto';
+import { RoomConversations } from 'components/meeting/interface/roomConversation.interface';
+import { ConversationCreateDto } from 'components/conversation/dto/conversation.create.dto';
+import { ConversationService } from 'components/conversation/service/conversation.service';
+import { VertexService } from 'components/vertex/service/vertex.service';
+import { EdgeService } from 'components/edge/service/edge.service';
+import { EmptyDataWarning } from 'assets/global/warning/emptyData.warning';
+import { EdgeEditDto } from 'components/edge/dto/edge.edit.dto';
 import { RecordService } from '@openvidu/service/record.service';
 import { StartRecordingDto } from '@openvidu/dto/recording.request.dto';
 import { S3Service } from '@s3/service/s3.service';
@@ -76,7 +76,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const room of client.rooms) {
       client.to(room).emit('exit', client['nickname'], this.countMember(room) - 1);
 
-      console.log(`${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`);
+      console.log(
+        `${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`,
+      );
 
       if (this.roomHostManager[room] === client['nickname']) {
         this.logger.log('Room destruction logic start');

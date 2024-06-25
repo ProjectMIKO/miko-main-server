@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConversationCreateDto } from '../dto/conversation.create.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  Conversation,
-  ConversationDocument,
-} from '@conversation/schema/conversation.schema';
+import { Conversation, ConversationDocument } from '@conversation/schema/conversation.schema';
 
 @Injectable()
 export class ConversationService {
@@ -14,15 +11,11 @@ export class ConversationService {
     private conversationModel: Model<ConversationDocument>,
   ) {}
 
-  public async createConversation(
-    conversationCreateDto: ConversationCreateDto,
-  ): Promise<string> {
+  public async createConversation(conversationCreateDto: ConversationCreateDto): Promise<string> {
     const conversationModel = new this.conversationModel(conversationCreateDto);
     await conversationModel.save();
 
-    console.log(
-      'CreateNewConversation ID: ' + conversationModel._id.toString(),
-    );
+    console.log('CreateNewConversation ID: ' + conversationModel._id.toString());
 
     return conversationModel._id.toString();
   }

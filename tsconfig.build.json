@@ -12,45 +12,19 @@
     "outDir": "./dist",
     "baseUrl": "./src",
     "paths": {
-      "@global/*": [
-        "asset/global/*"
-      ],
-      "@component/*": [
-        "component/*"
-      ],
-      "@s3/*": [
-        "extern/s3/*"
-      ],
-      "@user/*": [
-        "component/user/*"
-      ],
-      "@conversation/*": [
-        "component/conversation/*"
-      ],
-      "@vertex/*": [
-        "component/vertex/*"
-      ],
-      "@edge/*": [
-        "component/edge/*"
-      ],
-      "@middleware/*": [
-        "middleware/*"
-      ],
-      "@meeting/*": [
-        "component/meeting/*"
-      ],
-      "@auth/*": [
-        "auth/*"
-      ],
-      "@openvidu/*": [
-        "extern/openvidu/*"
-      ]
+      "@global/*": ["asset/global/*"],
+      "@component/*": ["component/*"],
+      "@s3/*": ["extern/s3/*"],
+      "@user/*": ["component/user/*"],
+      "@conversation/*": ["component/conversation/*"],
+      "@vertex/*": ["component/vertex/*"],
+      "@edge/*": ["component/edge/*"],
+      "@middleware/*": ["middleware/*"],
+      "@meeting/*": ["component/meeting/*"],
+      "@auth/*": ["auth/*"],
+      "@openvidu/*": ["extern/openvidu/*"]
     },
-    "exclude": [
-      "node_modules",
-      "test",
-      "dist",
-      "**/*spec.ts"
-    ]
+    "include": ["src/**/*", "src/**/*.spec.ts", "eslint.config.js"],
+    "exclude": ["node_modules", "test", "dist"]
   }
 }

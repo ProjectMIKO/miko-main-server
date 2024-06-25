@@ -4,12 +4,11 @@ import {
   Catch,
   ExceptionFilter,
   InternalServerErrorException,
-  Logger,
+  Logger, NotFoundException,
 } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
 import { InvalidResponseException } from '../exception/invalidResponse.exception';
-import { FileNotFoundException } from '../exception/findNotFound.exception';
 import { EmptyDataWarning } from '@global/warning/emptyData.warning';
 
 @Catch()
@@ -22,14 +21,14 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     let message: string;
 
     switch (exception.constructor) {
-      case FileNotFoundException:
-        message = `Error#001(FileNotFoundException): ${(exception as FileNotFoundException).message}`;
+      case NotFoundException:
+        message = `Error#001(NotFoundException): ${(exception as NotFoundException).message}`;
         break;
       case InvalidMiddlewareException: // Middleware Error
         const response = (exception as InvalidMiddlewareException).message.match(/\((.*?)\)/)[1];
         message = `Error#002(InvalidMiddlewareException): ${response}`;
         break;
-      case InvalidResponseException: // Invalid DB Response
+      case InvalidResponseException:
         message = `Error#003(InvalidResponseException): ${(exception as InvalidResponseException).message}`;
         break;
       case BadRequestException:

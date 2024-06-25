@@ -13,13 +13,13 @@
     "baseUrl": "./src",
     "paths": {
       "@global/*": [
-        "global/*"
+        "asset/global/*"
       ],
       "@component/*": [
         "component/*"
       ],
-      "@filesystem/*": [
-        "filesystem/*"
+      "@s3/*": [
+        "extern/s3/*"
       ],
       "@user/*": [
         "component/user/*"
@@ -37,60 +37,20 @@
         "middleware/*"
       ],
       "@meeting/*": [
-        "meeting/*"
+        "component/meeting/*"
       ],
       "@auth/*": [
         "auth/*"
       ],
       "@openvidu/*": [
-        "openvidu/*"
-      ],
-      "@controller/*": [
-        "component/user/controller/*",
-        "component/conversation/controller/*",
-        "component/vertex/controller/*",
-        "component/edge/controller/*",
-        "middleware/controller/*",
-        "filesystem/controller/*",
-        "meeting/controller/*",
-        "auth/controller/*",
-        "openvidu/controller/*"
-      ],
-      "@service/*": [
-        "component/user/service/*",
-        "component/conversation/service/*",
-        "component/vertex/service/*",
-        "component/edge/service/*",
-        "middleware/service/*",
-        "filesystem/service/*",
-        "meeting/service/*",
-        "auth/service/*",
-        "openvidu/service/*"
-      ],
-      "@dto/*": [
-        "component/user/dto/*",
-        "component/conversation/dto/*",
-        "component/vertex/dto/*",
-        "component/edge/dto/*",
-        "middleware/dto/*",
-        "filesystem/dto/*",
-        "meeting/dto/*",
-        "auth/dto/*",
-        "openvidu/dto/*"
-      ],
-      "@schema/*": [
-        "component/user/schema/*",
-        "component/conversation/schema/*",
-        "component/vertex/schema/*",
-        "component/edge/schema/*",
-        "meeting/schema/*"
+        "extern/openvidu/*"
       ]
-    }
-  },
-  "exclude": [
-    "node_modules",
-    "test",
-    "dist",
-    "**/*spec.ts"
-  ]
+    },
+    "exclude": [
+      "node_modules",
+      "test",
+      "dist",
+      "**/*spec.ts"
+    ]
+  }
 }

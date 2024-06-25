@@ -8,20 +8,20 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
-import { MeetingService } from '@service/meeting.service';
-import { MiddlewareService } from '@service/middleware.service';
-import { MeetingCreateDto } from '@dto/meeting.create.dto';
-import { VertexCreateDto } from '@dto/vertex.create.dto';
-import { SummarizeRequestDto } from '@dto/summarize.request.dto';
-import { ConvertResponseDto } from '@dto/convert.response.dto';
-import { SummarizeResponseDto } from '@dto/summarize.response.dto';
+import { MeetingService } from '@meeting/service/meeting.service';
+import { MiddlewareService } from '@middleware/service/middleware.service';
+import { MeetingCreateDto } from '@meeting/dto/meeting.create.dto';
+import { VertexCreateDto } from '@vertex/dto/vertex.create.dto';
+import { SummarizeRequestDto } from '@middleware/dto/summarize.request.dto';
+import { ConvertResponseDto } from '@middleware/dto/convert.response.dto';
+import { SummarizeResponseDto } from '@middleware/dto/summarize.response.dto';
 import { RoomConversations } from '@meeting/interface/roomConversation.interface';
-import { ConversationCreateDto } from '@dto/conversation.create.dto';
-import { ConversationService } from '@service/conversation.service';
-import { VertexService } from '@service/vertex.service';
-import { EdgeService } from '@service/edge.service';
+import { ConversationCreateDto } from '@conversation/dto/conversation.create.dto';
+import { ConversationService } from '@conversation/service/conversation.service';
+import { VertexService } from '@vertex/service/vertex.service';
+import { EdgeService } from '@edge/service/edge.service';
 import { EmptyDataWarning } from '@global/warning/emptyData.warning';
-import { EdgeRequestDto } from '@dto/edge.create.dto';
+import { EdgeRequestDto } from '@edge/dto/edge.request.dto';
 
 @Injectable()
 export class AppService {
@@ -164,7 +164,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     this.conversationService
-      .createNewConversation(conversationCreateDto)
+      .createConversation(conversationCreateDto)
       .then((contentId) => {
         // Session 에 Conversations 저장
         this.roomConversations[room][contentId] = [conversationCreateDto];
@@ -242,7 +242,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
-    const contentId = await this.vertexService.createNewVertex(vertexCreateDto);
+    const contentId = await this.vertexService.createVertex(vertexCreateDto);
 
     this.emitMessage(
       client,

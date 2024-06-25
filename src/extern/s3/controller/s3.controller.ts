@@ -10,7 +10,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { FileSystemService } from '../service/fileSystem.service';
+import { S3Service } from '../service/s3.service';
 import { Express } from 'express';
 import { ApiBody, ApiConsumes, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DownloadResponseDto } from '../dto/download.response.dto';
@@ -19,8 +19,8 @@ import { UploadResponseDto } from '../dto/upload.response.dto';
 
 @ApiTags('file')
 @Controller('/api/file')
-export class FileSystemController {
-  constructor(private readonly fileSystemService: FileSystemService) {}
+export class S3Controller {
+  constructor(private readonly fileSystemService: S3Service) {}
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))

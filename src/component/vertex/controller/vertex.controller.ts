@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { VertexService } from '@service/vertex.service';
+import { VertexService } from '../service/vertex.service';
 
 @Controller('node')
 export class VertexController {

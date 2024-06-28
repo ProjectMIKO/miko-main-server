@@ -235,11 +235,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const summarizeResponseDto: SummarizeResponseDto =
       await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-    console.log(`Returned: ${summarizeResponseDto.main.keyword} - ${summarizeResponseDto.main.subject}`);
+    console.log(`Main Subject Returned: ${summarizeResponseDto.main.keyword} - ${summarizeResponseDto.main.subject}`);
     const mainId = await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto.main]);
 
     for (const subItem of summarizeResponseDto.sub) {
-      console.log(`Returned: ${subItem.keyword} - ${subItem.subject}`);
+      console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
       const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
       await this.handleEdge(client, [room, mainId, subId, '$push']);
     }
@@ -267,7 +267,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
-    const vertexCreateResponseDto = await this.vertexService.createVertex(vertexCreateRequestDto);
+    const vertexCreateResponseDto: VertexCreateResponseDto =
+      await this.vertexService.createVertex(vertexCreateRequestDto);
 
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
@@ -298,7 +299,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       action: action,
     };
 
-    const edgeEditReponseDto = await this.edgeService.updateEdge(edgeRequestDto);
+    const edgeEditReponseDto: EdgeEditReponseDto = await this.edgeService.updateEdge(edgeRequestDto);
     this.emitMessage(client, room, 'edge', edgeEditReponseDto);
 
     await this.meetingService.updateMeetingField(

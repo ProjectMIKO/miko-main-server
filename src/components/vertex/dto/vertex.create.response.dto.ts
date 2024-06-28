@@ -12,7 +12,7 @@ export class VertexCreateResponseDto extends VertexCreateRequestDto {
     super();
     this.contentId = contentId;
     this.keyword = vertexCreateDto.keyword;
-    this.subtitle = vertexCreateDto.subtitle;
+    this.subject = vertexCreateDto.subject;
     this.conversationIds = vertexCreateDto.conversationIds;
   }
 }

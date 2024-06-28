@@ -10,7 +10,7 @@ export class VertexCreateRequestDto {
   @ApiProperty({ description: 'Node summary' })
   @IsString()
   @IsNotEmpty()
-  subtitle: string;
+  subject: string;
 
   @ApiProperty({
     description: 'List of conversation IDs associated with this node',

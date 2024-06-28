@@ -235,11 +235,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const summarizeResponseDto: SummarizeResponseDto =
       await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-    this.logger.log(`Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`);
+    console.log(`Returned: ${summarizeResponseDto.main.keyword} - ${summarizeResponseDto.main.subject}`);
+    const mainId = await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto.main]);
 
-    this.emitMessage(client, room, 'summarize', summarizeResponseDto);
+    for (const subItem of summarizeResponseDto.sub) {
+      console.log(`Returned: ${subItem.keyword} - ${subItem.subject}`);
+      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+      await this.handleEdge(client, [room, mainId, subId, '$push']);
+    }
 
-    await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto]);
+    // this.emitMessage(client, room, 'summarize', summarizeResponseDto);
 
     this.roomConversations[room] = {}; // 임시 저장한 대화 flush
     this.logger.log(`Summarize Method: Finished`);
@@ -248,7 +253,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('vertex')
   async handleVertex(
     client: Socket,
-    [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, SummarizeResponseDto],
+    [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, any],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
     if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
@@ -258,7 +263,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const vertexCreateRequestDto: VertexCreateRequestDto = {
       keyword: summarizeResponseDto.keyword,
-      subtitle: summarizeResponseDto.subtitle,
+      subject: summarizeResponseDto.subject,
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
@@ -267,7 +272,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
     // Meeting 에 Vertex 저장
-    await this.meetingService.updateMeetingField(
+    const contentId = await this.meetingService.updateMeetingField(
       this.roomMeetingMap[room],
       vertexCreateResponseDto.contentId,
       'vertexes',
@@ -275,6 +280,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     this.logger.log(`Vertex Creation Method: Finished`);
+
+    return contentId;
   }
 
   @SubscribeMessage('edge')

@@ -2,26 +2,29 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Vertex, VertexDocument } from '../schema/vertex.schema';
 import { Model } from 'mongoose';
-import { VertexCreateDto } from '../dto/vertex.create.dto';
+import { VertexCreateRequestDto } from '../dto/vertex.create.request.dto';
 import { VertexRequestDto } from 'components/vertex/dto/vertex.request.dto';
+import { VertexCreateResponseDto } from '../dto/vertex.create.response.dto';
 
 @Injectable()
 export class VertexService {
   constructor(@InjectModel(Vertex.name) private vertexModel: Model<VertexDocument>) {}
 
-  public async createVertex(vertexCreateDto: VertexCreateDto): Promise<string> {
-    const vertexModel = new this.vertexModel(vertexCreateDto);
+  public async createVertex(vertexCreateRequestDto: VertexCreateRequestDto): Promise<VertexCreateResponseDto> {
+    const vertexModel = new this.vertexModel(vertexCreateRequestDto);
     await vertexModel.save();
 
     console.log('CreateNewVertex ID: ' + vertexModel._id.toString());
 
-    return vertexModel._id.toString();
+    const vertexCreateResponseDto = new VertexCreateResponseDto(vertexModel._id.toString(), vertexCreateRequestDto);
+
+    return vertexCreateResponseDto;
   }
 
   public async findVertices(vertexRequestDto: VertexRequestDto): Promise<Vertex[]> {
     const { vertexIdList } = vertexRequestDto;
 
-    const vertices = await this.vertexModel
+    const vertexes = await this.vertexModel
       .find({
         _id: {
           $in: vertexIdList,
@@ -29,9 +32,9 @@ export class VertexService {
       })
       .exec();
 
-    if (vertices.length === 0) throw new NotFoundException('Vertexes not found');
+    if (vertexes.length === 0) throw new NotFoundException('Vertexes not found');
 
-    return vertices;
+    return vertexes;
   }
 
   public async deleteVertices(vertexRequestDto: VertexRequestDto): Promise<{ deletedCount: number }> {

@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EdgeEditDto } from '../dto/edge.edit.dto';
+import { EdgeEditRequestDto } from '../dto/edge.edit.request.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Edge, EdgeDocument } from '../schema/edge.schema';
 import { EdgeRequestDto } from 'components/edge/dto/edge.request.dto';
+import { EdgeEditReponseDto } from '../dto/edge.edit.response.dto';
 
 @Injectable()
 export class EdgeService {
@@ -13,31 +14,35 @@ export class EdgeService {
     const edgeModel = new this.edgeModel(vertex1, vertex2);
     await edgeModel.save();
 
+    if (!edgeModel) throw new NotFoundException('Edge not found');
     console.log('CreateEdge ID: ' + edgeModel._id.toString());
 
     return edgeModel._id.toString();
   }
 
   public async deleteEdge(vertex1: string, vertex2: string): Promise<string> {
-    const deletedEdge = await this.edgeModel.findOneAndDelete({
+    const edgeModel = await this.edgeModel.findOneAndDelete({
       $or: [
         { vertex1: vertex1, vertex2: vertex2 },
         { vertex1: vertex2, vertex2: vertex1 },
       ],
     });
 
-    if (!deletedEdge) {
-      throw new NotFoundException('Edge not found');
-    }
+    if (!edgeModel) throw new NotFoundException('Edge not found');
+    console.log('DeletedEdge ID: ' + edgeModel._id.toString());
 
-    console.log('DeleteEdge: Success');
-
-    return deletedEdge._id.toString();
+    return edgeModel._id.toString();
   }
 
-  async updateEdge(edgeRequestDto: EdgeEditDto) {
-    if (edgeRequestDto.action === '$push') return this.createEdge(edgeRequestDto.vertex1, edgeRequestDto.vertex2);
-    else return this.deleteEdge(edgeRequestDto.vertex1, edgeRequestDto.vertex2);
+  async updateEdge(edgeEditRequestDto: EdgeEditRequestDto): Promise<EdgeEditReponseDto> {
+    const contentId =
+      edgeEditRequestDto.action === '$push'
+        ? this.createEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2)
+        : this.deleteEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2);
+
+    const edgeEditReponseDto = new EdgeEditReponseDto(await contentId, edgeEditRequestDto);
+
+    return edgeEditReponseDto;
   }
 
   public async findEdges(edgeRequestDto: EdgeRequestDto): Promise<Edge[]> {

@@ -11,7 +11,6 @@ import { instrument } from '@socket.io/admin-ui';
 import { MeetingService } from 'components/meeting/service/meeting.service';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
-import { VertexCreateDto } from 'components/vertex/dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@middleware/dto/summarize.request.dto';
 import { ConvertResponseDto } from '@middleware/dto/convert.response.dto';
 import { SummarizeResponseDto } from '@middleware/dto/summarize.response.dto';
@@ -21,12 +20,15 @@ import { ConversationService } from 'components/conversation/service/conversatio
 import { VertexService } from 'components/vertex/service/vertex.service';
 import { EdgeService } from 'components/edge/service/edge.service';
 import { EmptyDataWarning } from 'assets/global/warning/emptyData.warning';
-import { EdgeEditDto } from 'components/edge/dto/edge.edit.dto';
+import { EdgeEditRequestDto } from 'components/edge/dto/edge.edit.request.dto';
 import { RecordService } from '@openvidu/service/record.service';
 import { StartRecordingDto } from '@openvidu/dto/recording.request.dto';
 import { S3Service } from '@s3/service/s3.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
 import { UploadResponseDto } from '@s3/dto/upload.response.dto';
+import { VertexCreateRequestDto } from 'components/vertex/dto/vertex.create.request.dto';
+import { VertexCreateResponseDto } from 'components/vertex/dto/vertex.create.response.dto';
+import { EdgeEditReponseDto } from 'components/edge/dto/edge.edit.response.dto';
 
 @Injectable()
 export class AppService {
@@ -235,12 +237,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`);
 
-    const responsePayload = {
-      keyword: summarizeResponseDto.keyword,
-      subtitle: summarizeResponseDto.subtitle,
-    };
-
-    this.emitMessage(client, room, 'summarize', responsePayload);
+    this.emitMessage(client, room, 'summarize', summarizeResponseDto);
 
     await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto]);
 
@@ -259,23 +256,23 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Vertex Creation Method: Start`);
 
-    const vertexCreateDto: VertexCreateDto = {
+    const vertexCreateRequestDto: VertexCreateRequestDto = {
       keyword: summarizeResponseDto.keyword,
       subtitle: summarizeResponseDto.subtitle,
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
-    const contentId = await this.vertexService.createVertex(vertexCreateDto);
+    const vertexCreateResponseDto = await this.vertexService.createVertex(vertexCreateRequestDto);
 
-    this.emitMessage(
-      client,
-      room,
-      'vertex',
-      `{"id": ${contentId}, "keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
-    );
+    this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
     // Meeting 에 Vertex 저장
-    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'vertexes', '$push');
+    await this.meetingService.updateMeetingField(
+      this.roomMeetingMap[room],
+      vertexCreateResponseDto.contentId,
+      'vertexes',
+      '$push',
+    );
 
     this.logger.log(`Vertex Creation Method: Finished`);
   }
@@ -288,22 +285,21 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Edge ${action} Method: Start`);
 
-    const edgeRequestDto: EdgeEditDto = {
+    const edgeRequestDto: EdgeEditRequestDto = {
       vertex1: vertex1,
       vertex2: vertex2,
       action: action,
     };
 
-    const contentId = await this.edgeService.updateEdge(edgeRequestDto);
+    const edgeEditReponseDto = await this.edgeService.updateEdge(edgeRequestDto);
+    this.emitMessage(client, room, 'edge', edgeEditReponseDto);
 
-    this.emitMessage(
-      client,
-      room,
-      'edge',
-      `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}}`,
+    await this.meetingService.updateMeetingField(
+      this.roomMeetingMap[room],
+      edgeEditReponseDto.contentId,
+      'edges',
+      action,
     );
-
-    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'edges', action);
 
     this.logger.log(`Edge ${action} Method: Finished`);
   }

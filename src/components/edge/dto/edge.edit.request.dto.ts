@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class EdgeEditDto {
+export class EdgeEditRequestDto {
   @ApiProperty({ description: 'Source node ID' })
   @IsString()
   @IsNotEmpty()

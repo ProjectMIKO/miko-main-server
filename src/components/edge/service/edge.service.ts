@@ -35,7 +35,7 @@ export class EdgeService {
   }
 
   public async updateEdge(edgeEditRequestDto: EdgeEditRequestDto): Promise<EdgeEditReponseDto> {
-    const contentId =
+    const contentId: string =
       edgeEditRequestDto.action === '$push'
         ? await this.createEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2)
         : await this.deleteEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2);

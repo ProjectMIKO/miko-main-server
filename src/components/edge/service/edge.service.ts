@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EdgeEditRequestDto } from '../dto/edge.edit.request.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -10,8 +10,8 @@ import { EdgeEditReponseDto } from '../dto/edge.edit.response.dto';
 export class EdgeService {
   constructor(@InjectModel(Edge.name) private edgeModel: Model<EdgeDocument>) {}
 
-  public async createEdge(vertex1: string, vertex2: string): Promise<string> {
-    const edgeModel = new this.edgeModel(vertex1, vertex2);
+  async createEdge(vertex1: string, vertex2: string): Promise<string> {
+    const edgeModel = new this.edgeModel({ vertex1, vertex2 });
     await edgeModel.save();
 
     if (!edgeModel) throw new NotFoundException('Edge not found');
@@ -20,7 +20,7 @@ export class EdgeService {
     return edgeModel._id.toString();
   }
 
-  public async deleteEdge(vertex1: string, vertex2: string): Promise<string> {
+  async deleteEdge(vertex1: string, vertex2: string): Promise<string> {
     const edgeModel = await this.edgeModel.findOneAndDelete({
       $or: [
         { vertex1: vertex1, vertex2: vertex2 },
@@ -34,13 +34,13 @@ export class EdgeService {
     return edgeModel._id.toString();
   }
 
-  async updateEdge(edgeEditRequestDto: EdgeEditRequestDto): Promise<EdgeEditReponseDto> {
+  public async updateEdge(edgeEditRequestDto: EdgeEditRequestDto): Promise<EdgeEditReponseDto> {
     const contentId =
       edgeEditRequestDto.action === '$push'
-        ? this.createEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2)
-        : this.deleteEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2);
+        ? await this.createEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2)
+        : await this.deleteEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2);
 
-    const edgeEditReponseDto = new EdgeEditReponseDto(await contentId, edgeEditRequestDto);
+    const edgeEditReponseDto = new EdgeEditReponseDto(contentId, edgeEditRequestDto);
 
     return edgeEditReponseDto;
   }

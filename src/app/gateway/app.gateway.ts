@@ -241,6 +241,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const subItem of summarizeResponseDto.sub) {
       console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
       const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+      await this.sleep(3000); // 3초 지연
       await this.handleEdge(client, [room, mainId, subId, '$push']);
     }
 
@@ -345,5 +346,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
     }
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

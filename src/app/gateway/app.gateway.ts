@@ -241,6 +241,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const subItem of summarizeResponseDto.sub) {
       console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
       const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+      console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
       await this.sleep(3000); // 3초 지연
       await this.handleEdge(client, [room, mainId, subId, '$push']);
     }
@@ -296,6 +297,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const edgeEditRequestDto: EdgeEditRequestDto = { vertex1, vertex2 };
     const edgeEditReponseDto: EdgeEditReponseDto = await this.edgeService.updateEdge(edgeEditRequestDto, action);
+
     this.emitMessage(client, room, 'edge', edgeEditReponseDto);
 
     await this.meetingService.updateMeetingField(

@@ -242,7 +242,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
       const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
       console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
-      await this.sleep(3000); // 3초 지연
       await this.handleEdge(client, [room, mainId, subId, '$push']);
     }
 
@@ -275,7 +274,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
     // Meeting 에 Vertex 저장
-    const contentId = await this.meetingService.updateMeetingField(
+    await this.meetingService.updateMeetingField(
       this.roomMeetingMap[room],
       vertexCreateResponseDto.contentId,
       'vertexes',
@@ -284,7 +283,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Vertex Creation Method: Finished`);
 
-    return contentId;
+    return vertexCreateResponseDto.contentId;
   }
 
   @SubscribeMessage('edge')
@@ -343,9 +342,5 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
     }
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

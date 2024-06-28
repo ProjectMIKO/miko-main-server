@@ -1,5 +1,6 @@
 import {
   ArgumentsHost,
+  BadGatewayException,
   BadRequestException,
   Catch,
   ExceptionFilter,
@@ -34,6 +35,9 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         break;
       case BadRequestException:
         message = `Error#004(BadRequestException): ${(exception as BadRequestException).message}`;
+        break;
+      case BadGatewayException:
+        message = `Error#005(BadGatewayException): ${(exception as BadGatewayException).message}`;
         break;
       case EmptyDataWarning:
         status = 'warning';

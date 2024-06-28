@@ -11,7 +11,7 @@ export class EdgeService {
   constructor(@InjectModel(Edge.name) private edgeModel: Model<EdgeDocument>) {}
 
   public async createEdge(vertex1: string, vertex2: string): Promise<string> {
-    const edgeModel = new this.edgeModel({ vertex1: vertex1, vertex2: vertex2 });
+    const edgeModel = new this.edgeModel({ vertex1, vertex2 });
     await edgeModel.save();
 
     if (!edgeModel) throw new NotFoundException('Edge not found');

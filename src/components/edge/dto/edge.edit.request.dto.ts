@@ -11,9 +11,4 @@ export class EdgeEditRequestDto {
   @IsString()
   @IsNotEmpty()
   vertex2: string;
-
-  @ApiProperty({ description: 'Destination node ID' })
-  @IsString()
-  @IsNotEmpty()
-  action: string;
 }

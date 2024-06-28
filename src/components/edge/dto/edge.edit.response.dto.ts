@@ -13,6 +13,5 @@ export class EdgeEditReponseDto extends EdgeEditRequestDto {
     this.contentId = contentId;
     this.vertex1 = edgeEditRequestDto.vertex1;
     this.vertex2 = edgeEditRequestDto.vertex2;
-    this.action = edgeEditRequestDto.action;
   }
 }

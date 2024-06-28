@@ -294,13 +294,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Edge ${action} Method: Start`);
 
-    const edgeRequestDto: EdgeEditRequestDto = {
-      vertex1: vertex1,
-      vertex2: vertex2,
-      action: action,
-    };
-
-    const edgeEditReponseDto: EdgeEditReponseDto = await this.edgeService.updateEdge(edgeRequestDto);
+    const edgeEditRequestDto: EdgeEditRequestDto = { vertex1, vertex2 };
+    const edgeEditReponseDto: EdgeEditReponseDto = await this.edgeService.updateEdge(edgeEditRequestDto, action);
     this.emitMessage(client, room, 'edge', edgeEditReponseDto);
 
     await this.meetingService.updateMeetingField(

@@ -10,8 +10,8 @@ import { EdgeEditReponseDto } from '../dto/edge.edit.response.dto';
 export class EdgeService {
   constructor(@InjectModel(Edge.name) private edgeModel: Model<EdgeDocument>) {}
 
-  public async createEdge(vertex1: string, vertex2: string): Promise<string> {
-    const edgeModel = new this.edgeModel({ vertex1, vertex2 });
+  public async createEdge(edgeEditRequestDto: EdgeEditRequestDto): Promise<string> {
+    const edgeModel = new this.edgeModel(edgeEditRequestDto);
     await edgeModel.save();
 
     if (!edgeModel) throw new NotFoundException('Edge not found');
@@ -20,11 +20,11 @@ export class EdgeService {
     return edgeModel._id.toString();
   }
 
-  async deleteEdge(vertex1: string, vertex2: string): Promise<string> {
+  async deleteEdge(edgeEditRequestDto: EdgeEditRequestDto): Promise<string> {
     const edgeModel = await this.edgeModel.findOneAndDelete({
       $or: [
-        { vertex1: vertex1, vertex2: vertex2 },
-        { vertex1: vertex2, vertex2: vertex1 },
+        { vertex1: edgeEditRequestDto.vertex1, vertex2: edgeEditRequestDto.vertex2 },
+        { vertex1: edgeEditRequestDto.vertex2, vertex2: edgeEditRequestDto.vertex1 },
       ],
     });
 
@@ -34,11 +34,9 @@ export class EdgeService {
     return edgeModel._id.toString();
   }
 
-  public async updateEdge(edgeEditRequestDto: EdgeEditRequestDto): Promise<EdgeEditReponseDto> {
+  public async updateEdge(edgeEditRequestDto: EdgeEditRequestDto, action: string): Promise<EdgeEditReponseDto> {
     const contentId: string =
-      edgeEditRequestDto.action === '$push'
-        ? await this.createEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2)
-        : await this.deleteEdge(edgeEditRequestDto.vertex1, edgeEditRequestDto.vertex2);
+      action === '$push' ? await this.createEdge(edgeEditRequestDto) : await this.deleteEdge(edgeEditRequestDto);
 
     const edgeEditReponseDto = new EdgeEditReponseDto(contentId, edgeEditRequestDto);
 

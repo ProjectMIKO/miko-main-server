@@ -72,8 +72,8 @@ export class MeetingService {
         .exec();
 
       return meetingModel._id.toString();
-    } catch {
-      throw new NotFoundException(`Meeting ID ${meetingId}: Not found`);
+    } catch (error) {
+      throw error;
     }
   }
 }

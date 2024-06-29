@@ -9,7 +9,7 @@ import { APP_FILTER } from '@nestjs/core';
 @Module({
   imports: [MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }])],
   controllers: [MeetingController],
-  providers: [MeetingService, { provide: APP_FILTER, useClass: GlobalExceptionsFilter }],
+  providers: [MeetingService],
   exports: [MeetingService],
 })
 export class MeetingModule {}

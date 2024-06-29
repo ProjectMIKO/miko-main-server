@@ -153,7 +153,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.recordService.startRecording(startRecordingDto);
     } else {
       // Room 중간에 입장했을 경우
-      client.emit('load_meeting', this.meetingService.findOne(this.roomMeetingMap[room]));
+      await this.meetingService.findOne(this.roomMeetingMap[room]);
     }
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));
@@ -274,12 +274,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
     // Meeting 에 Vertex 저장
-    await this.meetingService.updateMeetingField(
-      this.roomMeetingMap[room],
-      vertexCreateResponseDto.contentId,
-      'vertexes',
-      '$push',
-    );
+    await this.meetingService
+      .updateMeetingField(this.roomMeetingMap[room], vertexCreateResponseDto.contentId, 'vertexes', '$push')
+      .catch((error) => {
+        throw error;
+      });
 
     this.logger.log(`Vertex Creation Method: Finished`);
 

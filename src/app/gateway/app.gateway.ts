@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -274,11 +274,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
     // Meeting 에 Vertex 저장
-    await this.meetingService
-      .updateMeetingField(this.roomMeetingMap[room], vertexCreateResponseDto.contentId, 'vertexes', '$push')
-      .catch((error) => {
-        throw error;
-      });
+    const result = await this.meetingService.updateMeetingField(
+      this.roomMeetingMap[room],
+      vertexCreateResponseDto.contentId,
+      'vertexes',
+      '$push',
+    );
+
+    if (result === 'undefined') throw new NotFoundException(`Meeting ID: Not found`);
 
     this.logger.log(`Vertex Creation Method: Finished`);
 

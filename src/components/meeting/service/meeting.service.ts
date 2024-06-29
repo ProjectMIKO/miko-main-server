@@ -72,7 +72,7 @@ export class MeetingService {
       .populate(field)
       .exec();
 
-    if (!meetingModel) throw new NotFoundException(`Meeting ID: Not found`);
+    if (!meetingModel) return 'undefined';
 
     return meetingModel._id.toString();
   }

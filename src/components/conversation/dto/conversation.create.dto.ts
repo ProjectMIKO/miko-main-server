@@ -10,7 +10,7 @@ export class ConversationCreateDto {
   @ApiProperty({ description: 'Conversation content' })
   @IsString()
   @IsNotEmpty()
-  content: string;
+  script: string;
 
   @ApiProperty({ description: 'Conversation time' })
   @IsDate()

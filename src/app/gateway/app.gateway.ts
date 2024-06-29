@@ -199,12 +199,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],
-      content: convertResponseDto.script,
+      script: convertResponseDto.script,
       timestamp: currentTime,
     };
 
     console.log(
-      `Created STT: room:${room}  user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
+      `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime}`,
     );
 
     if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
@@ -345,7 +345,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const contentId in this.roomConversations[room]) {
       for (const message of this.roomConversations[room][contentId]) {
         console.log(
-          `Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+          `Content ID: ${contentId} User: ${message.user}, Script: ${message.script}, Timestamp: ${message.timestamp}`,
         );
       }
     }

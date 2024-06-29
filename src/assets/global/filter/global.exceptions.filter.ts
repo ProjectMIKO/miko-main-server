@@ -46,16 +46,18 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Warning#001(EmptyDataException): ${(exception as EmptyDataWarning).message}`;
         break;
       default:
+        status = 'internal';
         message = `Error#000(InternalServerError): ${exception.message}`;
-        return;
     }
 
     if (status == 'error') {
       this.logger.error(message);
       client.emit('error', message);
-    } else {
+    } else if (status == 'warning') {
       this.logger.warn(message);
       client.emit('warning', message);
+    } else {
+      this.logger.error(message);
     }
   }
 }

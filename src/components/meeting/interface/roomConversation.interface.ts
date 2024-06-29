@@ -1,6 +1,6 @@
 interface RoomContent {
   user: string;
-  content: string;
+  script: string;
   timestamp: Date;
 }
 

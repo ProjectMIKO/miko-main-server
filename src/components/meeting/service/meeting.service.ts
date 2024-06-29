@@ -62,6 +62,12 @@ export class MeetingService {
     this.validateField(field);
     this.validateAction(action);
 
+    const meeting = await this.meetingModel.findById(meetingId);
+
+    if (!meeting) {
+      throw new NotFoundException(`Meeting with ID ${meetingId} not found`);
+    }
+
     const update = { [action]: { [field]: contentId } };
 
     const meetingModel = await this.meetingModel

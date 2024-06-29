@@ -22,6 +22,8 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     let status = 'error';
     let message: string;
 
+    console.log('Catched by Global Exceptions Handler');
+
     switch (exception.constructor) {
       case NotFoundException:
         message = `Error#001(NotFoundException): ${(exception as NotFoundException).message}`;

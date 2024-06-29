@@ -62,18 +62,16 @@ export class MeetingService {
 
     const update = { [action]: { [field]: contentId } };
 
-    try {
-      const meetingModel = await this.meetingModel
-        .findByIdAndUpdate(meetingId, update, {
-          new: true,
-          useFindAndModify: false,
-        })
-        .populate(field)
-        .exec();
+    const meetingModel = await this.meetingModel
+      .findByIdAndUpdate(meetingId, update, {
+        new: true,
+        useFindAndModify: false,
+      })
+      .populate(field)
+      .exec();
 
-      return meetingModel._id.toString();
-    } catch (error) {
-      throw error;
-    }
+    if (!meetingModel) throw new NotFoundException(`Meeting ID ${meetingId}: Not found`);
+
+    return meetingModel._id.toString();
   }
 }

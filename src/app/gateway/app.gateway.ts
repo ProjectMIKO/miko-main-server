@@ -273,6 +273,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
+    if (!this.roomMeetingMap[room]) throw new NotFoundException(`Meeting ID: Undefined`);
+
     // Meeting 에 Vertex 저장
     const result = await this.meetingService.updateMeetingField(
       this.roomMeetingMap[room],
@@ -280,8 +282,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       'vertexes',
       '$push',
     );
-
-    if (result === 'undefined') throw new NotFoundException(`Meeting ID: Not found`);
 
     this.logger.log(`Vertex Creation Method: Finished`);
 

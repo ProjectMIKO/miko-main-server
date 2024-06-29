@@ -147,6 +147,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
       for (const conversation of conversations) {
         console.log(`Conversation Restore: ${conversation.user}: ${conversation.script}`);
+        await this.sleep(50);
         client.emit('script', `${conversation.user}: ${conversation.script}`);
       }
 
@@ -154,7 +155,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
       for (const vertex of vertexes) {
         console.log(`Vertex Restore: keyword=${vertex.keyword} subject=${vertex.subject}`);
-        this.sleep(1000);
+        await this.sleep(50);
         client.emit('vertex', vertex);
       }
 
@@ -162,7 +163,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
       for (const edge of edges) {
         console.log(`Edge Restore: vertex1=${edge.vertex1} vertex2=${edge.vertex2}`);
-        this.sleep(1000);
+        await this.sleep(50);
         client.emit('edge', edge);
       }
     }

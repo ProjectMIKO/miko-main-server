@@ -1,5 +1,6 @@
 import {
   ArgumentsHost,
+  BadGatewayException,
   BadRequestException,
   Catch,
   ExceptionFilter,
@@ -21,6 +22,8 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     let status = 'error';
     let message: string;
 
+    console.log('Catched by Global Exceptions Handler');
+
     switch (exception.constructor) {
       case NotFoundException:
         message = `Error#001(NotFoundException): ${(exception as NotFoundException).message}`;
@@ -35,20 +38,26 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
       case BadRequestException:
         message = `Error#004(BadRequestException): ${(exception as BadRequestException).message}`;
         break;
+      case BadGatewayException:
+        message = `Error#005(BadGatewayException): ${(exception as BadGatewayException).message}`;
+        break;
       case EmptyDataWarning:
         status = 'warning';
         message = `Warning#001(EmptyDataException): ${(exception as EmptyDataWarning).message}`;
         break;
       default:
+        status = 'internal';
         message = `Error#000(InternalServerError): ${exception.message}`;
     }
 
     if (status == 'error') {
       this.logger.error(message);
       client.emit('error', message);
-    } else {
+    } else if (status == 'warning') {
       this.logger.warn(message);
       client.emit('warning', message);
+    } else {
+      this.logger.error(message);
     }
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -11,7 +11,6 @@ import { instrument } from '@socket.io/admin-ui';
 import { MeetingService } from 'components/meeting/service/meeting.service';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
-import { VertexCreateDto } from 'components/vertex/dto/vertex.create.dto';
 import { SummarizeRequestDto } from '@middleware/dto/summarize.request.dto';
 import { ConvertResponseDto } from '@middleware/dto/convert.response.dto';
 import { SummarizeResponseDto } from '@middleware/dto/summarize.response.dto';
@@ -21,12 +20,17 @@ import { ConversationService } from 'components/conversation/service/conversatio
 import { VertexService } from 'components/vertex/service/vertex.service';
 import { EdgeService } from 'components/edge/service/edge.service';
 import { EmptyDataWarning } from 'assets/global/warning/emptyData.warning';
-import { EdgeEditDto } from 'components/edge/dto/edge.edit.dto';
+import { EdgeEditRequestDto } from 'components/edge/dto/edge.edit.request.dto';
 import { RecordService } from '@openvidu/service/record.service';
 import { StartRecordingDto } from '@openvidu/dto/recording.request.dto';
 import { S3Service } from '@s3/service/s3.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
 import { UploadResponseDto } from '@s3/dto/upload.response.dto';
+import { VertexCreateRequestDto } from 'components/vertex/dto/vertex.create.request.dto';
+import { VertexCreateResponseDto } from 'components/vertex/dto/vertex.create.response.dto';
+import { EdgeEditReponseDto } from 'components/edge/dto/edge.edit.response.dto';
+import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.response.dto';
+import { timeout } from 'rxjs';
 
 @Injectable()
 export class AppService {
@@ -128,30 +132,40 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit('entered_room');
 
     if (isNewRoom) {
-      // Room 최초 개설했을 경우
-      const meetingCreateDto: MeetingCreateDto = {
-        title: room,
-        owner: client['nickname'],
-        record_key: '',
-      };
-
-      this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
-      this.roomHostManager[room] = client['nickname'];
-      this.roomConversations[room] = {};
-
-      console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
-
-      const startRecordingDto: StartRecordingDto = {
-        sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
-        name: `${room}_recording`,
-        hasAudio: true,
-        hasVideo: false,
-      };
-
-      await this.recordService.startRecording(startRecordingDto);
+      await this.createNewRoom(client, room);
     } else {
       // Room 중간에 입장했을 경우
-      client.emit('load_meeting', this.meetingService.findOne(this.roomMeetingMap[room]));
+      const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(
+        this.roomMeetingMap[room],
+      );
+
+      console.log(meetingFindResponseDto.conversationIds);
+      console.log(meetingFindResponseDto.vertexIds);
+      console.log(meetingFindResponseDto.edgeIds);
+
+      // 기존 대화(conversations) 전송
+      const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
+      for (const conversation of conversations) {
+        console.log(`Conversation Restore: ${conversation.user}: ${conversation.script}`);
+        await this.sleep(50);
+        client.emit('script', `${conversation.user}: ${conversation.script}`);
+      }
+
+      // 기존 버텍스(vertices) 전송
+      const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+      for (const vertex of vertexes) {
+        console.log(`Vertex Restore: keyword=${vertex.keyword} subject=${vertex.subject}`);
+        await this.sleep(50);
+        client.emit('vertex', vertex);
+      }
+
+      // 기존 에지(edges) 전송
+      const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
+      for (const edge of edges) {
+        console.log(`Edge Restore: vertex1=${edge.vertex1} vertex2=${edge.vertex2}`);
+        await this.sleep(50);
+        client.emit('edge', edge);
+      }
     }
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));
@@ -193,24 +207,24 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],
-      content: convertResponseDto.script,
+      script: convertResponseDto.script,
       timestamp: currentTime,
     };
 
     console.log(
-      `Created STT: room:${room}  user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
+      `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime}`,
     );
 
-    if (!this.roomConversations[room]) {
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
       this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
-      this.roomConversations[room] = {};
+      await this.createNewRoom(client, room);
     }
 
-    this.conversationService.createConversation(conversationCreateDto).then((contentId) => {
+    this.conversationService.createConversation(conversationCreateDto).then((_id) => {
       // Session 에 Conversations 저장
-      this.roomConversations[room][contentId] = [conversationCreateDto];
+      this.roomConversations[room][_id] = [conversationCreateDto];
       // Meeting 에 Conversation 저장
-      this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'conversations', '$push');
+      this.meetingService.updateMeetingField(this.roomMeetingMap[room], _id, 'conversations', '$push');
     });
 
     this.logger.log(`Convert STT Method: Finished`);
@@ -233,16 +247,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const summarizeResponseDto: SummarizeResponseDto =
       await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-    this.logger.log(`Returned Keyword: ${summarizeResponseDto.keyword} \n Subtitle: ${summarizeResponseDto.subtitle}`);
+    console.log(`Main Subject Returned: ${summarizeResponseDto.main.keyword} - ${summarizeResponseDto.main.subject}`);
+    const mainId = await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto.main]);
 
-    const responsePayload = {
-      keyword: summarizeResponseDto.keyword,
-      subtitle: summarizeResponseDto.subtitle,
-    };
-
-    this.emitMessage(client, room, 'summarize', responsePayload);
-
-    await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto]);
+    for (const subItem of summarizeResponseDto.sub) {
+      console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
+      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+      console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
+      await this.handleEdge(client, [room, mainId, subId, '$push']);
+    }
 
     this.roomConversations[room] = {}; // 임시 저장한 대화 flush
     this.logger.log(`Summarize Method: Finished`);
@@ -251,7 +264,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('vertex')
   async handleVertex(
     client: Socket,
-    [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, SummarizeResponseDto],
+    [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, any],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
     if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
@@ -259,25 +272,33 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Vertex Creation Method: Start`);
 
-    const vertexCreateDto: VertexCreateDto = {
+    const vertexCreateRequestDto: VertexCreateRequestDto = {
       keyword: summarizeResponseDto.keyword,
-      subtitle: summarizeResponseDto.subtitle,
+      subject: summarizeResponseDto.subject,
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
-    const contentId = await this.vertexService.createVertex(vertexCreateDto);
+    const vertexCreateResponseDto: VertexCreateResponseDto =
+      await this.vertexService.createVertex(vertexCreateRequestDto);
 
-    this.emitMessage(
-      client,
-      room,
-      'vertex',
-      `{"id": ${contentId}, "keyword": ${vertexCreateDto.keyword}, "subtitle": ${vertexCreateDto.subtitle}, conversationIds: ${vertexCreateDto.conversationIds}}`,
-    );
+    this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
+
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
+      this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
+      await this.createNewRoom(client, room);
+    }
 
     // Meeting 에 Vertex 저장
-    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'vertexes', '$push');
+    await this.meetingService.updateMeetingField(
+      this.roomMeetingMap[room],
+      vertexCreateResponseDto._id,
+      'vertexes',
+      '$push',
+    );
 
     this.logger.log(`Vertex Creation Method: Finished`);
+
+    return vertexCreateResponseDto._id;
   }
 
   @SubscribeMessage('edge')
@@ -288,22 +309,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Edge ${action} Method: Start`);
 
-    const edgeRequestDto: EdgeEditDto = {
-      vertex1: vertex1,
-      vertex2: vertex2,
-      action: action,
-    };
+    const edgeEditRequestDto: EdgeEditRequestDto = { vertex1, vertex2 };
+    const edgeEditReponseDto: EdgeEditReponseDto = await this.edgeService.updateEdge(edgeEditRequestDto, action);
 
-    const contentId = await this.edgeService.updateEdge(edgeRequestDto);
+    this.emitMessage(client, room, 'edge', edgeEditReponseDto);
 
-    this.emitMessage(
-      client,
-      room,
-      'edge',
-      `{"id": ${contentId}, "vertex1": ${vertex1}, "vertex2": ${vertex2}}, "action": ${action}}`,
-    );
-
-    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'edges', action);
+    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], edgeEditReponseDto._id, 'edges', action);
 
     this.logger.log(`Edge ${action} Method: Finished`);
   }
@@ -332,14 +343,44 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return this.server.sockets.adapter.rooms.get(room)?.size ?? 0;
   }
 
+  private sleep(time: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, time));
+  }
+
   private printRoomConversations(room: string) {
     console.log(`Room: ${room}`);
-    for (const contentId in this.roomConversations[room]) {
-      for (const message of this.roomConversations[room][contentId]) {
+    for (const _id in this.roomConversations[room]) {
+      for (const message of this.roomConversations[room][_id]) {
         console.log(
-          `Content ID: ${contentId} User: ${message.user}, Content: ${message.content}, Timestamp: ${message.timestamp}`,
+          `Content ID: ${_id} User: ${message.user}, Script: ${message.script}, Timestamp: ${message.timestamp}`,
         );
       }
     }
+  }
+
+  private async createNewRoom(client: Socket, room: string) {
+    // Room 최초 개설했을 경우
+    this.logger.log('Create Room Method: Initiated');
+    const meetingCreateDto: MeetingCreateDto = {
+      title: room,
+      owner: client['nickname'],
+      record_key: '',
+    };
+
+    this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
+    this.roomHostManager[room] = client['nickname'];
+    this.roomConversations[room] = {};
+
+    console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
+
+    const startRecordingDto: StartRecordingDto = {
+      sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
+      name: `${room}_recording`,
+      hasAudio: true,
+      hasVideo: false,
+    };
+
+    await this.recordService.startRecording(startRecordingDto);
+    this.logger.log('Create Room Method: Completed');
   }
 }

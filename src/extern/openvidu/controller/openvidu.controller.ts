@@ -1,4 +1,14 @@
-import { Controller, Post, Body, Param, NotFoundException, Get, ForbiddenException, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  NotFoundException,
+  Get,
+  ForbiddenException,
+  Delete,
+  BadGatewayException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { OpenviduService } from '../service/openvidu.service';
 import { RecordService } from '../service/record.service';
@@ -62,8 +72,12 @@ export class OpenviduController {
     type: [SessionResponseDto],
   })
   async fetchAllSessions(): Promise<SessionResponseDto[]> {
-    const sessionResponseDtoArr: SessionResponseDto[] = await this.openviduService.fetchAllSessions();
-    return sessionResponseDtoArr;
+    try {
+      const sessionResponseDtoArr: SessionResponseDto[] = await this.openviduService.fetchAllSessions();
+      return sessionResponseDtoArr;
+    } catch (error) {
+      throw new BadGatewayException('Openvidu Server not healthy');
+    }
   }
 
   @Get('sessions/:sessionId')

@@ -8,13 +8,13 @@ import { Edge } from 'components/edge/schema/edge.schema';
 export class EdgeController {
   constructor(private readonly edgeService: EdgeService) {}
 
-  @Get()
-  @ApiOperation({ summary: 'Find edges by IDs' })
-  @ApiResponse({ status: 200, description: 'Successful retrieval of edges', type: [Edge] })
-  @ApiBody({ type: EdgeRequestDto })
-  public async findEdges(@Body() edgeRequestDto: EdgeRequestDto) {
-    return this.edgeService.findEdges(edgeRequestDto);
-  }
+  // @Get()
+  // @ApiOperation({ summary: 'Find edges by IDs' })
+  // @ApiResponse({ status: 200, description: 'Successful retrieval of edges', type: [Edge] })
+  // @ApiBody({ type: EdgeRequestDto })
+  // public async findEdges(@Body() edgeRequestDto: EdgeRequestDto) {
+  //   return this.edgeService.findEdges(edgeRequestDto);
+  // }
 
   @Delete()
   @ApiOperation({ summary: 'Delete edges by IDs' })

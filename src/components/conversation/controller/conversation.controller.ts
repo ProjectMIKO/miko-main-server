@@ -8,13 +8,13 @@ import { Conversation } from 'components/conversation/schema/conversation.schema
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
 
-  @Get()
-  @ApiOperation({ summary: 'Find conversations by IDs' })
-  @ApiResponse({ status: 200, description: 'Successful retrieval of conversations', type: [Conversation] })
-  @ApiBody({ type: ConversationRequestDto })
-  public async findConversation(@Body() conversationRequestDto: ConversationRequestDto) {
-    return this.conversationService.findConversation(conversationRequestDto);
-  }
+  // @Get()
+  // @ApiOperation({ summary: 'Find conversations by IDs' })
+  // @ApiResponse({ status: 200, description: 'Successful retrieval of conversations', type: [Conversation] })
+  // @ApiBody({ type: ConversationRequestDto })
+  // public async findConversation(@Body() conversationRequestDto: ConversationRequestDto) {
+  //   return this.conversationService.findConversation(conversationRequestDto);
+  // }
 
   @Delete()
   @ApiOperation({ summary: 'Delete conversations by IDs' })

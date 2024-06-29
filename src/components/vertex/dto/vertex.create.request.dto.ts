@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsArray, ArrayNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class VertexCreateDto {
+export class VertexCreateRequestDto {
   @ApiProperty({ description: 'Node keyword' })
   @IsString()
   @IsNotEmpty()
@@ -10,7 +10,7 @@ export class VertexCreateDto {
   @ApiProperty({ description: 'Node summary' })
   @IsString()
   @IsNotEmpty()
-  subtitle: string;
+  subject: string;
 
   @ApiProperty({
     description: 'List of conversation IDs associated with this node',

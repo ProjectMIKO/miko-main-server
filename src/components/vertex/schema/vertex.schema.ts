@@ -9,7 +9,7 @@ export class Vertex {
   keyword: string;
 
   @Prop({ required: true })
-  subtitle: string;
+  subject: string;
 
   @Prop({ type: [String], default: [] })
   conversationIds: string[];

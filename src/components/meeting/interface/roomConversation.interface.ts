@@ -1,11 +1,11 @@
 interface RoomContent {
   user: string;
-  content: string;
+  script: string;
   timestamp: Date;
 }
 
 interface RoomData {
-  [contentId: string]: RoomContent[];
+  [_id: string]: RoomContent[];
 }
 
 export interface RoomConversations {

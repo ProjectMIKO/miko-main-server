@@ -27,7 +27,7 @@ export class Meeting {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Vertex' }], default: [] })
   vertexes: Vertex[];
 
-  @Prop({ type: [EdgeSchema], default: [] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Edge' }], default: [] })
   edges: Edge[];
 
   @IsString()

@@ -62,12 +62,6 @@ export class MeetingService {
     this.validateField(field);
     this.validateAction(action);
 
-    const meeting = await this.meetingModel.findById(meetingId);
-
-    if (!meeting) {
-      throw new NotFoundException(`Meeting with ID ${meetingId} not found`);
-    }
-
     const update = { [action]: { [field]: contentId } };
 
     const meetingModel = await this.meetingModel
@@ -78,7 +72,7 @@ export class MeetingService {
       .populate(field)
       .exec();
 
-    if (!meetingModel) throw new NotFoundException(`Meeting ID ${meetingId}: Not found`);
+    if (!meetingModel) throw new NotFoundException(`Meeting ID: Not found`);
 
     return meetingModel._id.toString();
   }

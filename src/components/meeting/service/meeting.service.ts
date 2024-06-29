@@ -21,16 +21,16 @@ export class MeetingService {
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meetingModel = new this.meetingModel({
+    const meeting = new this.meetingModel({
       ...meetingCreateDto,
       startTime: new Date(),
     });
 
-    meetingModel.save().catch((error) => {
+    meeting.save().catch((error) => {
       throw new InvalidResponseException('CreateNewMeeting');
     });
 
-    return meetingModel._id.toString();
+    return meeting._id.toString();
   }
 
   public async findAllByOwner(ownerId: string): Promise<Meeting[]> {
@@ -58,22 +58,22 @@ export class MeetingService {
     return this.meetingModel.findByIdAndDelete(id).exec();
   }
 
-  async updateMeetingField(meetingId: string, contentId: string, field: string, action: string): Promise<string> {
+  async updateMeetingField(id: string, contentId: string, field: string, action: string): Promise<string> {
     this.validateField(field);
     this.validateAction(action);
 
     const update = { [action]: { [field]: contentId } };
 
-    const meetingModel = await this.meetingModel
-      .findByIdAndUpdate(meetingId, update, {
+    const meeting = await this.meetingModel
+      .findByIdAndUpdate(id, update, {
         new: true,
         useFindAndModify: false,
       })
       .populate(field)
       .exec();
 
-    if (!meetingModel) return 'undefined';
+    if (!meeting) throw new NotFoundException(`Meeting with ID ${id} not found`);
 
-    return meetingModel._id.toString();
+    return meeting._id.toString();
   }
 }

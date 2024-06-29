@@ -130,27 +130,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit('entered_room');
 
     if (isNewRoom) {
-      // Room 최초 개설했을 경우
-      const meetingCreateDto: MeetingCreateDto = {
-        title: room,
-        owner: client['nickname'],
-        record_key: '',
-      };
-
-      this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
-      this.roomHostManager[room] = client['nickname'];
-      this.roomConversations[room] = {};
-
-      console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
-
-      const startRecordingDto: StartRecordingDto = {
-        sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
-        name: `${room}_recording`,
-        hasAudio: true,
-        hasVideo: false,
-      };
-
-      await this.recordService.startRecording(startRecordingDto);
+      await this.createNewRoom(client, room);
     } else {
       // Room 중간에 입장했을 경우
       await this.meetingService.findOne(this.roomMeetingMap[room]);
@@ -203,9 +183,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `Created STT: room:${room}  user: ${conversationCreateDto.user}  content: ${convertResponseDto.script}  timestamp: ${currentTime}`,
     );
 
-    if (!this.roomConversations[room]) {
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
       this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
-      this.roomConversations[room] = {};
+      await this.createNewRoom(client, room);
     }
 
     this.conversationService.createConversation(conversationCreateDto).then((contentId) => {
@@ -245,8 +225,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.handleEdge(client, [room, mainId, subId, '$push']);
     }
 
-    // this.emitMessage(client, room, 'summarize', summarizeResponseDto);
-
     this.roomConversations[room] = {}; // 임시 저장한 대화 flush
     this.logger.log(`Summarize Method: Finished`);
   }
@@ -273,10 +251,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
-    if (!this.roomMeetingMap[room]) throw new NotFoundException(`Meeting ID: Undefined`);
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
+      this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
+      await this.createNewRoom(client, room);
+    }
 
     // Meeting 에 Vertex 저장
-    const result = await this.meetingService.updateMeetingField(
+    await this.meetingService.updateMeetingField(
       this.roomMeetingMap[room],
       vertexCreateResponseDto.contentId,
       'vertexes',
@@ -344,5 +325,31 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
     }
+  }
+
+  private async createNewRoom(client: Socket, room: string) {
+    // Room 최초 개설했을 경우
+    this.logger.log('Create Room Method: Initiated');
+    const meetingCreateDto: MeetingCreateDto = {
+      title: room,
+      owner: client['nickname'],
+      record_key: '',
+    };
+
+    this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
+    this.roomHostManager[room] = client['nickname'];
+    this.roomConversations[room] = {};
+
+    console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
+
+    const startRecordingDto: StartRecordingDto = {
+      sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
+      name: `${room}_recording`,
+      hasAudio: true,
+      hasVideo: false,
+    };
+
+    await this.recordService.startRecording(startRecordingDto);
+    this.logger.log('Create Room Method: Completed');
   }
 }

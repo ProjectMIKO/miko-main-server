@@ -21,13 +21,11 @@ export class ConversationService {
     return conversationModel._id.toString();
   }
 
-  public async findConversation(conversationRequestDto: ConversationRequestDto): Promise<Conversation[]> {
-    const { conversationIdList } = conversationRequestDto;
-
+  public async findConversation(conversationList: Conversation[]): Promise<Conversation[]> {
     const conversations = await this.conversationModel
       .find({
         _id: {
-          $in: conversationIdList,
+          $in: conversationList,
         },
       })
       .exec();

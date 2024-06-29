@@ -21,9 +21,7 @@ export class VertexService {
     return vertexCreateResponseDto;
   }
 
-  public async findVertices(vertexRequestDto: VertexRequestDto): Promise<Vertex[]> {
-    const { vertexIdList } = vertexRequestDto;
-
+  public async findVertices(vertexIdList: Vertex[]): Promise<Vertex[]> {
     const vertexes = await this.vertexModel
       .find({
         _id: {

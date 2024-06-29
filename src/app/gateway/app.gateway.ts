@@ -29,6 +29,7 @@ import { UploadResponseDto } from '@s3/dto/upload.response.dto';
 import { VertexCreateRequestDto } from 'components/vertex/dto/vertex.create.request.dto';
 import { VertexCreateResponseDto } from 'components/vertex/dto/vertex.create.response.dto';
 import { EdgeEditReponseDto } from 'components/edge/dto/edge.edit.response.dto';
+import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.response.dto';
 
 @Injectable()
 export class AppService {
@@ -133,7 +134,30 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.createNewRoom(client, room);
     } else {
       // Room 중간에 입장했을 경우
-      await this.meetingService.findOne(this.roomMeetingMap[room]);
+      const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(
+        this.roomMeetingMap[room],
+      );
+
+      console.log(meetingFindResponseDto.conversationIds);
+      console.log(meetingFindResponseDto.vertexIds);
+      console.log(meetingFindResponseDto.edgeIds);
+
+      // // 기존 대화(conversations) 전송
+      // const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
+      // for (const conversation of conversations) {
+      //   client.emit('script', `${conversation.user}: ${conversation.script}`);
+      // }
+
+      // // 기존 버텍스(vertices) 전송
+      // const vertexes = await this.vertexService.findVertices(meetingFindResponseDto.vertexIds);
+      // for (const vertex of vertexes) {
+      //   client.emit('vertex', vertex);
+      // }
+
+      // // 기존 에지(edges) 전송
+      // for (const edge of meetingFindResponseDto.edgeIds) {
+      //   client.emit('edge', edge);
+      // }
     }
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));

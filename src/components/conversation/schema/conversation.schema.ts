@@ -12,7 +12,7 @@ export class Conversation {
 
   @ApiProperty({ description: 'Content of the conversation' })
   @Prop({ required: true })
-  content: string;
+  script: string;
 
   @ApiProperty({ description: 'Timestamp of the conversation' })
   @Prop({ required: true })

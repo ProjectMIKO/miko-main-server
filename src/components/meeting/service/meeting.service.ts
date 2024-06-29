@@ -5,6 +5,7 @@ import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { InvalidResponseException } from 'assets/global/exception/invalidResponse.exception';
 import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
+import { MeetingFindResponseDto } from '../dto/meeting.find.response.dto';
 
 @Injectable()
 @UseFilters(GlobalExceptionsFilter)
@@ -46,12 +47,14 @@ export class MeetingService {
     return meetings;
   }
 
-  async findOne(id: string): Promise<Meeting> {
+  async findOne(id: string): Promise<MeetingFindResponseDto> {
     const meeting = await this.meetingModel.findById(id);
 
     if (!meeting) throw new NotFoundException(`Meeting with ID ${id} not found`);
 
-    return meeting;
+    const meetingFindResponseDto = new MeetingFindResponseDto(meeting);
+
+    return meetingFindResponseDto;
   }
 
   async remove(id: string): Promise<any> {

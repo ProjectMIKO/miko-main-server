@@ -45,9 +45,7 @@ export class EdgeService {
     return edgeEditReponseDto;
   }
 
-  public async findEdges(edgeRequestDto: EdgeRequestDto): Promise<Edge[]> {
-    const { edgeIdList } = edgeRequestDto;
-
+  public async findEdges(edgeIdList: Edge[]): Promise<Edge[]> {
     const edges = await this.edgeModel
       .find({
         _id: {

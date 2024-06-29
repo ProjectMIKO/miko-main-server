@@ -17,7 +17,6 @@ export class EdgeService {
     if (!edgeModel) throw new NotFoundException('Edge not found');
 
     console.log(`CreateEdge ID: ${edgeModel._id.toString()}`);
-    console.log(`${edgeEditRequestDto.vertex1} ${edgeEditRequestDto.vertex2}`);
     console.log(`${edgeModel.vertex1} ${edgeModel.vertex2}`);
 
     return edgeModel._id.toString();

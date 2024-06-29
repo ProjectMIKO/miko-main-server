@@ -310,7 +310,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const edgeEditRequestDto: EdgeEditRequestDto = { vertex1, vertex2 };
     const edgeEditReponseDto: EdgeEditReponseDto = await this.edgeService.updateEdge(edgeEditRequestDto, action);
 
-    this.emitMessage(client, room, 'edge', { edgeEditReponseDto, action });
+    if (action == '$push') this.emitMessage(client, room, 'edge', edgeEditReponseDto);
+    else this.emitMessage(client, room, 'del_edge', edgeEditReponseDto);
 
     await this.meetingService.updateMeetingField(this.roomMeetingMap[room], edgeEditReponseDto._id, 'edges', action);
 

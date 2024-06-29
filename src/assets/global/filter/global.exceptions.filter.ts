@@ -47,6 +47,7 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         break;
       default:
         message = `Error#000(InternalServerError): ${exception.message}`;
+        return;
     }
 
     if (status == 'error') {

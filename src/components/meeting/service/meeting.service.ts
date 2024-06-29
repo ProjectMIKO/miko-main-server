@@ -61,11 +61,11 @@ export class MeetingService {
     return this.meetingModel.findByIdAndDelete(id).exec();
   }
 
-  async updateMeetingField(id: string, contentId: string, field: string, action: string): Promise<string> {
+  async updateMeetingField(id: string, _id: string, field: string, action: string): Promise<string> {
     this.validateField(field);
     this.validateAction(action);
 
-    const update = { [action]: { [field]: contentId } };
+    const update = { [action]: { [field]: _id } };
 
     const meeting = await this.meetingModel
       .findByIdAndUpdate(id, update, {

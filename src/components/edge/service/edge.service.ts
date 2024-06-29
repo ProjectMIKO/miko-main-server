@@ -37,10 +37,10 @@ export class EdgeService {
   }
 
   public async updateEdge(edgeEditRequestDto: EdgeEditRequestDto, action: string): Promise<EdgeEditReponseDto> {
-    const contentId: string =
+    const _id: string =
       action === '$push' ? await this.createEdge(edgeEditRequestDto) : await this.deleteEdge(edgeEditRequestDto);
 
-    const edgeEditReponseDto = new EdgeEditReponseDto(contentId, edgeEditRequestDto);
+    const edgeEditReponseDto = new EdgeEditReponseDto(_id, edgeEditRequestDto);
 
     return edgeEditReponseDto;
   }

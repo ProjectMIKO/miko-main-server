@@ -6,11 +6,11 @@ export class EdgeEditReponseDto extends EdgeEditRequestDto {
   @ApiProperty({ description: 'Content ID' })
   @IsString()
   @IsNotEmpty()
-  contentId: string;
+  _id: string;
 
-  constructor(contentId: string, edgeEditRequestDto: EdgeEditRequestDto) {
+  constructor(_id: string, edgeEditRequestDto: EdgeEditRequestDto) {
     super();
-    this.contentId = contentId;
+    this._id = _id;
     this.vertex1 = edgeEditRequestDto.vertex1;
     this.vertex2 = edgeEditRequestDto.vertex2;
   }

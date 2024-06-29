@@ -6,11 +6,11 @@ export class VertexCreateResponseDto extends VertexCreateRequestDto {
   @ApiProperty({ description: 'Content ID' })
   @IsString()
   @IsNotEmpty()
-  contentId: string;
+  _id: string;
 
-  constructor(contentId: string, vertexCreateDto: VertexCreateRequestDto) {
+  constructor(_id: string, vertexCreateDto: VertexCreateRequestDto) {
     super();
-    this.contentId = contentId;
+    this._id = _id;
     this.keyword = vertexCreateDto.keyword;
     this.subject = vertexCreateDto.subject;
     this.conversationIds = vertexCreateDto.conversationIds;

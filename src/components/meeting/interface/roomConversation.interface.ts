@@ -5,7 +5,7 @@ interface RoomContent {
 }
 
 interface RoomData {
-  [contentId: string]: RoomContent[];
+  [_id: string]: RoomContent[];
 }
 
 export interface RoomConversations {

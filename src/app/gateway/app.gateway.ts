@@ -30,6 +30,7 @@ import { VertexCreateRequestDto } from 'components/vertex/dto/vertex.create.requ
 import { VertexCreateResponseDto } from 'components/vertex/dto/vertex.create.response.dto';
 import { EdgeEditReponseDto } from 'components/edge/dto/edge.edit.response.dto';
 import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.response.dto';
+import { timeout } from 'rxjs';
 
 @Injectable()
 export class AppService {
@@ -145,21 +146,23 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // 기존 대화(conversations) 전송
       const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
       for (const conversation of conversations) {
-        console.log(`기존 대화 복구: ${conversation.user}: ${conversation.script}`);
+        console.log(`Conversation Restore: ${conversation.user}: ${conversation.script}`);
         client.emit('script', `${conversation.user}: ${conversation.script}`);
       }
 
       // 기존 버텍스(vertices) 전송
       const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
       for (const vertex of vertexes) {
-        console.log(`기존 버텍스 복구: keyword=${vertex.keyword} subject=${vertex.subject}`);
+        console.log(`Vertex Restore: keyword=${vertex.keyword} subject=${vertex.subject}`);
+        this.sleep(500);
         client.emit('vertex', vertex);
       }
 
       // 기존 에지(edges) 전송
       const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
       for (const edge of edges) {
-        console.log(`기존 엣지 복구: vertex1=${edge.vertex1} vertex2=${edge.vertex2}`);
+        console.log(`Edge Restore: vertex1=${edge.vertex1} vertex2=${edge.vertex2}`);
+        this.sleep(500);
         client.emit('edge', edge);
       }
     }
@@ -216,11 +219,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.createNewRoom(client, room);
     }
 
-    this.conversationService.createConversation(conversationCreateDto).then((contentId) => {
+    this.conversationService.createConversation(conversationCreateDto).then((_id) => {
       // Session 에 Conversations 저장
-      this.roomConversations[room][contentId] = [conversationCreateDto];
+      this.roomConversations[room][_id] = [conversationCreateDto];
       // Meeting 에 Conversation 저장
-      this.meetingService.updateMeetingField(this.roomMeetingMap[room], contentId, 'conversations', '$push');
+      this.meetingService.updateMeetingField(this.roomMeetingMap[room], _id, 'conversations', '$push');
     });
 
     this.logger.log(`Convert STT Method: Finished`);
@@ -287,14 +290,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Meeting 에 Vertex 저장
     await this.meetingService.updateMeetingField(
       this.roomMeetingMap[room],
-      vertexCreateResponseDto.contentId,
+      vertexCreateResponseDto._id,
       'vertexes',
       '$push',
     );
 
     this.logger.log(`Vertex Creation Method: Finished`);
 
-    return vertexCreateResponseDto.contentId;
+    return vertexCreateResponseDto._id;
   }
 
   @SubscribeMessage('edge')
@@ -310,12 +313,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.emitMessage(client, room, 'edge', edgeEditReponseDto);
 
-    await this.meetingService.updateMeetingField(
-      this.roomMeetingMap[room],
-      edgeEditReponseDto.contentId,
-      'edges',
-      action,
-    );
+    await this.meetingService.updateMeetingField(this.roomMeetingMap[room], edgeEditReponseDto._id, 'edges', action);
 
     this.logger.log(`Edge ${action} Method: Finished`);
   }
@@ -344,12 +342,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return this.server.sockets.adapter.rooms.get(room)?.size ?? 0;
   }
 
+  private sleep(time: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, time));
+  }
+
   private printRoomConversations(room: string) {
     console.log(`Room: ${room}`);
-    for (const contentId in this.roomConversations[room]) {
-      for (const message of this.roomConversations[room][contentId]) {
+    for (const _id in this.roomConversations[room]) {
+      for (const message of this.roomConversations[room][_id]) {
         console.log(
-          `Content ID: ${contentId} User: ${message.user}, Script: ${message.script}, Timestamp: ${message.timestamp}`,
+          `Content ID: ${_id} User: ${message.user}, Script: ${message.script}, Timestamp: ${message.timestamp}`,
         );
       }
     }

@@ -77,6 +77,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('disconnecting')
   async handleDisconnecting(client: Socket) {
+    // Todo: Disconnecting 작동 확인
     for (const room of client.rooms) {
       client.to(room).emit('exit', client['nickname'], this.countMember(room) - 1);
 
@@ -139,33 +140,30 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.roomMeetingMap[room],
       );
 
-      console.log(meetingFindResponseDto.conversationIds);
-      console.log(meetingFindResponseDto.vertexIds);
-      console.log(meetingFindResponseDto.edgeIds);
+      this.logger.log('Join Room Method: Initiated');
 
       // 기존 대화(conversations) 전송
       const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
       for (const conversation of conversations) {
-        console.log(`Conversation Restore: ${conversation.user}: ${conversation.script}`);
-        await this.sleep(50);
         client.emit('script', `${conversation.user}: ${conversation.script}`);
+        await this.sleep(50);
       }
 
       // 기존 버텍스(vertices) 전송
       const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
       for (const vertex of vertexes) {
-        console.log(`Vertex Restore: keyword=${vertex.keyword} subject=${vertex.subject}`);
-        await this.sleep(50);
         client.emit('vertex', vertex);
+        await this.sleep(50);
       }
 
       // 기존 에지(edges) 전송
       const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
       for (const edge of edges) {
-        console.log(`Edge Restore: vertex1=${edge.vertex1} vertex2=${edge.vertex2}`);
-        await this.sleep(50);
         client.emit('edge', edge);
+        await this.sleep(50);
       }
+
+      this.logger.log('Join Room Method: Complete');
     }
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));
@@ -312,7 +310,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const edgeEditRequestDto: EdgeEditRequestDto = { vertex1, vertex2 };
     const edgeEditReponseDto: EdgeEditReponseDto = await this.edgeService.updateEdge(edgeEditRequestDto, action);
 
-    this.emitMessage(client, room, 'edge', edgeEditReponseDto);
+    this.emitMessage(client, room, 'edge', { edgeEditReponseDto, action });
 
     await this.meetingService.updateMeetingField(this.roomMeetingMap[room], edgeEditReponseDto._id, 'edges', action);
 
@@ -381,6 +379,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     await this.recordService.startRecording(startRecordingDto);
-    this.logger.log('Create Room Method: Completed');
+    this.logger.log('Create Room Method: Complete');
   }
 }

@@ -45,7 +45,11 @@ export class MeetingService {
   }
 
   async findOne(id: string): Promise<Meeting> {
-    return this.meetingModel.findById(id).exec();
+    const meeting = await this.meetingModel.findById(id);
+
+    if (!meeting) throw new NotFoundException(`Meeting with ID ${id} not found`);
+
+    return meeting;
   }
 
   async remove(id: string): Promise<any> {
@@ -57,18 +61,19 @@ export class MeetingService {
     this.validateAction(action);
 
     const update = { [action]: { [field]: contentId } };
-    const meetingModel = await this.meetingModel
-      .findByIdAndUpdate(meetingId, update, {
-        new: true,
-        useFindAndModify: false,
-      })
-      .populate(field)
-      .exec();
 
-    if (!meetingModel) {
+    try {
+      const meetingModel = await this.meetingModel
+        .findByIdAndUpdate(meetingId, update, {
+          new: true,
+          useFindAndModify: false,
+        })
+        .populate(field)
+        .exec();
+
+      return meetingModel._id.toString();
+    } catch {
       throw new NotFoundException(`Meeting ID ${meetingId}: Not found`);
     }
-
-    return meetingModel._id.toString();
   }
 }

@@ -1,11 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UseFilters } from '@nestjs/common';
 import { Meeting, MeetingDocument } from '../schema/meeting.schema';
 import { MeetingCreateDto } from '../dto/meeting.create.dto';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { InvalidResponseException } from 'assets/global/exception/invalidResponse.exception';
+import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
 
 @Injectable()
+@UseFilters(GlobalExceptionsFilter)
 export class MeetingService {
   constructor(@InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>) {}
 

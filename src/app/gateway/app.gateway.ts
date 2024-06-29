@@ -78,9 +78,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('disconnecting')
   async handleDisconnecting(client: Socket) {
     // Todo: Disconnecting 작동 확인
+    console.log(`${client['nickname']}'s disconnecting sequence start`);
     for (const room of client.rooms) {
-      client.to(room).emit('exit', client['nickname'], this.countMember(room) - 1);
-
       console.log(
         `${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`,
       );
@@ -107,12 +106,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       if (this.countMember(room) === 0) {
-        // const recordingResponseDto = await this.recordService.getRecording(room);
-        // const uploadResponseDto = await this.s3Service.uploadFileFromUrl(recordingResponseDto.url);
-        // await this.meetingService.updateMeetingRecordKey(
-        //   this.roomMeetingMap[room],
-        //   uploadResponseDto.key
-        // );
+        // todo: 세선 종료하는 로직을 추가해야 하나?
       }
     }
   }
@@ -136,34 +130,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.createNewRoom(client, room);
     } else {
       // Room 중간에 입장했을 경우
-      const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(
-        this.roomMeetingMap[room],
-      );
-
-      this.logger.log('Join Room Method: Initiated');
-
-      // 기존 대화(conversations) 전송
-      const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
-      for (const conversation of conversations) {
-        client.emit('script', `${conversation.user}: ${conversation.script}`);
-        await this.sleep(50);
-      }
-
-      // 기존 버텍스(vertices) 전송
-      const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
-      for (const vertex of vertexes) {
-        client.emit('vertex', vertex);
-        await this.sleep(50);
-      }
-
-      // 기존 에지(edges) 전송
-      const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
-      for (const edge of edges) {
-        client.emit('edge', edge);
-        await this.sleep(50);
-      }
-
-      this.logger.log('Join Room Method: Complete');
+      await this.joinRoom(client, room);
     }
 
     client.to(room).emit('welcome', client['nickname'], this.countMember(room));
@@ -318,11 +285,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Edge ${action} Method: Finished`);
   }
 
+  /**
+   * 클라이언트와 접속한 방에 emit 뿌리는 함수
+   * @param client - Socket
+   * @param room - 방 이름
+   * @param ev - emit event
+   * @param args - 인자
+   */
   private emitMessage(client: Socket, room: string, ev: string, args: any) {
     client.emit(ev, args);
     client.to(room).emit(ev, args);
   }
 
+  /**
+   * 현재 개설된 방을 확인하는 함수
+   * @returns 현재 개설된 방
+   */
   private rooms(): string[] {
     if (!this.server || !this.server.sockets || !this.server.sockets.adapter) return [];
 
@@ -338,14 +316,28 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return publicRooms;
   }
 
+  /**
+   * 현재 room에 남은 인원 수 반환
+   * @param room - 방 이름
+   * @returns 남은 인원 수
+   */
   private countMember(room: string): number {
     return this.server.sockets.adapter.rooms.get(room)?.size ?? 0;
   }
 
+  /**
+   * Sleep Timer
+   * @param time - milisecond
+   * @returns
+   */
   private sleep(time: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, time));
   }
 
+  /**
+   * 현재 room에 keyword를 추출하지 않은 converstaion 리스트 출력 함수
+   * @param room - 방 이름
+   */
   private printRoomConversations(room: string) {
     console.log(`Room: ${room}`);
     for (const _id in this.roomConversations[room]) {
@@ -357,6 +349,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  /**
+   * 새로운 방에 입장했을 때 Session 초기화 및 DB에 meeting 생성. room 이름과 meeting 맵핑하는 함수
+   * @param client - Socket
+   * @param room - 방 이름
+   */
   private async createNewRoom(client: Socket, room: string) {
     // Room 최초 개설했을 경우
     this.logger.log('Create Room Method: Initiated');
@@ -381,5 +378,39 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.recordService.startRecording(startRecordingDto);
     this.logger.log('Create Room Method: Complete');
+  }
+
+  /**
+   * 기존 방에 들어갔을 때 DB에서 기존에 진행된 Data를 Client에 반환해주는 함수
+   * @param client - Socket
+   * @param room - string 방 이름
+   */
+  private async joinRoom(client: Socket, room: string) {
+    this.logger.log('Join Room Method: Initiated');
+
+    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(this.roomMeetingMap[room]);
+
+    // 기존 대화(conversations) 전송
+    const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
+    for (const conversation of conversations) {
+      client.emit('script', `${conversation.user}: ${conversation.script}`);
+      await this.sleep(50);
+    }
+
+    // 기존 버텍스(vertices) 전송
+    const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+    for (const vertex of vertexes) {
+      client.emit('vertex', vertex);
+      await this.sleep(50);
+    }
+
+    // 기존 에지(edges) 전송
+    const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
+    for (const edge of edges) {
+      client.emit('edge', edge);
+      await this.sleep(50);
+    }
+
+    this.logger.log('Join Room Method: Complete');
   }
 }

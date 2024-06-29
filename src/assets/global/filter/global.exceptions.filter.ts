@@ -17,8 +17,8 @@ import { EmptyDataWarning } from 'assets/global/warning/emptyData.warning';
 export class GlobalExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionsFilter.name);
   catch(exception: any, host: ArgumentsHost) {
-    const ctx = host.switchToWs();
-    const client = ctx.getClient<Socket>();
+    // const ctx = host.switchToWs();
+    // const client = ctx.getClient<Socket>();
     let status = 'error';
     let message: string;
 
@@ -49,12 +49,12 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Error#000(InternalServerError): ${exception.message}`;
     }
 
-    if (status == 'error') {
-      this.logger.error(message);
-      client.emit('error', message);
-    } else {
-      this.logger.warn(message);
-      client.emit('warning', message);
-    }
+    // if (status == 'error') {
+    //   this.logger.error(message);
+    //   client.emit('error', message);
+    // } else {
+    //   this.logger.warn(message);
+    //   client.emit('warning', message);
+    // }
   }
 }

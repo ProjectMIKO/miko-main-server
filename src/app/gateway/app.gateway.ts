@@ -65,8 +65,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   afterInit() {
     instrument(this.server, {
-      // Todo: 인증
       auth: false,
+      mode: 'development',
     });
   }
 
@@ -79,7 +79,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnecting(client: Socket) {
     // Todo: Disconnecting 작동 확인
     console.log(`${client['nickname']}'s disconnecting sequence start`);
-    for (const room of client.rooms) {
+
+    console.log(`${client['nickname']}'s entered rooms: ${Array.from(client.rooms)}`);
+
+    client.rooms.forEach(async (room) => {
       console.log(
         `${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`,
       );
@@ -108,10 +111,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (this.countMember(room) === 0) {
         // todo: 세선 종료하는 로직을 추가해야 하나?
       }
-    }
+    });
   }
 
   async handleDisconnect(client: Socket) {
+    await this.sleep(3000);
     this.logger.log(`${client['nickname']}: disconnected from server`);
   }
 
@@ -122,7 +126,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Enter Room: Start`);
 
     const isNewRoom = !this.rooms().includes(room);
-
     client.join(room);
     client.emit('entered_room');
 

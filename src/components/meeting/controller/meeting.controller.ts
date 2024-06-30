@@ -21,7 +21,7 @@ export class MeetingController {
   //   return this.meetingService.findOne(id);
   // }
 
-  @Get('id')
+  @Get(':id')
   async getResult(@Param('id') id: string) {
     this.logger.log('Join Room Method: Initiated');
 

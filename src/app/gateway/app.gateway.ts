@@ -77,41 +77,32 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('disconnecting')
   async handleDisconnecting(client: Socket) {
-    // Todo: Disconnecting 작동 확인
-    console.log(`${client['nickname']}'s disconnecting sequence start`);
-
-    console.log(`${client['nickname']}'s entered rooms: ${Array.from(client.rooms)}`);
-
-    client.rooms.forEach(async (room) => {
-      console.log(
-        `${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`,
-      );
-
-      if (this.roomHostManager[room] === client['nickname']) {
-        this.logger.log('Room destruction logic start');
-
-        client.to(room).emit('host_exit');
-
-        // Todo: Record 외에도 남아있는 conversation, vertex -> 업로드 해야함.
-
-        const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(room);
-        const uploadResponseDto: UploadResponseDto = await this.s3Service.uploadFileFromUrl(responseRecordingDto.url);
-        await this.meetingService.updateMeetingField(
-          this.roomMeetingMap[room],
-          uploadResponseDto.key,
-          'record',
-          '$push',
-        );
-
-        this.logger.log('Room destruction logic end');
-
-        client.to(room).emit('result_page', this.roomMeetingMap[room]);
-      }
-
-      if (this.countMember(room) === 0) {
-        // todo: 세선 종료하는 로직을 추가해야 하나?
-      }
-    });
+    // // Todo: Disconnecting 작동 확인
+    // console.log(`${client['nickname']}'s disconnecting sequence start`);
+    // console.log(`${client['nickname']}'s entered rooms: ${Array.from(client.rooms)}`);
+    // client.rooms.forEach(async (room) => {
+    //   console.log(
+    //     `${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`,
+    //   );
+    //   if (this.roomHostManager[room] === client['nickname']) {
+    //     this.logger.log('Room destruction logic start');
+    //     client.to(room).emit('host_exit');
+    //     // Todo: Record 외에도 남아있는 conversation, vertex -> 업로드 해야함.
+    //     const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(room);
+    //     const uploadResponseDto: UploadResponseDto = await this.s3Service.uploadFileFromUrl(responseRecordingDto.url);
+    //     await this.meetingService.updateMeetingField(
+    //       this.roomMeetingMap[room],
+    //       uploadResponseDto.key,
+    //       'record',
+    //       '$push',
+    //     );
+    //     this.logger.log('Room destruction logic end');
+    //     client.to(room).emit('result_page', this.roomMeetingMap[room]);
+    //   }
+    //   if (this.countMember(room) === 0) {
+    //     // todo: 세선 종료하는 로직을 추가해야 하나?
+    //   }
+    // });
   }
 
   async handleDisconnect(client: Socket) {
@@ -286,6 +277,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.meetingService.updateMeetingField(this.roomMeetingMap[room], edgeEditReponseDto._id, 'edges', action);
 
     this.logger.log(`Edge ${action} Method: Finished`);
+  }
+
+  @SubscribeMessage('roomId')
+  async handleRoomId(client: Socket, room: string) {
+    this.emitMessage(client, room, 'roomId', this.roomMeetingMap[room]);
   }
 
   /**

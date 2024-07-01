@@ -2,11 +2,7 @@ import { IsString, IsBoolean, IsEnum, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Recording, RecordingLayout } from 'openvidu-node-client';
 
-export class RecordingResponseDto {
-  @ApiProperty({ description: 'Unique identifier for the recording' })
-  @IsString()
-  readonly id: string;
-
+export class RecordingPropertiesDto {
   @ApiProperty({ description: 'Name of the recording' })
   @IsString()
   readonly name: string;
@@ -25,31 +21,37 @@ export class RecordingResponseDto {
   })
   @IsEnum(Recording.OutputMode)
   readonly outputMode: Recording.OutputMode;
+}
 
-  @ApiProperty({ description: 'Resolution of the recording' })
-  @IsString()
-  readonly resolution: string;
-
-  @ApiProperty({ description: 'Frame rate of the recording' })
+export class RecordingResponseDto {
+  @ApiProperty({ description: 'Size of the recording in bytes' })
   @IsNumber()
-  readonly frameRate: number;
+  readonly size: number;
+
+  @ApiProperty({ description: 'Duration of the recording in seconds' })
+  @IsNumber()
+  readonly duration: number;
+
+  @ApiProperty({ description: 'Unique identifier for the recording' })
+  @IsString()
+  readonly id: string;
+
+  @ApiProperty({ description: 'Session identifier for the recording' })
+  @IsString()
+  readonly sessionId: string;
+
+  @ApiProperty({ description: 'Timestamp when the recording was created' })
+  @IsNumber()
+  readonly createdAt: number;
 
   @ApiProperty({ description: 'URL to access the recording' })
   @IsString()
-  readonly url: string;
-  
-  @ApiProperty({
-    enum: RecordingLayout,
-    description: 'Layout used for the recording',
-  })
-  @IsEnum(RecordingLayout)
-  readonly recordingLayout: RecordingLayout;
+  readonly url: string | null;
 
-  @ApiProperty({ description: 'Custom layout path for the recording' })
+  @ApiProperty({ description: 'Status of the recording' })
   @IsString()
-  readonly customLayout: string;
+  readonly status: string;
 
-  @ApiProperty({ description: 'Shared memory size for the recording in bytes' })
-  @IsString()
-  readonly shmSize: string;
+  @ApiProperty({ description: 'Properties of the recording' })
+  readonly properties: RecordingPropertiesDto;
 }

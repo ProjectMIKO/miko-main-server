@@ -52,6 +52,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private roomConversations: RoomConversations = {};
   private roomMeetingMap: { [key: string]: string } = {};
   private roomHostManager: { [key: string]: string } = {};
+  private roomRecord: { [key: string]: string } = {};
+
   @WebSocketServer() server: Server;
 
   constructor(
@@ -289,8 +291,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`the number of people left in the room: ${num}`);
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0){
+      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(this.roomRecord[room]);
+      this.logger.log(`recording url: ${responseRecordingDto.url}`);
+      this.logger.log(`recording status: ${responseRecordingDto.status}`);
+      await this.openviduService.closeSession(room);
       this.emitMessage(client, room, 'roomId', this.roomMeetingMap[room]);
-      this.openviduService.closeSession(room);
     }
     else
       client.emit('roomId', this.roomMeetingMap[room]);
@@ -385,6 +390,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       record: recordingResponseDto.id,
     };
 
+    this.roomRecord[room] = recordingResponseDto.id;
     this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
     this.roomHostManager[room] = client['nickname'];
     this.roomConversations[room] = {};

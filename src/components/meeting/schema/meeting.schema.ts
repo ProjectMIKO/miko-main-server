@@ -30,7 +30,7 @@ export class Meeting {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Edge' }], default: [] })
   edges: Edge[];
 
-  @IsString()
+  @Prop()
   record: string;
 }
 

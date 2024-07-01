@@ -12,7 +12,7 @@ export class MeetingCreateDto {
   @IsNotEmpty()
   owner: string;
 
-  @ApiProperty({ description: 'Record file S3 Key' })
+  @ApiProperty({ description: 'Record file id' })
   @IsString()
-  record_key: string;
+  record: string;
 }

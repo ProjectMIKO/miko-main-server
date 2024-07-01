@@ -369,18 +369,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private async createNewRoom(client: Socket, room: string) {
     // Room 최초 개설했을 경우
     this.logger.log('Create Room Method: Initiated');
-    const meetingCreateDto: MeetingCreateDto = {
-      title: room,
-      owner: client['nickname'],
-      record_key: '',
-    };
-
-    this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
-    this.roomHostManager[room] = client['nickname'];
-    this.roomConversations[room] = {};
-
-    console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
-
+    
     const startRecordingDto: StartRecordingDto = {
       sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
       name: `${room}_recording`,
@@ -388,7 +377,19 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       hasVideo: false,
     };
 
-    await this.recordService.startRecording(startRecordingDto);
+    const recordingResponseDto:RecordingResponseDto = await this.recordService.startRecording(startRecordingDto);
+
+    const meetingCreateDto: MeetingCreateDto = {
+      title: room,
+      owner: client['nickname'],
+      record: recordingResponseDto.id,
+    };
+
+    this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
+    this.roomHostManager[room] = client['nickname'];
+    this.roomConversations[room] = {};
+
+    console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
     this.logger.log('Create Room Method: Complete');
   }
 

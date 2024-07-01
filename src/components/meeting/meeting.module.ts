@@ -8,6 +8,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { ConversationModule } from 'components/conversation/conversation.module';
 import { VertexModule } from 'components/vertex/vertex.module';
 import { EdgeModule } from 'components/edge/edge.module';
+import { OpenviduModule } from '@openvidu/openvidu.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { EdgeModule } from 'components/edge/edge.module';
     ConversationModule,
     VertexModule,
     EdgeModule,
+    OpenviduModule
   ],
   controllers: [MeetingController],
   providers: [MeetingService],

@@ -281,7 +281,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('roomId')
   async handleRoomId(client: Socket, room: string) {
-    this.emitMessage(client, room, 'roomId', this.roomMeetingMap[room]);
+    if (!room) throw new BadRequestException('Room is empty');
+    
+    if (this.roomHostManager[room] == client['nickname'])
+      this.emitMessage(client, room, 'roomId', this.roomMeetingMap[room]);
+    else
+      client.emit('roomId', this.roomMeetingMap[room]);
+          
   }
 
   /**

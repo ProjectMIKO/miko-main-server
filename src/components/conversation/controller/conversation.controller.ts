@@ -1,9 +1,10 @@
 import { Body, Controller, Delete, Get } from '@nestjs/common';
 import { ConversationService } from 'components/conversation/service/conversation.service';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConversationRequestDto } from 'components/conversation/dto/conversation.request.dto';
 import { Conversation } from 'components/conversation/schema/conversation.schema';
 
+@ApiTags('Meeting')
 @Controller('conversation')
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}

@@ -8,8 +8,10 @@ import { EdgeService } from 'components/edge/service/edge.service';
 import { RecordService } from '@openvidu/service/record.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
 import * as https from 'https'; // or 'http' depending on the protocol
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('meeting')
+@ApiTags('Meeting')
+@Controller('api/meeting')
 export class MeetingController {
   constructor(
     private readonly meetingService: MeetingService,

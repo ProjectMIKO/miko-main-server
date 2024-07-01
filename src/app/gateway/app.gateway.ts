@@ -31,6 +31,7 @@ import { VertexCreateResponseDto } from 'components/vertex/dto/vertex.create.res
 import { EdgeEditReponseDto } from 'components/edge/dto/edge.edit.response.dto';
 import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.response.dto';
 import { timeout } from 'rxjs';
+import { OpenviduService } from '@openvidu/service/openvidu.service';
 
 @Injectable()
 export class AppService {
@@ -61,6 +62,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly edgeService: EdgeService,
     private readonly recordService: RecordService,
     private readonly s3Service: S3Service,
+    private readonly openviduService: OpenviduService 
   ) {}
 
   afterInit() {
@@ -282,9 +284,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('roomId')
   async handleRoomId(client: Socket, room: string) {
     if (!room) throw new BadRequestException('Room is empty');
-    
-    if (this.roomHostManager[room] == client['nickname'])
+  
+    const num: Number = this.countMember(room) - 1;
+    this.logger.log(`the number of people left in the room: ${num}`);
+
+    if (this.roomHostManager[room] == client['nickname'] || num == 0){
       this.emitMessage(client, room, 'roomId', this.roomMeetingMap[room]);
+      this.openviduService.closeSession(room);
+    }
     else
       client.emit('roomId', this.roomMeetingMap[room]);
           

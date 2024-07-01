@@ -96,7 +96,7 @@ export class OpenviduService implements OnModuleInit {
     return this.toSessionResponseDto(session);
   }
 
-  async closeSession(sessionId: string, token: string): Promise<void> {
+  async closeSession(sessionId: string): Promise<void> {
     // Fetch the session info from OpenVidu Server
     await this.openvidu.fetch();
     const session: Session = this.openvidu.activeSessions.find((s) => s.sessionId === sessionId);
@@ -105,10 +105,10 @@ export class OpenviduService implements OnModuleInit {
     }
 
     // Verify user authorization by checking the token
-    const authorized = this.checkUserAuthorization(token, session);
-    if (!authorized) {
-      throw new ForbiddenException('User not authorized to close this session');
-    }
+    // const authorized = this.checkUserAuthorization(token, session);
+    // if (!authorized) {
+    //   throw new ForbiddenException('User not authorized to close this session');
+    // }
 
     // Close the session
     await session.close();

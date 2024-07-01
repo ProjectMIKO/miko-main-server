@@ -99,7 +99,7 @@ export class OpenviduController {
   }
 
   @Post('sessions/:sessionId/close')
-  @ApiOperation({ summary: 'Close a specific session (admin only)' })
+  @ApiOperation({ summary: 'Close a specific session' })
   @ApiResponse({
     status: 204,
     description: 'Session closed successfully',
@@ -107,13 +107,11 @@ export class OpenviduController {
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiParam({ name: 'sessionId', description: 'The ID of the session' })
-  @ApiBody({ type: ModeratorRequestDto })
   async closeSession(
-    @Param('sessionId') sessionId: string,
-    @Body() moderatorRequestDto: ModeratorRequestDto,
+    @Param('sessionId') sessionId: string
   ): Promise<void> {
     try {
-      await this.openviduService.closeSession(sessionId, moderatorRequestDto.token);
+      await this.openviduService.closeSession(sessionId);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Session not found');

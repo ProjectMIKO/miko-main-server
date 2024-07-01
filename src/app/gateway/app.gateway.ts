@@ -64,7 +64,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly edgeService: EdgeService,
     private readonly recordService: RecordService,
     private readonly s3Service: S3Service,
-    private readonly openviduService: OpenviduService 
+    private readonly openviduService: OpenviduService,
   ) {}
 
   afterInit() {
@@ -77,36 +77,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: Socket) {
     client['nickname'] = client.handshake.auth.nickname;
     this.logger.log(`${client['nickname']}: connected to server`);
-  }
-
-  @SubscribeMessage('disconnecting')
-  async handleDisconnecting(client: Socket) {
-    // // Todo: Disconnecting 작동 확인
-    // console.log(`${client['nickname']}'s disconnecting sequence start`);
-    // console.log(`${client['nickname']}'s entered rooms: ${Array.from(client.rooms)}`);
-    // client.rooms.forEach(async (room) => {
-    //   console.log(
-    //     `${client['nickname']} is Exiting ${room}... RoomID: ${this.roomMeetingMap[room]}  Host: ${this.roomHostManager}`,
-    //   );
-    //   if (this.roomHostManager[room] === client['nickname']) {
-    //     this.logger.log('Room destruction logic start');
-    //     client.to(room).emit('host_exit');
-    //     // Todo: Record 외에도 남아있는 conversation, vertex -> 업로드 해야함.
-    //     const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(room);
-    //     const uploadResponseDto: UploadResponseDto = await this.s3Service.uploadFileFromUrl(responseRecordingDto.url);
-    //     await this.meetingService.updateMeetingField(
-    //       this.roomMeetingMap[room],
-    //       uploadResponseDto.key,
-    //       'record',
-    //       '$push',
-    //     );
-    //     this.logger.log('Room destruction logic end');
-    //     client.to(room).emit('result_page', this.roomMeetingMap[room]);
-    //   }
-    //   if (this.countMember(room) === 0) {
-    //     // todo: 세선 종료하는 로직을 추가해야 하나?
-    //   }
-    // });
   }
 
   async handleDisconnect(client: Socket) {
@@ -286,20 +256,17 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('roomId')
   async handleRoomId(client: Socket, room: string) {
     if (!room) throw new BadRequestException('Room is empty');
-  
+
     const num: Number = this.countMember(room) - 1;
     this.logger.log(`the number of people left in the room: ${num}`);
 
-    if (this.roomHostManager[room] == client['nickname'] || num == 0){
+    if (this.roomHostManager[room] == client['nickname'] || num == 0) {
       const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(this.roomRecord[room]);
       this.logger.log(`recording url: ${responseRecordingDto.url}`);
       this.logger.log(`recording status: ${responseRecordingDto.status}`);
       await this.openviduService.closeSession(room);
       this.emitMessage(client, room, 'roomId', this.roomMeetingMap[room]);
-    }
-    else
-      client.emit('roomId', this.roomMeetingMap[room]);
-          
+    } else client.emit('roomId', this.roomMeetingMap[room]);
   }
 
   /**
@@ -374,7 +341,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private async createNewRoom(client: Socket, room: string) {
     // Room 최초 개설했을 경우
     this.logger.log('Create Room Method: Initiated');
-    
+
     const startRecordingDto: StartRecordingDto = {
       sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
       name: `${room}_recording`,
@@ -382,7 +349,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       hasVideo: false,
     };
 
-    const recordingResponseDto:RecordingResponseDto = await this.recordService.startRecording(startRecordingDto);
+    const recordingResponseDto: RecordingResponseDto = await this.recordService.startRecording(startRecordingDto);
 
     const meetingCreateDto: MeetingCreateDto = {
       title: room,

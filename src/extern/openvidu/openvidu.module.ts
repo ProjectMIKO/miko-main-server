@@ -6,6 +6,6 @@ import { RecordService } from '@openvidu/service/record.service';
 @Module({
     providers: [OpenviduService, RecordService],
     controllers: [OpenviduController],
-    exports: [RecordService]
+    exports: [OpenviduService, RecordService]
 })
 export class OpenviduModule {}

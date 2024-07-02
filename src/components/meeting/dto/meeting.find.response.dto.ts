@@ -21,9 +21,14 @@ export class MeetingFindResponseDto {
   @IsNotEmpty()
   edgeIds: Edge[];
 
+  @ApiProperty({ description: 'Record file id' })
+  @IsString()
+  record: string;
+
   constructor(meeting: Meeting) {
     this.conversationIds = meeting.conversations;
     this.vertexIds = meeting.vertexes;
     this.edgeIds = meeting.edges;
+    this.record = meeting.record;
   }
 }

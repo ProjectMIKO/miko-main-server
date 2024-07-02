@@ -119,7 +119,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('stt')
-  async handleRecord(client: Socket, [room, file]: [string, ArrayBuffer]) {
+  async handleRecord(client: Socket, [room, file, timestamp]: [string, ArrayBuffer, number]) {
     if (!file) throw new BadRequestException('File Not Found');
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
@@ -127,7 +127,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Convert STT Method: Start`);
 
-    const currentTime = new Date();
+    const currentTime = new Date(timestamp);
+    console.log(`timestamp: ${timestamp}`)
     const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
     const buffer = Buffer.from(new Uint8Array(file));
 

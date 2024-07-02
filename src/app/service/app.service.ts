@@ -1,3 +1,5 @@
+import { InvalidPasswordException } from '@global/exception/invalidPassword.exception';
+import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { AppGateway } from 'app/gateway/app.gateway';
 import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
@@ -36,12 +38,21 @@ export class AppService {
     };
 
     this.appGateway.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
-    this.appGateway.roomPosswordManager[room] = password;
+    this.appGateway.roomPasswordManager[room] = password;
     this.appGateway.roomHostManager[room] = nickname;
     this.appGateway.roomConversations[room] = {};
 
     console.log(`Create New Meeting Completed: ${room}: ${this.appGateway.roomMeetingMap[room]}`);
     this.logger.log('Create Room Method: Complete');
+
+    return true;
+  }
+
+  public async joinRoom(room: string, password: string): Promise<boolean> {
+    if (!this.appGateway.roomMeetingMap[room]) throw new RoomNotFoundException(`${room} is not existing room`);
+
+    if (this.appGateway.roomPasswordManager[room] != password)
+      throw new InvalidPasswordException('Password is not valid');
 
     return true;
   }

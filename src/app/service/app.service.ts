@@ -23,7 +23,10 @@ export class AppService {
    * 새로운 방에 입장했을 때 Session 초기화 및 DB에 meeting 생성. room 이름과 meeting 맵핑하는 메서드
    *
    * @param nickname - 이름
+   * @param nickname - 이름
    * @param room - 방 이름
+   * @param password - 비밀번호
+   * @returns 성공 여부
    * @param password - 비밀번호
    * @returns 성공 여부
    */
@@ -43,6 +46,7 @@ export class AppService {
     };
 
     this.appGateway.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
+    this.appGateway.roomPasswordManager[room] = password;
     this.appGateway.roomPasswordManager[room] = password;
     this.appGateway.roomHostManager[room] = nickname;
     this.appGateway.roomConversations[room] = {};

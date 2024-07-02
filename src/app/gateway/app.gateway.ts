@@ -31,6 +31,7 @@ import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.resp
 import { OpenviduService } from '@openvidu/service/openvidu.service';
 import { InvalidPasswordException } from '@global/exception/invalidPassword.exception';
 import { MeetingUpdateDto } from 'components/meeting/dto/meeting.update.dto';
+import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
 
 @WebSocketGateway({
   cors: {
@@ -45,7 +46,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public roomMeetingMap: { [key: string]: string } = {};
   public roomHostManager: { [key: string]: string } = {};
   public roomPosswordManager: { [key: string]: string } = {};
-  private roomRecord: { [key: string]: {recordingId: string; createdAt: number}} = {};
+  private roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
 
   @WebSocketServer() server: Server;
 
@@ -80,6 +81,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('enter_room')
   async handleEnterRoom(client: Socket, room: string, password: string) {
     if (!room) throw new BadRequestException('Room is empty');
+
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.logger.log(`Enter Room: Start`);
 
@@ -145,17 +149,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       user: client['nickname'],
       script: convertResponseDto.script,
       timestamp: currentTime,
-      time_offset: time_offset
+      time_offset: time_offset,
     };
 
     console.log(
       `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime} time_offset: ${time_offset}`,
     );
 
-    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
-      this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
-      await this.createNewRoom(client, room);
-    }
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.conversationService.createConversation(conversationCreateDto).then((_id) => {
       // Session 에 Conversations 저장
@@ -227,10 +229,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
 
-    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
-      this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
-      await this.createNewRoom(client, room);
-    }
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     // Meeting 에 Vertex 저장
     const meetingUpdateDto_vertex: MeetingUpdateDto = {
@@ -281,7 +281,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`the number of people left in the room: ${num}`);
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0) {
-      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(this.roomRecord[room].recordingId);
+      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(
+        this.roomRecord[room].recordingId,
+      );
       console.log(`recording url: ${responseRecordingDto.url}`);
       console.log(`recording status: ${responseRecordingDto.status}`);
 
@@ -386,7 +388,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     const recordingResponseDto: RecordingResponseDto = await this.recordService.startRecording(startRecordingDto);
-    this.roomRecord[room] = { recordingId: recordingResponseDto.id,  createdAt: recordingResponseDto.createdAt};
+    this.roomRecord[room] = { recordingId: recordingResponseDto.id, createdAt: recordingResponseDto.createdAt };
 
     const meetingUpdateDto_record: MeetingUpdateDto = {
       id: this.roomMeetingMap[room],
@@ -404,8 +406,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.meetingService.updateMeetingField(meetingUpdateDto_record);
     await this.meetingService.updateMeetingField(meetingUpdateDto_startTime);
-
-    
 
     console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
     this.logger.log('Create Room Method: Complete');

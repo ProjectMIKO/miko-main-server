@@ -14,6 +14,7 @@ import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/inval
 import { InvalidResponseException } from '../exception/invalidResponse.exception';
 import { EmptyDataException } from '../exception/emptyData.exception';
 import { InvalidPasswordException } from '../exception/invalidPassword.exception';
+import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
@@ -60,6 +61,9 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         statusCode = 400;
         message = `Error#007(EmptyDataException): ${(exception as EmptyDataException).message}`;
         break;
+      case RoomNotFoundException:
+        statusCode = 404;
+        message = `Error#008(RoomNotFoundException): ${(exception as RoomNotFoundException).message}`;
       default:
         statusCode = 500;
         message = `Error#000(InternalServerError): ${exception.message}`;

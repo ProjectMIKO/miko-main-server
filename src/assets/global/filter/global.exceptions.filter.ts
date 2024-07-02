@@ -69,6 +69,8 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         message = `Error#000(InternalServerError): ${exception.message}`;
     }
 
+    this.logger.error(message);
+
     if (host.getType() === 'http') {
       // HTTP 요청 처리
       response.status(statusCode).json({
@@ -80,7 +82,6 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     } else if (host.getType() === 'ws') {
       // WebSocket 요청 처리
       const client = host.switchToWs().getClient<Socket>();
-      this.logger.error(message);
       client.emit('error', message);
     }
   }

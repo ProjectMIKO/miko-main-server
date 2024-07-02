@@ -52,7 +52,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private roomConversations: RoomConversations = {};
   private roomMeetingMap: { [key: string]: string } = {};
   private roomHostManager: { [key: string]: string } = {};
-  private roomRecord: { [key: string]: string } = {};
+  private roomRecord: { [key: string]: {recordingId: string; createdAt: number}} = {};
 
   @WebSocketServer() server: Server;
 
@@ -152,6 +152,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Convert STT Method: Start`);
 
     const currentTime = new Date();
+    const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
     const buffer = Buffer.from(new Uint8Array(file));
 
     const newFile: Express.Multer.File = {
@@ -172,10 +173,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       user: client['nickname'],
       script: convertResponseDto.script,
       timestamp: currentTime,
+      time_offset: time_offset
     };
 
     console.log(
-      `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime}`,
+      `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime} time_offset: ${time_offset}`,
     );
 
     if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
@@ -291,7 +293,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`the number of people left in the room: ${num}`);
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0){
-      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(this.roomRecord[room]);
+      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(this.roomRecord[room].recordingId);
       this.logger.log(`recording url: ${responseRecordingDto.url}`);
       this.logger.log(`recording status: ${responseRecordingDto.status}`);
       await this.openviduService.closeSession(room);
@@ -390,7 +392,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       record: recordingResponseDto.id,
     };
 
-    this.roomRecord[room] = recordingResponseDto.id;
+    this.roomRecord[room] = { recordingId: recordingResponseDto.id,  createdAt: recordingResponseDto.createdAt};
     this.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
     this.roomHostManager[room] = client['nickname'];
     this.roomConversations[room] = {};

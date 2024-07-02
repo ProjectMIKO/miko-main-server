@@ -54,7 +54,6 @@ export class EdgeService {
       })
       .exec();
 
-    if (edges.length === 0) throw new NotFoundException('Edges not found');
 
     return edges;
   }

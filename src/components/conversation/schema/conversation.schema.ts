@@ -17,6 +17,10 @@ export class Conversation {
   @ApiProperty({ description: 'Timestamp of the conversation' })
   @Prop({ required: true })
   timestamp: Date;
+
+  @ApiProperty({ description: 'Recording time offset' })
+  @Prop({ required: true })
+  time_offset: number;
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);

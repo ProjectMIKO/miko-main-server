@@ -15,10 +15,10 @@ export class Meeting {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   owner: Types.ObjectId;
 
-  @Prop()
+  @Prop({ default: '' })
   startTime: Date;
 
-  @Prop()
+  @Prop({ default: '' })
   endTime: Date;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Conversation' }], default: [] })
@@ -30,7 +30,7 @@ export class Meeting {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Edge' }], default: [] })
   edges: Edge[];
 
-  @Prop()
+  @Prop({ default: '' })
   record: string;
 }
 

@@ -19,7 +19,7 @@ export class AppService {
    * @param client - Socket
    * @param room - 방 이름
    */
-  public async createNewRoom(nickname: string, room: string, password: string) {
+  public async createNewRoom(nickname: string, room: string, password: string): Promise<boolean> {
     if (!nickname) throw new BadRequestException('Nickname is empty');
     if (!room) throw new BadRequestException('Room is empty');
 
@@ -42,5 +42,7 @@ export class AppService {
 
     console.log(`Create New Meeting Completed: ${room}: ${this.appGateway.roomMeetingMap[room]}`);
     this.logger.log('Create Room Method: Complete');
+
+    return true;
   }
 }

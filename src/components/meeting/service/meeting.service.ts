@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { InvalidResponseException } from 'assets/global/exception/invalidResponse.exception';
 import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
 import { MeetingFindResponseDto } from '../dto/meeting.find.response.dto';
+import { MeetingUpdateDto } from '../dto/meeting.update.dto';
 
 @Injectable()
 @UseFilters(GlobalExceptionsFilter)
@@ -13,7 +14,7 @@ export class MeetingService {
   constructor(@InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>) {}
 
   validateField(field: string) {
-    if (!['conversations', 'vertexes', 'edges'].includes(field))
+    if (!['conversations', 'vertexes', 'edges', 'record', 'endTime', 'owner'].includes(field))
       throw new BadRequestException(`Invalid field: ${field}`);
   }
 
@@ -22,10 +23,7 @@ export class MeetingService {
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meeting = new this.meetingModel({
-      ...meetingCreateDto,
-      startTime: new Date(),
-    });
+    const meeting = new this.meetingModel(meetingCreateDto);
 
     meeting.save().catch((error) => {
       throw new InvalidResponseException('CreateNewMeeting');
@@ -61,21 +59,21 @@ export class MeetingService {
     return this.meetingModel.findByIdAndDelete(id).exec();
   }
 
-  async updateMeetingField(id: string, _id: string, field: string, action: string): Promise<string> {
-    this.validateField(field);
-    this.validateAction(action);
+  async updateMeetingField(meetingUpdateDto: MeetingUpdateDto): Promise<string> {
+    this.validateField(meetingUpdateDto.field);
+    this.validateAction(meetingUpdateDto.action);
 
-    const update = { [action]: { [field]: _id } };
+    const update = { [meetingUpdateDto.action]: { [meetingUpdateDto.field]: meetingUpdateDto.value } };
 
     const meeting = await this.meetingModel
-      .findByIdAndUpdate(id, update, {
+      .findByIdAndUpdate(meetingUpdateDto.id, update, {
         new: true,
         useFindAndModify: false,
       })
-      .populate(field)
+      .populate(meetingUpdateDto.field)
       .exec();
 
-    if (!meeting) throw new NotFoundException(`Meeting with ID ${id} not found`);
+    if (!meeting) throw new NotFoundException(`Meeting with ID ${meetingUpdateDto.id} not found`);
 
     return meeting._id.toString();
   }

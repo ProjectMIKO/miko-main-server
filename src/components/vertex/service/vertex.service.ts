@@ -30,7 +30,6 @@ export class VertexService {
       })
       .exec();
 
-    if (vertexes.length === 0) throw new NotFoundException('Vertexes not found');
 
     return vertexes;
   }

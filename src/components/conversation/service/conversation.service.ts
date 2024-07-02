@@ -31,7 +31,6 @@ export class ConversationService {
       })
       .exec();
 
-    if (conversations.length === 0) throw new NotFoundException('Conversations not found');
 
     return conversations;
   }

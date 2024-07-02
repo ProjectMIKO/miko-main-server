@@ -390,7 +390,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const meetingUpdateDto_record: MeetingUpdateDto = {
       id: this.roomMeetingMap[room],
-      value: recordingResponseDto.recordingId,
+      value: recordingResponseDto.id,
       field: 'record',
       action: '$push',
     };

@@ -11,8 +11,4 @@ export class MeetingCreateDto {
   @IsString()
   @IsNotEmpty()
   owner: string;
-
-  @ApiProperty({ description: 'Record file id' })
-  @IsString()
-  record: string;
 }

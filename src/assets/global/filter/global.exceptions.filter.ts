@@ -12,7 +12,8 @@ import { Request, Response } from 'express';
 import { Socket } from 'socket.io';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
 import { InvalidResponseException } from '../exception/invalidResponse.exception';
-import { EmptyDataWarning } from 'assets/global/warning/emptyData.warning';
+import { EmptyDataException } from '../exception/emptyData.exception';
+import { InvalidPasswordException } from '../exception/invalidPassword.exception';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
@@ -51,9 +52,13 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         statusCode = 502;
         message = `Error#005(BadGatewayException): ${(exception as BadGatewayException).message}`;
         break;
-      case EmptyDataWarning:
-        status = 'warning';
-        message = `Warning#001(EmptyDataException): ${(exception as EmptyDataWarning).message}`;
+      case InvalidPasswordException:
+        statusCode = 400;
+        message = `Error#006(InvalidPasswordException): ${(exception as InvalidPasswordException).message}`;
+        break;
+      case EmptyDataException:
+        statusCode = 400;
+        message = `Error#007(EmptyDataException): ${(exception as EmptyDataException).message}`;
         break;
       default:
         statusCode = 500;
@@ -71,15 +76,8 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     } else if (host.getType() === 'ws') {
       // WebSocket 요청 처리
       const client = host.switchToWs().getClient<Socket>();
-      if (status === 'error') {
-        this.logger.error(message);
-        client.emit('error', message);
-      } else if (status === 'warning') {
-        this.logger.warn(message);
-        client.emit('warning', message);
-      } else {
-        this.logger.error(message);
-      }
+      this.logger.error(message);
+      client.emit('error', message);
     }
   }
 }

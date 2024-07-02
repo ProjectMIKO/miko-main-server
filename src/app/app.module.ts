@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './controller/app.controller';
-import { AppService, AppGateway } from './gateway/app.gateway';
+import { AppGateway } from './gateway/app.gateway';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getMongoConfig } from 'assets/global/config/mongoose.config';
@@ -14,6 +14,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionsFilter } from 'assets/global/filter/global.exceptions.filter';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { AppService } from './service/app.service';
 
 @Module({
   imports: [

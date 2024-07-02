@@ -19,7 +19,7 @@ export class MeetingService {
   }
 
   validateAction(action: string) {
-    if (!['$push', '$pull'].includes(action)) throw new BadRequestException(`Invalid action: ${action}`);
+    if (!['$push', '$pull', '$set'].includes(action)) throw new BadRequestException(`Invalid action: ${action}`);
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {

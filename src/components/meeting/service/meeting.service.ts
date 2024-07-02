@@ -14,7 +14,7 @@ export class MeetingService {
   constructor(@InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>) {}
 
   validateField(field: string) {
-    if (!['conversations', 'vertexes', 'edges', 'record', 'endTime', 'owner'].includes(field))
+    if (!['owner', 'conversations', 'vertexes', 'edges', 'record', 'startTime', 'endTime'].includes(field))
       throw new BadRequestException(`Invalid field: ${field}`);
   }
 

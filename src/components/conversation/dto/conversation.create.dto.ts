@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsDate } from 'class-validator';
+import { IsString, IsNotEmpty, IsDate, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ConversationCreateDto {
@@ -16,4 +16,9 @@ export class ConversationCreateDto {
   @IsDate()
   @IsNotEmpty()
   timestamp: Date;
+
+  @ApiProperty({ description: 'Recording time offset' })
+  @IsNumber()
+  @IsNotEmpty()
+  time_offset: number;
 }

@@ -14,6 +14,7 @@ import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/inval
 import { InvalidResponseException } from '../exception/invalidResponse.exception';
 import { EmptyDataException } from '../exception/emptyData.exception';
 import { InvalidPasswordException } from '../exception/invalidPassword.exception';
+import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
@@ -60,10 +61,15 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
         statusCode = 400;
         message = `Error#007(EmptyDataException): ${(exception as EmptyDataException).message}`;
         break;
+      case RoomNotFoundException:
+        statusCode = 404;
+        message = `Error#008(RoomNotFoundException): ${(exception as RoomNotFoundException).message}`;
       default:
         statusCode = 500;
         message = `Error#000(InternalServerError): ${exception.message}`;
     }
+
+    this.logger.error(message);
 
     if (host.getType() === 'http') {
       // HTTP 요청 처리
@@ -76,7 +82,6 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     } else if (host.getType() === 'ws') {
       // WebSocket 요청 처리
       const client = host.switchToWs().getClient<Socket>();
-      this.logger.error(message);
       client.emit('error', message);
     }
   }

@@ -31,6 +31,7 @@ import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.resp
 import { OpenviduService } from '@openvidu/service/openvidu.service';
 import { InvalidPasswordException } from '@global/exception/invalidPassword.exception';
 import { MeetingUpdateDto } from 'components/meeting/dto/meeting.update.dto';
+import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
 
 @WebSocketGateway({
   cors: {
@@ -45,7 +46,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public roomMeetingMap: { [key: string]: string } = {};
   public roomHostManager: { [key: string]: string } = {};
   public roomPosswordManager: { [key: string]: string } = {};
-  private roomRecord: { [key: string]: {recordingId: string; createdAt: number}} = {};
+  private roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
 
   @WebSocketServer() server: Server;
 
@@ -80,12 +81,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('enter_room')
   async handleEnterRoom(client: Socket, room: string, password: string) {
     if (!room) throw new BadRequestException('Room is empty');
-
-    this.logger.log(`Enter Room: Start`);
-
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
+    if (!this.roomList().includes(room)) throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (this.roomPosswordManager[room] != password) {
       throw new InvalidPasswordException('Invalid password');
     }
+
+    this.logger.log(`Enter Room: Start`);
 
     if (this.countMember(room) == 0) {
       client.join(room);
@@ -120,6 +123,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleRecord(client: Socket, [room, file]: [string, ArrayBuffer]) {
     if (!file) throw new BadRequestException('File Not Found');
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.logger.log(`Convert STT Method: Start`);
 
@@ -145,17 +150,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       user: client['nickname'],
       script: convertResponseDto.script,
       timestamp: currentTime,
-      time_offset: time_offset
+      time_offset: time_offset,
     };
 
     console.log(
       `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime} time_offset: ${time_offset}`,
     );
-
-    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
-      this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
-      await this.createNewRoom(client, room);
-    }
 
     this.conversationService.createConversation(conversationCreateDto).then((_id) => {
       // Session 에 Conversations 저장
@@ -177,6 +177,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.logger.log(`Summarize Method: Start`);
 
@@ -211,6 +213,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, any],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
     if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
 
@@ -226,11 +230,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.vertexService.createVertex(vertexCreateRequestDto);
 
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
-
-    if (!this.roomConversations[room] || !this.roomMeetingMap[room]) {
-      this.logger.warn('Room 이 정상적으로 생성되지 않았습니다');
-      await this.createNewRoom(client, room);
-    }
 
     // Meeting 에 Vertex 저장
     const meetingUpdateDto_vertex: MeetingUpdateDto = {
@@ -250,6 +249,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('edge')
   async handleEdge(client: Socket, [room, vertex1, vertex2, action]: [string, string, string, string]) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (!vertex1 || !vertex2) throw new BadRequestException('Vertex ID is empty');
     if (action !== '$push' && action !== '$pull') throw new BadRequestException('Invalid Action');
 
@@ -276,12 +277,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('end_meeting')
   async handleRoomId(client: Socket, room: string) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     const num: Number = this.countMember(room) - 1;
     console.log(`the number of people left in the room: ${num}`);
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0) {
-      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(this.roomRecord[room].recordingId);
+      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(
+        this.roomRecord[room].recordingId,
+      );
       console.log(`recording url: ${responseRecordingDto.url}`);
       console.log(`recording status: ${responseRecordingDto.status}`);
 
@@ -386,7 +391,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     const recordingResponseDto: RecordingResponseDto = await this.recordService.startRecording(startRecordingDto);
-    this.roomRecord[room] = { recordingId: recordingResponseDto.id,  createdAt: recordingResponseDto.createdAt};
+    this.roomRecord[room] = { recordingId: recordingResponseDto.id, createdAt: recordingResponseDto.createdAt };
 
     const meetingUpdateDto_record: MeetingUpdateDto = {
       id: this.roomMeetingMap[room],
@@ -404,8 +409,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.meetingService.updateMeetingField(meetingUpdateDto_record);
     await this.meetingService.updateMeetingField(meetingUpdateDto_startTime);
-
-    
 
     console.log(`Create New Meeting Completed: ${room}: ${this.roomMeetingMap[room]}`);
     this.logger.log('Create Room Method: Complete');

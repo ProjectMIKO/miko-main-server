@@ -79,7 +79,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('enter_room')
-  async handleEnterRoom(client: Socket, room: string, password: string) {
+  async handleEnterRoom(client: Socket, [room, password]: [string, string]) {
     console.log(`Entering Room: ${room}:${this.roomMeetingMap[room]} - Password: ${password}`);
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
@@ -129,7 +129,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Convert STT Method: Start`);
 
     const currentTime = new Date(timestamp);
-    console.log(`timestamp: ${timestamp}`)
+    console.log(`timestamp: ${timestamp}`);
     const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
     const buffer = Buffer.from(new Uint8Array(file));
 

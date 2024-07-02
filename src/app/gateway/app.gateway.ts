@@ -81,15 +81,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('enter_room')
   async handleEnterRoom(client: Socket, room: string, password: string) {
     if (!room) throw new BadRequestException('Room is empty');
-
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
-
-    this.logger.log(`Enter Room: Start`);
-
+    if (!this.roomList().includes(room)) throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (this.roomPosswordManager[room] != password) {
       throw new InvalidPasswordException('Invalid password');
     }
+
+    this.logger.log(`Enter Room: Start`);
 
     if (this.countMember(room) == 0) {
       client.join(room);
@@ -124,6 +123,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleRecord(client: Socket, [room, file]: [string, ArrayBuffer]) {
     if (!file) throw new BadRequestException('File Not Found');
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.logger.log(`Convert STT Method: Start`);
 
@@ -156,9 +157,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime} time_offset: ${time_offset}`,
     );
 
-    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
-      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
-
     this.conversationService.createConversation(conversationCreateDto).then((_id) => {
       // Session 에 Conversations 저장
       this.roomConversations[room][_id] = [conversationCreateDto];
@@ -179,6 +177,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.logger.log(`Summarize Method: Start`);
 
@@ -213,6 +213,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, any],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
     if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
 
@@ -228,9 +230,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.vertexService.createVertex(vertexCreateRequestDto);
 
     this.emitMessage(client, room, 'vertex', vertexCreateResponseDto);
-
-    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
-      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     // Meeting 에 Vertex 저장
     const meetingUpdateDto_vertex: MeetingUpdateDto = {
@@ -250,6 +249,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('edge')
   async handleEdge(client: Socket, [room, vertex1, vertex2, action]: [string, string, string, string]) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (!vertex1 || !vertex2) throw new BadRequestException('Vertex ID is empty');
     if (action !== '$push' && action !== '$pull') throw new BadRequestException('Invalid Action');
 
@@ -276,6 +277,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('end_meeting')
   async handleRoomId(client: Socket, room: string) {
     if (!room) throw new BadRequestException('Room is empty');
+    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     const num: Number = this.countMember(room) - 1;
     console.log(`the number of people left in the room: ${num}`);

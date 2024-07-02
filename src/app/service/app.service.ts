@@ -18,8 +18,10 @@ export class AppService {
   /**
    * 새로운 방에 입장했을 때 Session 초기화 및 DB에 meeting 생성. room 이름과 meeting 맵핑하는 메서드
    *
-   * @param client - Socket
+   * @param nickname - 이름
    * @param room - 방 이름
+   * @param password - 비밀번호
+   * @returns 성공 여부
    */
   public async createNewRoom(nickname: string, room: string, password: string): Promise<boolean> {
     if (!nickname) throw new BadRequestException('Nickname is empty');

@@ -295,7 +295,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         id: this.roomMeetingMap[room],
         value: new Date(),
         field: 'endTime',
-        action: '$push',
+        action: '$set',
       };
 
       await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);

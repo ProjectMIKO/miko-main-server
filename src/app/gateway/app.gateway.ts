@@ -45,7 +45,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public roomConversations: RoomConversations = {};
   public roomMeetingMap: { [key: string]: string } = {};
   public roomHostManager: { [key: string]: string } = {};
-  public roomPosswordManager: { [key: string]: string } = {};
+  public roomPasswordManager: { [key: string]: string } = {};
   private roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
 
   @WebSocketServer() server: Server;
@@ -80,11 +80,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('enter_room')
   async handleEnterRoom(client: Socket, room: string, password: string) {
+    console.log(`Entering Room: ${room}:${this.roomMeetingMap[room]} - Password: ${password}`);
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
-    if (!this.roomList().includes(room)) throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
-    if (this.roomPosswordManager[room] != password) {
+    if (this.roomPasswordManager[room] != password) {
       throw new InvalidPasswordException('Invalid password');
     }
 

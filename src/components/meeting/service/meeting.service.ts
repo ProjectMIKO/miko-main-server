@@ -23,7 +23,7 @@ export class MeetingService {
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meeting = new this.meetingModel(meetingCreateDto);
+    const meeting = new this.meetingModel({ ...meetingCreateDto });
 
     meeting.save().catch((error) => {
       throw new InvalidResponseException('CreateNewMeeting');

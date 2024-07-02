@@ -1,12 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
-export class RoomCreateDto {
-  @ApiProperty({ description: 'Nickname of the user' })
-  @IsString()
-  @IsNotEmpty()
-  nickname: string;
-
+export class RoomJoinDto {
   @ApiProperty({ description: 'Name of the room' })
   @IsString()
   @IsNotEmpty()

@@ -15,7 +15,7 @@ export class Meeting {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   owner: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop()
   startTime: Date;
 
   @Prop()

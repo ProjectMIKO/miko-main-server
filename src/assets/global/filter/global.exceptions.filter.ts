@@ -15,6 +15,7 @@ import { InvalidResponseException } from '../exception/invalidResponse.exception
 import { EmptyDataException } from '../exception/emptyData.exception';
 import { InvalidPasswordException } from '../exception/invalidPassword.exception';
 import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
+import { RoomExistException } from '@global/exception/roomExist.exception';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
@@ -64,6 +65,9 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
       case RoomNotFoundException:
         statusCode = 404;
         message = `Error#008(RoomNotFoundException): ${(exception as RoomNotFoundException).message}`;
+      case RoomExistException:
+        statusCode = 400;
+        message = `Error#009(RoomExistException): ${(exception as RoomExistException).message}`;
       default:
         statusCode = 500;
         message = `Error#000(InternalServerError): ${exception.message}`;

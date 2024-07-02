@@ -1,9 +1,10 @@
 import { Body, Controller, Get, Post, Res } from '@nestjs/common';
-import { Response } from 'express';
-import { AppService } from '../service/app.service';
-import { join } from 'path';
-import { RoomCreateDto } from '../dto/room.create.dto';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
+import { Response } from 'express';
+import { join } from 'path';
+import { AppService } from '../service/app.service';
+import { RoomCreateDto } from '../dto/room.create.dto';
+import { RoomJoinDto } from '../dto/room.join.dto';
 
 @ApiTags('App')
 @Controller()
@@ -65,17 +66,37 @@ export class AppController {
       example: true,
     },
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid input, object invalid',
-    schema: {
-      type: 'boolean',
-      example: false,
-    },
-  })
   @Post('create/room')
   async createRoom(@Body() roomCreateDto: RoomCreateDto): Promise<boolean> {
     const { nickname, room, password } = roomCreateDto;
     return await this.appService.createNewRoom(nickname, room, password);
+  }
+
+  @ApiOperation({ summary: 'Join an existing room' })
+  @ApiBody({
+    description: 'The data needed to join an existing room',
+    type: RoomJoinDto,
+    examples: {
+      example1: {
+        summary: 'Example room join',
+        value: {
+          room: 'Room1',
+          password: 'password123',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully joined the room.',
+    schema: {
+      type: 'boolean',
+      example: true,
+    },
+  })
+  @Post('join/room')
+  async joinRoom(@Body() roomJoinDto: RoomJoinDto): Promise<boolean> {
+    const { room, password } = roomJoinDto;
+    return await this.appService.joinRoom(room, password);
   }
 }

@@ -37,8 +37,11 @@ export class AppService {
     if (!room) throw new BadRequestException('Room is empty');
 
     this.logger.log('Create Room Method: Initiated');
+    
+    console.log('Existing rooms:', Object.keys(this.appGateway.roomMeetingMap));
 
     if (this.appGateway.roomMeetingMap[room]) throw new RoomExistException(`${room} is an existing room`);
+
 
     const meetingCreateDto: MeetingCreateDto = {
       title: room,

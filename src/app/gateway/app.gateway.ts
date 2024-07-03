@@ -300,8 +300,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
       await this.openviduService.closeSession(room);
-
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
+      delete this.roomMeetingMap[room];
     } else {
       client.emit('end_meeting', this.roomMeetingMap[room]);
     }

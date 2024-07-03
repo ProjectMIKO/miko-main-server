@@ -120,7 +120,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('stt')
-  async handleRecord(client: Socket, [room, file, timestamp]: [string, ArrayBuffer, number]) {
+  async handleRecord(client: Socket, [room, file, timestamp]: [string, Blob, number]) {
     if (!file) throw new BadRequestException('File Not Found');
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
@@ -131,17 +131,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const currentTime = new Date(timestamp);
     console.log(`timestamp: ${timestamp}`);
     const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
-    const buffer = Buffer.from(new Uint8Array(file));
 
-    const newFile: Express.Multer.File = {
-      buffer: buffer,
-      originalname: 'temp.wav',
-      mimetype: 'audio/wav',
-      filename: 'temp.wav',
-      size: buffer.length,
-    } as Express.Multer.File;
-
-    const convertResponseDto: ConvertResponseDto = await this.middlewareService.convertStt(newFile); // STT 변환 요청
+    const convertResponseDto: ConvertResponseDto = await this.middlewareService.convertStt(file); // STT 변환 요청
 
     if (!convertResponseDto.script) throw new EmptyDataException(`ConvertSTT: Empty script`);
 

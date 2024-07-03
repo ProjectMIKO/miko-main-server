@@ -130,6 +130,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const currentTime = new Date(timestamp);
     console.log(`timestamp: ${timestamp}`);
+    // Blob 크기 확인
+    const blobSize = file.size;
+    console.log(`Blob 크기: ${blobSize} 바이트`);
     const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
 
     const convertResponseDto: ConvertResponseDto = await this.middlewareService.convertStt(file); // STT 변환 요청

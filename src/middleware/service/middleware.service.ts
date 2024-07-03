@@ -36,12 +36,9 @@ export class MiddlewareService {
       });
   }
 
-  public async convertStt(file: Express.Multer.File): Promise<ConvertResponseDto> {
+  public async convertStt(file: Blob): Promise<ConvertResponseDto> {
     const formData = new FormData();
-    formData.append('file', file.buffer, {
-      filename: file.originalname,
-      contentType: file.mimetype,
-    });
+    formData.append('file', file, 'temp.wav'); // Blob을 그대로 추가
 
     return axios
       .post(`${this.NLP_SERVER_URL}/api/stt/`, formData, {

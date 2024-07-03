@@ -79,7 +79,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('enter_room')
-  async handleEnterRoom(client: Socket, room: string, password: string) {
+  async handleEnterRoom(client: Socket, [room, password]: [string, string]) {
+    console.log(`Entering Room: ${room}:${this.roomMeetingMap[room]} - Password: ${password}`);
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
@@ -128,7 +129,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Convert STT Method: Start`);
 
     const currentTime = new Date(timestamp);
-    console.log(`timestamp: ${timestamp}`)
+    console.log(`timestamp: ${timestamp}`);
     const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
     const buffer = Buffer.from(new Uint8Array(file));
 
@@ -193,14 +194,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const summarizeResponseDto: SummarizeResponseDto =
       await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-    console.log(`Main Subject Returned: ${summarizeResponseDto.main.keyword} - ${summarizeResponseDto.main.subject}`);
-    const mainId = await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto.main]);
+    for (const idea of summarizeResponseDto.idea) {
+      console.log(`Main Subject Returned: ${idea.main.keyword} - ${idea.main.subject}`);
+      const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
 
-    for (const subItem of summarizeResponseDto.sub) {
-      console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
-      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
-      console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
-      await this.handleEdge(client, [room, mainId, subId, '$push']);
+      for (const subItem of idea.sub) {
+        console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
+        const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+        console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
+        await this.handleEdge(client, [room, mainId, subId, '$push']);
+      }
     }
 
     this.roomConversations[room] = {}; // 임시 저장한 대화 flush
@@ -294,13 +297,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         id: this.roomMeetingMap[room],
         value: new Date(),
         field: 'endTime',
-        action: '$push',
+        action: '$set',
       };
 
       await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
       await this.openviduService.closeSession(room);
-
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
+      delete this.roomMeetingMap[room];
     } else {
       client.emit('end_meeting', this.roomMeetingMap[room]);
     }
@@ -397,14 +400,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       id: this.roomMeetingMap[room],
       value: recordingResponseDto.id,
       field: 'record',
-      action: '$push',
+      action: '$set',
     };
 
     const meetingUpdateDto_startTime: MeetingUpdateDto = {
       id: this.roomMeetingMap[room],
       value: new Date(recordingResponseDto.createdAt),
       field: 'startTime',
-      action: '$push',
+      action: '$set',
     };
 
     await this.meetingService.updateMeetingField(meetingUpdateDto_record);

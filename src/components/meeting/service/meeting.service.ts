@@ -14,16 +14,16 @@ export class MeetingService {
   constructor(@InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>) {}
 
   validateField(field: string) {
-    if (!['conversations', 'vertexes', 'edges', 'record', 'endTime', 'owner'].includes(field))
+    if (!['owner', 'conversations', 'vertexes', 'edges', 'record', 'startTime', 'endTime'].includes(field))
       throw new BadRequestException(`Invalid field: ${field}`);
   }
 
   validateAction(action: string) {
-    if (!['$push', '$pull'].includes(action)) throw new BadRequestException(`Invalid action: ${action}`);
+    if (!['$push', '$pull', '$set'].includes(action)) throw new BadRequestException(`Invalid action: ${action}`);
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meeting = new this.meetingModel(meetingCreateDto);
+    const meeting = new this.meetingModel({ ...meetingCreateDto });
 
     meeting.save().catch((error) => {
       throw new InvalidResponseException('CreateNewMeeting');

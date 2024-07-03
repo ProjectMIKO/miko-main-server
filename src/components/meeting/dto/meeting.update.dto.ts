@@ -16,9 +16,9 @@ export class MeetingUpdateDto {
   @IsNotEmpty()
   field: string;
 
-  @ApiProperty({ description: 'Action to perform', enum: ['$push', '$pull'] })
+  @ApiProperty({ description: 'Action to perform', enum: ['$push', '$pull', '$set'] })
   @IsString()
   @IsNotEmpty()
-  @IsIn(['$push', '$pull'])
+  @IsIn(['$push', '$pull', '$set'])
   action: string;
 }

@@ -194,14 +194,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const summarizeResponseDto: SummarizeResponseDto =
       await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-    console.log(`Main Subject Returned: ${summarizeResponseDto.main.keyword} - ${summarizeResponseDto.main.subject}`);
-    const mainId = await this.handleVertex(client, [room, summarizeRequestDto, summarizeResponseDto.main]);
+    for (const idea of summarizeResponseDto.idea) {
+      console.log(`Main Subject Returned: ${idea.main.keyword} - ${idea.main.subject}`);
+      const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
 
-    for (const subItem of summarizeResponseDto.sub) {
-      console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
-      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
-      console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
-      await this.handleEdge(client, [room, mainId, subId, '$push']);
+      for (const subItem of idea.sub) {
+        console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
+        const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+        console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
+        await this.handleEdge(client, [room, mainId, subId, '$push']);
+      }
     }
 
     this.roomConversations[room] = {}; // 임시 저장한 대화 flush

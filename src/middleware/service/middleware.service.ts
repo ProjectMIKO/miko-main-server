@@ -27,8 +27,7 @@ export class MiddlewareService {
       .then((response) => {
         const responseData = response.data;
         const summarizeResponseDto: SummarizeResponseDto = {
-          main: responseData.main,
-          sub: responseData.sub,
+          idea: responseData.idea,
         };
         return summarizeResponseDto;
       })

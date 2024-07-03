@@ -14,15 +14,23 @@ class SummaryBody {
   subject: string;
 }
 
-export class SummarizeResponseDto {
+class Idea {
   @ApiProperty({ description: 'Main item', type: SummaryBody })
   @ValidateNested()
   @Type(() => SummaryBody)
-  readonly main: SummaryBody;
+  main: SummaryBody;
 
   @ApiProperty({ description: 'Sub-items', type: [SummaryBody] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SummaryBody)
-  readonly sub: SummaryBody[];
+  sub: SummaryBody[];
+}
+
+export class SummarizeResponseDto {
+  @ApiProperty({ description: 'Idea array', type: [Idea] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Idea)
+  idea: Idea[];
 }

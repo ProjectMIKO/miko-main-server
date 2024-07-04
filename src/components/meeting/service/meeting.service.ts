@@ -36,10 +36,6 @@ export class MeetingService {
   }
 
   public async findAllByOwner(ownerId: string): Promise<MeetingListResponseDto[]> {
-    if (!Types.ObjectId.isValid(ownerId)) {
-      throw new NotFoundException('Invalid owner ID');
-    }
-
     const meetings = await this.meetingModel.find({ owner: ownerId }).exec();
 
     if (!meetings.length) {

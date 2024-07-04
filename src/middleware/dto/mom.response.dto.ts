@@ -41,11 +41,21 @@ export class MomResponseDto {
   @IsNotEmpty()
   mom: string;
 
-  constructor(mom: Mom){
-    this.title = mom.title
-    this.startTime =mom.startTime
-    this.period = mom.period
-    this.participants = mom.participants
-    this.mom = mom.mom
+  constructor();
+  constructor(mom: Mom);
+  constructor(mom?: Mom) {
+    if (mom) {
+      this.title = mom.title;
+      this.startTime = mom.startTime;
+      this.period = mom.period;
+      this.participants = mom.participants;
+      this.mom = mom.mom;
+    } else {
+      this.title = '';
+      this.startTime = new Date();
+      this.period = 0;
+      this.participants = [];
+      this.mom = '';
+    }
   }
 }

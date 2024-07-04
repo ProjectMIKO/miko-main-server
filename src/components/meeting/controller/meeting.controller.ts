@@ -20,7 +20,6 @@ import { MomResponseDto } from '@middleware/dto/mom.response.dto';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { Meeting } from '../schema/meeting.schema';
 import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
 
 @ApiTags('Meeting')
@@ -40,7 +39,11 @@ export class MeetingController {
   @Get(':id')
   @ApiOperation({ summary: 'Get meeting details' })
   @ApiParam({ name: 'id', description: 'ID of the meeting to retrieve' })
-  @ApiResponse({ status: 200, description: 'Successfully retrieved meeting details', type: MeetingFindResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved meeting details',
+    type: MeetingFindResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Meeting not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getResult(@Param('id') id: string) {
@@ -53,6 +56,15 @@ export class MeetingController {
   }
 
   @Get(':id/mom')
+  @ApiOperation({ summary: 'Get minutes of meeting' })
+  @ApiParam({ name: 'id', description: 'ID of the meeting to retrieve minutes of' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved minutes of meeting',
+    type: MomResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Meeting not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getMom(@Param('id') id: string) {
     const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
@@ -70,7 +82,11 @@ export class MeetingController {
   @Get('owner/:ownerId')
   @ApiOperation({ summary: 'Get meetings by owner' })
   @ApiParam({ name: 'ownerId', description: 'ID of the owner to retrieve meetings for' })
-  @ApiResponse({ status: 200, description: 'Successfully retrieved meetings', type: [MeetingListResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved meetings',
+    type: [MeetingListResponseDto],
+  })
   @ApiResponse({ status: 404, description: 'No meetings found for this owner' })
   async findAllByOwner(@Param('ownerId') ownerId: string): Promise<MeetingListResponseDto[]> {
     return this.meetingService.findAllByOwner(ownerId);
@@ -100,7 +116,7 @@ export class MeetingController {
       case 'stopped':
         throw new InternalServerErrorException('Recording is stopped but not yet processed');
       // case 'failed':
-        // throw new InternalServerErrorException('Recording failed');
+      //   throw new InternalServerErrorException('Recording failed');
       // default:
       //   throw new InternalServerErrorException('Recording is not ready');
     }

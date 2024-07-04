@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware, UseFilters } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { SummarizeRequestDto } from '../dto/summarize.request.dto';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -6,6 +6,10 @@ import { SummarizeResponseDto } from '../dto/summarize.response.dto';
 import { ConvertResponseDto } from '../dto/convert.response.dto';
 import * as FormData from 'form-data';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
+import { MomResponseDto } from '@middleware/dto/mom.response.dto';
+import { MomRequestDto } from '@middleware/dto/mom.request.dto';
+import { Conversation } from 'components/conversation/schema/conversation.schema';
+import { Vertex } from 'components/vertex/schema/vertex.schema';
 
 @Injectable()
 export class MiddlewareService {
@@ -55,6 +59,29 @@ export class MiddlewareService {
       })
       .catch((error) => {
         throw new InvalidMiddlewareException(`ConvertStt: ${error.message}`);
+      });
+  }
+
+  public async extractMom(conversations: Conversation[], vertexes: Vertex[]): Promise<MomResponseDto> {
+    const momRequestDto: MomRequestDto = {
+      conversations: conversations,
+      vertexes: vertexes,
+    };
+
+    return axios
+      .post(`${this.NLP_SERVER_URL}/api/mom/`, momRequestDto, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then((response) => {
+        const responseData = response.data;
+        const momResponseDto = new MomResponseDto();
+        momResponseDto.summary = responseData.summary;
+        return momResponseDto;
+      })
+      .catch((error) => {
+        throw new InternalServerErrorException(`SummarizeScript: ${error.message}`);
       });
   }
 }

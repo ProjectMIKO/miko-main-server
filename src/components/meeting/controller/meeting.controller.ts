@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Delete, Logger, Res, HttpException, HttpStatus, BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Delete,
+  Logger,
+  Res,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { MeetingService } from '../service/meeting.service';
 import { MeetingFindResponseDto } from '../dto/meeting.find.response.dto';
@@ -9,6 +18,8 @@ import { RecordService } from '@openvidu/service/record.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
 import * as https from 'https'; // or 'http' depending on the protocol
 import { ApiTags } from '@nestjs/swagger';
+import { MomResponseDto } from '@middleware/dto/mom.response.dto';
+import { MiddlewareService } from '@middleware/service/middleware.service';
 
 @ApiTags('Meeting')
 @Controller('api/meeting')
@@ -18,7 +29,8 @@ export class MeetingController {
     private readonly conversationService: ConversationService,
     private readonly vertexService: VertexService,
     private readonly edgeService: EdgeService,
-    private readonly recordService: RecordService
+    private readonly recordService: RecordService,
+    private readonly middlewareService: MiddlewareService,
   ) {}
 
   private readonly logger = new Logger(MeetingController.name);
@@ -31,6 +43,21 @@ export class MeetingController {
     const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
 
     return { conversations, vertexes, edges };
+  }
+
+  @Get(':id/mom')
+  async getMom(@Param('id') id: string) {
+    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
+    const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
+    const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+    const momResponseDto: MomResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
+    momResponseDto.title = meetingFindResponseDto.title;
+    momResponseDto.startTime = meetingFindResponseDto.startTime;
+    const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
+    const minutes = Math.floor(periodMillis / 60000);
+    momResponseDto.period = String(minutes);
+
+    return { momResponseDto };
   }
 
   @Get(':id/record')

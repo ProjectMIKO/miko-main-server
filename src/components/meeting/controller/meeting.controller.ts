@@ -21,6 +21,7 @@ import { MiddlewareService } from '@middleware/service/middleware.service';
 import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
+import { MeetingUpdateDto } from '../dto/meeting.update.dto';
 
 @ApiTags('Meeting')
 @Controller('api/meeting')
@@ -66,19 +67,44 @@ export class MeetingController {
   @ApiResponse({ status: 404, description: 'Meeting not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getMom(@Param('id') id: string) {
+    // Meeting 조회
     const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
+    if (!meetingFindResponseDto) {
+      throw new NotFoundException('Meeting not found');
+    }
+  
+    // Conversations 및 Vertexes 조회
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
     const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+  
+    // 회의록 추출
     const momResponseDto: MomResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
     momResponseDto.title = meetingFindResponseDto.title;
     momResponseDto.startTime = meetingFindResponseDto.startTime;
+  
+    // 회의 기간 계산
     const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
     momResponseDto.period = periodMillis;
+  
+    // 참석자 목록 설정
     const participants: ParticipantDto[] = meetingFindResponseDto.owner.map((name, index) => ({
       name,
       role: index === 0 ? 'host' : 'member',
     }));
-    momResponseDto.participants = participants
+    momResponseDto.participants = participants;
+  
+    // Mom 저장
+    const mom = await this.meetingService.createMom(momResponseDto);
+  
+    // Meeting에 Mom ID 업데이트
+    const meetingUpdateDto_mom: MeetingUpdateDto = {
+      id: id,
+      value: mom._id.toString(),
+      field: 'mom',
+      action: '$set',
+    };
+    await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
+  
     return { momResponseDto };
   }
 

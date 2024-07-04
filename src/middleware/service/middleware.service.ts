@@ -77,7 +77,7 @@ export class MiddlewareService {
       .then((response) => {
         const responseData = response.data;
         const momResponseDto = new MomResponseDto();
-        momResponseDto.summary = responseData.summary;
+        momResponseDto.mom = responseData.mom;
         return momResponseDto;
       })
       .catch((error) => {

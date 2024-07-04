@@ -38,5 +38,5 @@ export class MomResponseDto {
   @ApiProperty({ description: '회의록 요약' })
   @IsString()
   @IsNotEmpty()
-  summary: string;
+  mom: string;
 }

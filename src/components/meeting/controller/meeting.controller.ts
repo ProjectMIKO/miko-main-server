@@ -73,8 +73,7 @@ export class MeetingController {
     momResponseDto.title = meetingFindResponseDto.title;
     momResponseDto.startTime = meetingFindResponseDto.startTime;
     const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
-    const minutes = Math.floor(periodMillis / 60000);
-    momResponseDto.period = String(minutes);
+    momResponseDto.period = String(periodMillis);
 
     return { momResponseDto };
   }

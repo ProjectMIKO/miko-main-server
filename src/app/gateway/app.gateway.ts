@@ -120,7 +120,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('stt')
-  async handleRecord(client: Socket, [room, file, timestamp]: [string, Blob, number]) {
+  async handleRecord(client: Socket, [room, file, timestamp]: [string, any, number]) {
     if (!file) throw new BadRequestException('File Not Found');
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
@@ -128,11 +128,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Convert STT Method: Start`);
 
+    // Blob 크기 확인 (KB 단위로 변환)
+    const fileSize = file.size || file.byteLength || file.length;
+    const fileSizeInKB = (fileSize / 1024).toFixed(2);
+    console.log(`파일 크기: ${fileSizeInKB} KB`);
+
+    // 타임스탬프를 한국 시간으로 변환
     const currentTime = new Date(timestamp);
-    console.log(`timestamp: ${timestamp}`);
-    // Blob 크기 확인
-    const blobSize = file.size;
-    console.log(`Blob 크기: ${blobSize} 바이트`);
+    const koreanTime = new Date(currentTime.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+    console.log(`시간: ${koreanTime.toLocaleString()}`);
     const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
 
     const convertResponseDto: ConvertResponseDto = await this.middlewareService.convertStt(file); // STT 변환 요청

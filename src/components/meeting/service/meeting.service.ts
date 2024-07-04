@@ -7,6 +7,7 @@ import { InvalidResponseException } from 'assets/global/exception/invalidRespons
 import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter';
 import { MeetingFindResponseDto } from '../dto/meeting.find.response.dto';
 import { MeetingUpdateDto } from '../dto/meeting.update.dto';
+import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
 
 @Injectable()
 @UseFilters(GlobalExceptionsFilter)
@@ -23,26 +24,29 @@ export class MeetingService {
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meeting = new this.meetingModel({ ...meetingCreateDto });
+    const meeting = new this.meetingModel({ ...meetingCreateDto, owner: [meetingCreateDto.owner] });
 
-    meeting.save().catch((error) => {
+    try {
+      await meeting.save();
+    } catch (error) {
       throw new InvalidResponseException('CreateNewMeeting');
-    });
+    }
 
     return meeting._id.toString();
   }
 
-  public async findAllByOwner(ownerId: string): Promise<Meeting[]> {
+  public async findAllByOwner(ownerId: string): Promise<MeetingListResponseDto[]> {
     if (!Types.ObjectId.isValid(ownerId)) {
       throw new NotFoundException('Invalid owner ID');
     }
 
-    const meetings = await this.meetingModel.find({ owner: ownerId }).exec();
+    const meetings = await this.meetingModel.find({ owner: ownerId }).select('_id title').exec();
+
     if (!meetings.length) {
       throw new NotFoundException('No meetings found for this owner');
     }
 
-    return meetings;
+    return meetings.map((meeting) => ({ _id: meeting._id.toString(), title: meeting.title }));
   }
 
   async findOne(id: string): Promise<MeetingFindResponseDto> {

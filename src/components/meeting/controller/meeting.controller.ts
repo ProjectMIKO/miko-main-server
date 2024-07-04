@@ -5,8 +5,8 @@ import {
   Delete,
   Logger,
   Res,
-  NotFoundException,
   InternalServerErrorException,
+  NotFoundException
 } from '@nestjs/common';
 import { Response } from 'express';
 import { MeetingService } from '../service/meeting.service';
@@ -16,6 +16,8 @@ import { VertexService } from 'components/vertex/service/vertex.service';
 import { EdgeService } from 'components/edge/service/edge.service';
 import { RecordService } from '@openvidu/service/record.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
+import { MomResponseDto } from '@middleware/dto/mom.response.dto';
+import { MiddlewareService } from '@middleware/service/middleware.service';
 import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { Meeting } from '../schema/meeting.schema';
@@ -30,6 +32,7 @@ export class MeetingController {
     private readonly vertexService: VertexService,
     private readonly edgeService: EdgeService,
     private readonly recordService: RecordService,
+    private readonly middlewareService: MiddlewareService,
   ) {}
 
   private readonly logger = new Logger(MeetingController.name);
@@ -47,6 +50,21 @@ export class MeetingController {
     const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
 
     return { conversations, vertexes, edges };
+  }
+
+  @Get(':id/mom')
+  async getMom(@Param('id') id: string) {
+    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
+    const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
+    const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+    const momResponseDto: MomResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
+    momResponseDto.title = meetingFindResponseDto.title;
+    momResponseDto.startTime = meetingFindResponseDto.startTime;
+    const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
+    const minutes = Math.floor(periodMillis / 60000);
+    momResponseDto.period = String(minutes);
+
+    return { momResponseDto };
   }
 
   @Get('owner/:ownerId')
@@ -81,8 +99,10 @@ export class MeetingController {
         throw new InternalServerErrorException('Recording is still in progress');
       case 'stopped':
         throw new InternalServerErrorException('Recording is stopped but not yet processed');
-      default:
-        throw new InternalServerErrorException('Recording is not ready');
+      // case 'failed':
+        // throw new InternalServerErrorException('Recording failed');
+      // default:
+      //   throw new InternalServerErrorException('Recording is not ready');
     }
 
     const fileUrl = recordingResponseDto.url;

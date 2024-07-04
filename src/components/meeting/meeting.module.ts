@@ -9,6 +9,7 @@ import { ConversationModule } from 'components/conversation/conversation.module'
 import { VertexModule } from 'components/vertex/vertex.module';
 import { EdgeModule } from 'components/edge/edge.module';
 import { OpenviduModule } from '@openvidu/openvidu.module';
+import { MiddlewareModule } from '@middleware/middleware.module';
 
 @Module({
   imports: [
@@ -16,10 +17,11 @@ import { OpenviduModule } from '@openvidu/openvidu.module';
     ConversationModule,
     VertexModule,
     EdgeModule,
-    OpenviduModule
+    OpenviduModule,
+    MiddlewareModule
   ],
   controllers: [MeetingController],
-  providers: [MeetingService],
+  providers: [MeetingService,],
   exports: [MeetingService],
 })
 export class MeetingModule {}

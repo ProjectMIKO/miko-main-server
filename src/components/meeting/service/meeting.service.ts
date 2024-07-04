@@ -100,4 +100,14 @@ export class MeetingService {
     return mom;
   }
 
+  async findMom(momId: string): Promise<MomResponseDto> {
+    const mom = await this.momModel.findById(momId);
+
+    if (!mom) throw new NotFoundException(`MOM with ID ${momId} not found`);
+
+    const momResponseDto = new MomResponseDto(mom);
+
+    return momResponseDto;
+  }
+
 }

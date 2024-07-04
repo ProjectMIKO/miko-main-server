@@ -72,6 +72,11 @@ export class MeetingController {
     if (!meetingFindResponseDto) {
       throw new NotFoundException('Meeting not found');
     }
+    // mom 조회
+    if(meetingFindResponseDto.mom) {
+      const mom: MomResponseDto = await this.meetingService.findMom(meetingFindResponseDto.mom);
+      return { mom }
+    }
   
     // Conversations 및 Vertexes 조회
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);

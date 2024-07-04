@@ -49,8 +49,8 @@ export class MeetingController {
         throw new InternalServerErrorException('Recording is still in progress');
       case 'stopped':
         throw new InternalServerErrorException('Recording is stopped but not yet processed');
-      case 'failed':
-        throw new InternalServerErrorException('Recording failed');
+      // case 'failed':
+        // throw new InternalServerErrorException('Recording failed');
       default:
         throw new InternalServerErrorException('Recording is not ready');
     }

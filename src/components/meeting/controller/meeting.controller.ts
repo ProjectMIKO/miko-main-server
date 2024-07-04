@@ -78,8 +78,8 @@ export class MeetingController {
         throw new InternalServerErrorException('Recording is stopped but not yet processed');
       // case 'failed':
         // throw new InternalServerErrorException('Recording failed');
-      default:
-        throw new InternalServerErrorException('Recording is not ready');
+      // default:
+      //   throw new InternalServerErrorException('Recording is not ready');
     }
 
     const fileUrl = recordingResponseDto.url;

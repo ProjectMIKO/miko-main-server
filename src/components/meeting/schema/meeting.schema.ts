@@ -13,7 +13,7 @@ export class Meeting {
   title: string;
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
-  owner: Types.ObjectId;
+  owner: string[];
 
   @Prop({ default: null })
   startTime: Date;

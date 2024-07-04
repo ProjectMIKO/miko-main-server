@@ -23,11 +23,13 @@ export class MeetingService {
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meeting = new this.meetingModel({ ...meetingCreateDto });
+    const meeting = new this.meetingModel({ ...meetingCreateDto, owner: [meetingCreateDto.owner] });
 
-    meeting.save().catch((error) => {
+    try {
+      await meeting.save();
+    } catch (error) {
       throw new InvalidResponseException('CreateNewMeeting');
-    });
+    }
 
     return meeting._id.toString();
   }

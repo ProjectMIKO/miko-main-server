@@ -152,19 +152,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `Created STT: room:${room}  user: ${conversationCreateDto.user}  script: ${convertResponseDto.script}  timestamp: ${currentTime} time_offset: ${time_offset}`,
     );
 
-    this.conversationService.createConversation(conversationCreateDto).then((_id) => {
-      // Session 에 Conversations 저장
-      this.roomConversations[room][_id] = [conversationCreateDto];
-      // Meeting 에 Conversation 저장
-      const meetingUpdateDto_convers: MeetingUpdateDto = {
-        id: this.roomMeetingMap[room],
-        value: _id,
-        field: 'conversations',
-        action: '$push',
-      };
+    const conversationId = await this.conversationService.createConversation(conversationCreateDto);
+    // Session 에 Conversations 저장
+    this.roomConversations[room][conversationId] = [conversationCreateDto];
+    // Meeting 에 Conversation 저장
+    const meetingUpdateDto_convers: MeetingUpdateDto = {
+      id: this.roomMeetingMap[room],
+      value: conversationId,
+      field: 'conversations',
+      action: '$push',
+    };
 
-      this.meetingService.updateMeetingField(meetingUpdateDto_convers);
-    });
+    this.meetingService.updateMeetingField(meetingUpdateDto_convers);
+
+    // roomConversations 가 5개 이상 되면 handleSummarize 호출
+    console.log(`${this.roomConversations[room].length}`);
+    if (Object.keys(this.roomConversations[room]).length >= 5) await this.handleSummarize(client, room);
 
     this.logger.log(`Convert STT Method: Finished`);
   }

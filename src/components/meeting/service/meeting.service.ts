@@ -40,13 +40,18 @@ export class MeetingService {
       throw new NotFoundException('Invalid owner ID');
     }
 
-    const meetings = await this.meetingModel.find({ owner: ownerId }).select('_id title').exec();
+    const meetings = await this.meetingModel.find({ owner: ownerId }).exec();
 
     if (!meetings.length) {
       throw new NotFoundException('No meetings found for this owner');
     }
 
-    return meetings.map((meeting) => ({ _id: meeting._id.toString(), title: meeting.title }));
+    return meetings.map((meeting) => ({
+      meeting_id: meeting._id.toString(),
+      title: meeting.title,
+      startTime: meeting.startTime,
+      owner: meeting.owner,
+    }));
   }
 
   async findOne(id: string): Promise<MeetingFindResponseDto> {

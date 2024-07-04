@@ -4,8 +4,20 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export type ConversationDocument = Conversation & Document;
 
-@Schema()
+@Schema({
+  toJSON: {
+    virtuals: true,
+    versionKey: false,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+    },
+  },
+})
 export class Conversation {
+  @ApiProperty({ description: 'Conversation ID' })
+  id: string;
+
   @ApiProperty({ description: 'User who created the conversation' })
   @Prop({ required: true })
   user: string;

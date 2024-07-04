@@ -46,6 +46,9 @@ export class MeetingFindResponseDto {
   record: string;
 
   constructor(meeting: Meeting) {
+    this.title = meeting.title;
+    this.startTime = meeting.startTime;
+    this.endTime = meeting.endTime;
     this.conversationIds = meeting.conversations;
     this.vertexIds = meeting.vertexes;
     this.edgeIds = meeting.edges;

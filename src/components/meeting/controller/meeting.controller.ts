@@ -16,7 +16,7 @@ import { VertexService } from 'components/vertex/service/vertex.service';
 import { EdgeService } from 'components/edge/service/edge.service';
 import { RecordService } from '@openvidu/service/record.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
-import { MomResponseDto } from '@middleware/dto/mom.response.dto';
+import { MomResponseDto, ParticipantDto } from '@middleware/dto/mom.response.dto';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
@@ -73,8 +73,12 @@ export class MeetingController {
     momResponseDto.title = meetingFindResponseDto.title;
     momResponseDto.startTime = meetingFindResponseDto.startTime;
     const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
-    momResponseDto.period = String(periodMillis);
-
+    momResponseDto.period = periodMillis;
+    const participants: ParticipantDto[] = meetingFindResponseDto.owner.map((name, index) => ({
+      name,
+      role: index === 0 ? 'host' : 'member',
+    }));
+    momResponseDto.participants = participants
     return { momResponseDto };
   }
 

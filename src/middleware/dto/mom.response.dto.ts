@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsDate, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
 
-class ParticipantDto {
+export class ParticipantDto {
   @ApiProperty({ description: '참석자 이름' })
   @IsString()
   @IsNotEmpty()
@@ -26,8 +26,8 @@ export class MomResponseDto {
   startTime: Date;
 
   @ApiProperty({ description: '회의 기간' })
-  @IsString()
-  period: String;
+  @IsNumber()
+  period: number;
 
   @ApiProperty({ description: '참석자 목록' })
   @IsArray()

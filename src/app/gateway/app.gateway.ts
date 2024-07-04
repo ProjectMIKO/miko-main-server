@@ -100,13 +100,18 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return;
     }
-
     client.join(room);
     client.emit('entered_room');
 
     await this.joinRoom(client, room);
 
-    client.to(room).emit('welcome', client['nickname'], this.countMember(room));
+    const meetingUpdateDto_owner: MeetingUpdateDto = {
+      id: this.roomMeetingMap[room],
+      value: client['nickname'],
+      field: 'owner',
+      action: '$push',
+    };
+    await this.meetingService.updateMeetingField(meetingUpdateDto_owner);
 
     this.logger.log(`Enter Room: Finished`);
   }

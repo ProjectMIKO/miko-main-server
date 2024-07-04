@@ -81,7 +81,7 @@ export class MiddlewareService {
         return momResponseDto;
       })
       .catch((error) => {
-        throw new InternalServerErrorException(`SummarizeScript: ${error.message}`);
+        throw new InvalidMiddlewareException(`extractMom: ${error.message}`);
       });
   }
 }

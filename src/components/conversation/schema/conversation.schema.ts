@@ -6,6 +6,7 @@ export type ConversationDocument = Conversation & Document;
 
 @Schema()
 export class Conversation {
+  
   @ApiProperty({ description: 'User who created the conversation' })
   @Prop({ required: true })
   user: string;

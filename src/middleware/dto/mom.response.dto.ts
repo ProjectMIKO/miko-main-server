@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsDate, IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
+import { Mom } from 'components/meeting/schema/mom.schema';
 
 export class ParticipantDto {
   @ApiProperty({ description: '참석자 이름' })
@@ -39,4 +40,22 @@ export class MomResponseDto {
   @IsString()
   @IsNotEmpty()
   mom: string;
+
+  constructor();
+  constructor(mom: Mom);
+  constructor(mom?: Mom) {
+    if (mom) {
+      this.title = mom.title;
+      this.startTime = mom.startTime;
+      this.period = mom.period;
+      this.participants = mom.participants;
+      this.mom = mom.mom;
+    } else {
+      this.title = '';
+      this.startTime = new Date();
+      this.period = 0;
+      this.participants = [];
+      this.mom = '';
+    }
+  }
 }

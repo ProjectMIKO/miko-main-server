@@ -49,6 +49,10 @@ export class MeetingFindResponseDto {
   @IsString()
   record: string;
 
+  @ApiProperty({ description: 'Meeting Minutes ID', example: '22345667c7cc2cb63d418696' })
+  @IsString()
+  mom: string;
+
   constructor(meeting: Meeting) {
     this.title = meeting.title;
     this.owner = meeting.owner;
@@ -58,5 +62,6 @@ export class MeetingFindResponseDto {
     this.vertexIds = meeting.vertexes;
     this.edgeIds = meeting.edges;
     this.record = meeting.record;
+    this.mom = meeting.mom;
   }
 }

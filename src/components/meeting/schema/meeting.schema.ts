@@ -32,6 +32,9 @@ export class Meeting {
 
   @Prop({ default: null })
   record: string;
+
+  @Prop({ required: false })
+  mom: string;
 }
 
 export const MeetingSchema = SchemaFactory.createForClass(Meeting);

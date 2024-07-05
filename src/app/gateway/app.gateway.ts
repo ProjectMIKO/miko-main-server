@@ -295,7 +295,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0) {
       await this.stopRecording(room);
-      await this.saveMom(room);
+      this.saveMom(room);
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
       delete this.roomMeetingMap[room];
     } else {
@@ -465,7 +465,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private async saveMom(room: string) {
-    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(this.roomMeetingMap[room]);
+    const tmpRoomId = this.roomMeetingMap[room];
+    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(tmpRoomId);
 
     // Conversations 및 Vertexes 조회
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
@@ -492,7 +493,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Meeting에 Mom ID 업데이트
     const meetingUpdateDto_mom: MeetingUpdateDto = {
-      id: this.roomMeetingMap[room],
+      id: tmpRoomId,
       value: mom._id.toString(),
       field: 'mom',
       action: '$set',

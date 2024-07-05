@@ -57,60 +57,43 @@ export class MeetingController {
   }
 
   @Get(':id/mom')
-  @ApiOperation({ summary: 'Get minutes of meeting' })
+  @ApiOperation({ summary: 'Get minutes of meeting using SSE' })
   @ApiParam({ name: 'id', description: 'ID of the meeting to retrieve minutes of' })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved minutes of meeting',
-    type: MomResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Meeting not found' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getMom(@Param('id') id: string) {
+  async getMom(@Param('id') id: string, @Res() res: Response) {
     // Meeting 조회
-    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
+    let meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
     if (!meetingFindResponseDto) {
       throw new NotFoundException('Meeting not found');
     }
-    // mom 조회
-    if(meetingFindResponseDto.mom) {
-      const momResponseDto: MomResponseDto = await this.meetingService.findMom(meetingFindResponseDto.mom);
-      return { momResponseDto }
-    }
   
-    // Conversations 및 Vertexes 조회
-    const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
-    const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
   
-    // 회의록 추출
-    const momResponseDto: MomResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
-    momResponseDto.title = meetingFindResponseDto.title;
-    momResponseDto.startTime = meetingFindResponseDto.startTime;
+    const intervalId = setInterval(async () => {
+      meetingFindResponseDto = await this.meetingService.findOne(id); // mom id 조회될 때까지 검색
+      if (meetingFindResponseDto.mom) {
+        const momResponseDto = await this.meetingService.findMom(meetingFindResponseDto.mom);
+        if (momResponseDto) {
+          res.write(`data: ${JSON.stringify(momResponseDto)}\n\n`);
+          
+          // 인터벌을 정리하고 연결을 닫음
+          clearInterval(intervalId);
+          res.end();
+        }
+      }
+    }, 2000);
   
-    // 회의 기간 계산
-    const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
-    momResponseDto.period = periodMillis;
-  
-    // 참석자 목록 설정
-    const participants: ParticipantDto[] = meetingFindResponseDto.owner.map((name, index) => ({
-      name,
-      role: index === 0 ? 'host' : 'member',
-    }));
-    momResponseDto.participants = participants;
-  
-    // Mom 저장
-    const mom = await this.meetingService.createMom(momResponseDto);
-  
-    // Meeting에 Mom ID 업데이트
-    const meetingUpdateDto_mom: MeetingUpdateDto = {
-      id: id,
-      value: mom._id.toString(),
-      field: 'mom',
-      action: '$set',
-    };
-    await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
-  
-    return { momResponseDto };
+    // 연결이 닫히면 인터벌을 정리
+    res.on('close', () => {
+      clearInterval(intervalId);
+      res.end();
+    });
   }
 
   @Get('owner/:ownerId')

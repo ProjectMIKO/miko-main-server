@@ -57,26 +57,43 @@ export class MeetingController {
   }
 
   @Get(':id/mom')
-  @ApiOperation({ summary: 'Get minutes of meeting' })
+  @ApiOperation({ summary: 'Get minutes of meeting using SSE' })
   @ApiParam({ name: 'id', description: 'ID of the meeting to retrieve minutes of' })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved minutes of meeting',
-    type: MomResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Meeting not found' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getMom(@Param('id') id: string) {
-    
+  async getMom(@Param('id') id: string, @Res() res: Response) {
     // Meeting 조회
-    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
+    let meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
     if (!meetingFindResponseDto) {
       throw new NotFoundException('Meeting not found');
     }
-
-    // mom 조회
-    const momResponseDto: MomResponseDto = await this.meetingService.findMom(meetingFindResponseDto.mom);
-    return { momResponseDto }
+  
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+  
+    const intervalId = setInterval(async () => {
+      meetingFindResponseDto = await this.meetingService.findOne(id); // mom id 조회될 때까지 검색
+      if (meetingFindResponseDto.mom) {
+        const momResponseDto = await this.meetingService.findMom(meetingFindResponseDto.mom);
+        if (momResponseDto) {
+          res.write(`data: ${JSON.stringify(momResponseDto)}\n\n`);
+          
+          // 인터벌을 정리하고 연결을 닫음
+          clearInterval(intervalId);
+          res.end();
+        }
+      }
+    }, 2000);
+  
+    // 연결이 닫히면 인터벌을 정리
+    res.on('close', () => {
+      clearInterval(intervalId);
+      res.end();
+    });
   }
 
   @Get('owner/:ownerId')

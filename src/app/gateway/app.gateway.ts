@@ -32,6 +32,7 @@ import { OpenviduService } from '@openvidu/service/openvidu.service';
 import { InvalidPasswordException } from '@global/exception/invalidPassword.exception';
 import { MeetingUpdateDto } from 'components/meeting/dto/meeting.update.dto';
 import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
+import { MomResponseDto, ParticipantDto } from '@middleware/dto/mom.response.dto';
 
 @WebSocketGateway({
   cors: {
@@ -294,6 +295,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0) {
       await this.stopRecording(room);
+      await this.saveMom(room);
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
       delete this.roomMeetingMap[room];
     } else {
@@ -461,4 +463,41 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
     await this.openviduService.closeSession(room);
   }
+
+  private async saveMom(room: string) {
+    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(this.roomMeetingMap[room]);
+
+    // Conversations 및 Vertexes 조회
+    const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
+    const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+
+    // 회의록 추출
+    const momResponseDto: MomResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
+    momResponseDto.title = meetingFindResponseDto.title;
+    momResponseDto.startTime = meetingFindResponseDto.startTime;
+
+    // 회의 기간 계산
+    const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
+    momResponseDto.period = periodMillis;
+
+    // 참석자 목록 설정
+    const participants: ParticipantDto[] = meetingFindResponseDto.owner.map((name, index) => ({
+      name,
+      role: index === 0 ? 'host' : 'member',
+    }));
+    momResponseDto.participants = participants;
+
+    // Mom 저장
+    const mom = await this.meetingService.createMom(momResponseDto);
+
+    // Meeting에 Mom ID 업데이트
+    const meetingUpdateDto_mom: MeetingUpdateDto = {
+      id: this.roomMeetingMap[room],
+      value: mom._id.toString(),
+      field: 'mom',
+      action: '$set',
+    };
+    await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
+  }
+
 }

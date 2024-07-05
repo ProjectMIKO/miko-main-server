@@ -293,21 +293,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`the number of people left in the room: ${num}`);
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0) {
-      const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(
-        this.roomRecord[room].recordingId,
-      );
-      console.log(`recording url: ${responseRecordingDto.url}`);
-      console.log(`recording status: ${responseRecordingDto.status}`);
-
-      const meetingUpdateDto_endTime: MeetingUpdateDto = {
-        id: this.roomMeetingMap[room],
-        value: new Date(),
-        field: 'endTime',
-        action: '$set',
-      };
-
-      await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
-      await this.openviduService.closeSession(room);
+      await this.stopRecording(room);
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
       delete this.roomMeetingMap[room];
     } else {
@@ -456,5 +442,23 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     this.logger.log('Join Room Method: Complete');
+  }
+
+  private async stopRecording(room: string) {
+    const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(
+      this.roomRecord[room].recordingId,
+    );
+    console.log(`recording url: ${responseRecordingDto.url}`);
+    console.log(`recording status: ${responseRecordingDto.status}`);
+
+    const meetingUpdateDto_endTime: MeetingUpdateDto = {
+      id: this.roomMeetingMap[room],
+      value: new Date(),
+      field: 'endTime',
+      action: '$set',
+    };
+
+    await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
+    await this.openviduService.closeSession(room);
   }
 }

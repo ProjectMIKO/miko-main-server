@@ -116,41 +116,38 @@ export class MeetingController {
   @ApiResponse({ status: 404, description: 'Recording not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getRecord(@Param('id') id: string, @Res() res: Response) {
+    // Meeting 조회
     const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(id);
-    const recordingResponseDto: RecordingResponseDto = await this.recordService.getRecording(
-      meetingFindResponseDto.record,
-    );
-
-    if (!recordingResponseDto) {
-      throw new NotFoundException('Recording not found');
+    if (!meetingFindResponseDto) {
+      throw new NotFoundException('Meeting not found');
     }
 
-    switch (recordingResponseDto.status) {
-      case 'ready':
-        break;
-      case 'started':
-        throw new InternalServerErrorException('Recording is still in progress');
-      case 'stopped':
-        throw new InternalServerErrorException('Recording is stopped but not yet processed');
-      // case 'failed':
-      //   throw new InternalServerErrorException('Recording failed');
-      // default:
-      //   throw new InternalServerErrorException('Recording is not ready');
-    }
+    const intervalId = setInterval(async () => {
+      let recordingResponseDto: RecordingResponseDto = await this.recordService.getRecording(
+        meetingFindResponseDto.record,
+      );
 
-    const fileUrl = recordingResponseDto.url;
+      if (!recordingResponseDto) {
+        throw new NotFoundException('Recording not found');
+      }
 
-    https
-      .get(fileUrl, (fileRes) => {
-        if (fileRes.statusCode !== 200) {
+      if (recordingResponseDto.status == 'ready' || recordingResponseDto.status == 'failed') {
+        const fileUrl = recordingResponseDto.url;
+
+        https
+        .get(fileUrl, (fileRes) => {
+          if (fileRes.statusCode !== 200) {
+            throw new InternalServerErrorException('Failed to fetch the recording file');
+          }
+          res.setHeader('Content-Type', 'audio/webm');
+          fileRes.pipe(res);
+          clearInterval(intervalId);
+        })
+        .on('error', () => {
           throw new InternalServerErrorException('Failed to fetch the recording file');
-        }
-        res.setHeader('Content-Type', 'audio/webm');
-        fileRes.pipe(res);
-      })
-      .on('error', () => {
-        throw new InternalServerErrorException('Failed to fetch the recording file');
-      });
+        });
+      }
+    }, 2000);
   }
 
   @Delete(':id')

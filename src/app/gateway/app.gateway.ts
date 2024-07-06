@@ -294,8 +294,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`the number of people left in the room: ${num}`);
 
     if (this.roomHostManager[room] == client['nickname'] || num == 0) {
-      await this.stopRecording(room);
-      this.saveMom(room);
+      const roomId = this.roomMeetingMap[room];
+      const recordingId = this.roomRecord[room].recordingId;
+      this.stopRecording(roomId, recordingId)
+        .then(() => this.saveMom(roomId));
+      await this.openviduService.closeSession(room);
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
       delete this.roomMeetingMap[room];
     } else {
@@ -446,27 +449,23 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log('Join Room Method: Complete');
   }
 
-  private async stopRecording(room: string) {
-    const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(
-      this.roomRecord[room].recordingId,
-    );
+  private async stopRecording(roomId: string, recordingId: string) {
+    const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(recordingId);
     console.log(`recording url: ${responseRecordingDto.url}`);
     console.log(`recording status: ${responseRecordingDto.status}`);
 
     const meetingUpdateDto_endTime: MeetingUpdateDto = {
-      id: this.roomMeetingMap[room],
+      id: roomId,
       value: new Date(),
       field: 'endTime',
       action: '$set',
     };
 
     await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
-    await this.openviduService.closeSession(room);
   }
 
-  private async saveMom(room: string) {
-    const tmpRoomId = this.roomMeetingMap[room];
-    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(tmpRoomId);
+  private async saveMom(roomId: string) {
+    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(roomId);
 
     // Conversations 및 Vertexes 조회
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
@@ -493,12 +492,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Meeting에 Mom ID 업데이트
     const meetingUpdateDto_mom: MeetingUpdateDto = {
-      id: tmpRoomId,
+      id: roomId,
       value: mom._id.toString(),
       field: 'mom',
       action: '$set',
     };
     await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
   }
-
 }

@@ -12,7 +12,7 @@ export class Meeting {
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  @Prop({ required: true, type: [String] })
   owner: string[];
 
   @Prop({ default: null })

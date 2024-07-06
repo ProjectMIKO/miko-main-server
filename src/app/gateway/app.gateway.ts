@@ -191,8 +191,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Summarize Method: Start`);
 
     this.printRoomConversations(room);
-
-    if (!this.roomConversations[room]) throw new EmptyDataException(`SummarizeScript: Empty conversations`);
+    if (!this.roomConversations[room] || Object.keys(this.roomConversations[room]).length === 0)
+      throw new EmptyDataException(`SummarizeScript: Empty conversations`);
 
     const summarizeRequestDto: SummarizeRequestDto = {
       conversations: this.roomConversations[room],
@@ -364,6 +364,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   private printRoomConversations(room: string) {
     console.log(`Room: ${room}`);
+    console.log(`Room conversations count: ${Object.keys(this.roomConversations[room]).length}`)
     for (const _id in this.roomConversations[room]) {
       for (const message of this.roomConversations[room][_id]) {
         console.log(

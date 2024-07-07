@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 
-class SummaryBody {
+export class SummaryBody {
   @ApiProperty({ description: 'Keyword of the main item' })
   @IsString()
   @IsNotEmpty()
@@ -14,7 +14,7 @@ class SummaryBody {
   subject: string;
 }
 
-class Idea {
+export class Idea {
   @ApiProperty({ description: 'Main item', type: SummaryBody })
   @ValidateNested()
   @Type(() => SummaryBody)

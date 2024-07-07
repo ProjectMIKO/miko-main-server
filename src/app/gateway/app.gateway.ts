@@ -12,7 +12,7 @@ import { MeetingService } from 'components/meeting/service/meeting.service';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import { SummarizeRequestDto } from '@middleware/dto/summarize.request.dto';
 import { ConvertResponseDto } from '@middleware/dto/convert.response.dto';
-import { SummarizeResponseDto } from '@middleware/dto/summarize.response.dto';
+import { SummarizeResponseDto, SummaryBody } from '@middleware/dto/summarize.response.dto';
 import { RoomConversations } from 'components/meeting/interface/roomConversation.interface';
 import { ConversationCreateDto } from 'components/conversation/dto/conversation.create.dto';
 import { ConversationService } from 'components/conversation/service/conversation.service';
@@ -220,19 +220,19 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('vertex')
   async handleVertex(
     client: Socket,
-    [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, any],
+    [room, summarizeRequestDto, summaryBody]: [string, SummarizeRequestDto, SummaryBody],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
-    if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
+    if (!summaryBody) throw new BadRequestException('SummarizeResponseDto is empty');
 
     this.logger.log(`Vertex Creation Method: Start`);
 
     const vertexCreateRequestDto: VertexCreateRequestDto = {
-      keyword: summarizeResponseDto.keyword,
-      subject: summarizeResponseDto.subject,
+      keyword: summaryBody.keyword,
+      subject: summaryBody.subject,
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 

@@ -12,7 +12,7 @@ import { MeetingService } from 'components/meeting/service/meeting.service';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import { SummarizeRequestDto } from '@middleware/dto/summarize.request.dto';
 import { ConvertResponseDto } from '@middleware/dto/convert.response.dto';
-import { SummarizeResponseDto } from '@middleware/dto/summarize.response.dto';
+import { SummarizeResponseDto, SummaryBody } from '@middleware/dto/summarize.response.dto';
 import { RoomConversations } from 'components/meeting/interface/roomConversation.interface';
 import { ConversationCreateDto } from 'components/conversation/dto/conversation.create.dto';
 import { ConversationService } from 'components/conversation/service/conversation.service';
@@ -33,6 +33,7 @@ import { InvalidPasswordException } from '@global/exception/invalidPassword.exce
 import { MeetingUpdateDto } from 'components/meeting/dto/meeting.update.dto';
 import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
 import { MomResponseDto, ParticipantDto } from '@middleware/dto/mom.response.dto';
+import { Mutex } from 'async-mutex';
 
 @WebSocketGateway({
   cors: {
@@ -48,6 +49,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public roomHostManager: { [key: string]: string } = {};
   public roomPasswordManager: { [key: string]: string } = {};
   private roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
+  private readonly roomMutexes: { [key: string]: Mutex } = {};
 
   @WebSocketServer() server: Server;
 
@@ -184,55 +186,66 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
+    if (!this.roomMutexes[room]) {
+      console.log('lock');
+      this.roomMutexes[room] = new Mutex();
+    }
+
+    const release = await this.roomMutexes[room].acquire();
+
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
-    this.logger.log(`Summarize Method: Start`);
+    try {
+      this.logger.log(`Summarize Method: Start`);
 
-    this.printRoomConversations(room);
+      this.printRoomConversations(room);
+      if (!this.roomConversations[room] || Object.keys(this.roomConversations[room]).length === 0)
+        throw new EmptyDataException(`SummarizeScript: Empty conversations`);
 
-    if (!this.roomConversations[room]) throw new EmptyDataException(`SummarizeScript: Empty conversations`);
+      const summarizeRequestDto: SummarizeRequestDto = {
+        conversations: this.roomConversations[room],
+      };
 
-    const summarizeRequestDto: SummarizeRequestDto = {
-      conversations: this.roomConversations[room],
-    };
+      const summarizeResponseDto: SummarizeResponseDto =
+        await this.middlewareService.summarizeScript(summarizeRequestDto);
 
-    const summarizeResponseDto: SummarizeResponseDto =
-      await this.middlewareService.summarizeScript(summarizeRequestDto);
+      for (const idea of summarizeResponseDto.idea) {
+        console.log(`Main Subject Returned: ${idea.main.keyword} - ${idea.main.subject}`);
+        const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
 
-    for (const idea of summarizeResponseDto.idea) {
-      console.log(`Main Subject Returned: ${idea.main.keyword} - ${idea.main.subject}`);
-      const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
-
-      for (const subItem of idea.sub) {
-        console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
-        const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
-        console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
-        await this.handleEdge(client, [room, mainId, subId, '$push']);
+        for (const subItem of idea.sub) {
+          console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
+          const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+          console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
+          await this.handleEdge(client, [room, mainId, subId, '$push']);
+        }
       }
-    }
 
-    this.roomConversations[room] = {}; // 임시 저장한 대화 flush
-    this.logger.log(`Summarize Method: Finished`);
+      this.roomConversations[room] = {}; // 임시 저장한 대화 flush
+      this.logger.log(`Summarize Method: Finished`);
+    } finally {
+      release();
+    }
   }
 
   @SubscribeMessage('vertex')
   async handleVertex(
     client: Socket,
-    [room, summarizeRequestDto, summarizeResponseDto]: [string, SummarizeRequestDto, any],
+    [room, summarizeRequestDto, summaryBody]: [string, SummarizeRequestDto, SummaryBody],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
     if (!summarizeRequestDto) throw new BadRequestException('SummarizeRequestDto is empty');
-    if (!summarizeResponseDto) throw new BadRequestException('SummarizeResponseDto is empty');
+    if (!summaryBody) throw new BadRequestException('SummarizeResponseDto is empty');
 
     this.logger.log(`Vertex Creation Method: Start`);
 
     const vertexCreateRequestDto: VertexCreateRequestDto = {
-      keyword: summarizeResponseDto.keyword,
-      subject: summarizeResponseDto.subject,
+      keyword: summaryBody.keyword,
+      subject: summaryBody.subject,
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
@@ -364,6 +377,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   private printRoomConversations(room: string) {
     console.log(`Room: ${room}`);
+    console.log(`Room conversations count: ${Object.keys(this.roomConversations[room]).length}`)
     for (const _id in this.roomConversations[room]) {
       for (const message of this.roomConversations[room][_id]) {
         console.log(

@@ -20,7 +20,9 @@ export class MeetingService {
   ) {}
 
   validateField(field: string) {
-    if (!['owner', 'conversations', 'vertexes', 'edges', 'record', 'startTime', 'endTime', 'mom'].includes(field))
+    if (
+      !['title', 'owner', 'conversations', 'vertexes', 'edges', 'record', 'startTime', 'endTime', 'mom'].includes(field)
+    )
       throw new BadRequestException(`Invalid field: ${field}`);
   }
 
@@ -109,5 +111,4 @@ export class MeetingService {
 
     return momResponseDto;
   }
-
 }

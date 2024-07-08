@@ -11,7 +11,10 @@ export class MeetingUpdateDto {
   @IsNotEmpty()
   value: any;
 
-  @ApiProperty({ description: 'Field to update' })
+  @ApiProperty({
+    description: 'Field to update',
+    enum: ['title', 'owner', 'conversations', 'vertexes', 'edges', 'record', 'startTime', 'endTime'],
+  })
   @IsString()
   @IsNotEmpty()
   field: string;

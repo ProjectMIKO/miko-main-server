@@ -215,6 +215,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`Main Subject Returned: ${idea.main.keyword} - ${idea.main.subject}`);
         const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
 
+        if (!idea.sub) continue;
+
         for (const subItem of idea.sub) {
           console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
           const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
@@ -309,8 +311,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (this.roomHostManager[room] == client['nickname'] || num == 0) {
       const roomId = this.roomMeetingMap[room];
       const recordingId = this.roomRecord[room].recordingId;
-      this.stopRecording(roomId, recordingId)
-        .then(() => this.saveMom(roomId));
+      this.stopRecording(roomId, recordingId).then(() => this.saveMom(roomId));
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
       delete this.roomMeetingMap[room];
     } else {
@@ -376,7 +377,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   private printRoomConversations(room: string) {
     console.log(`Room: ${room}`);
-    console.log(`Room conversations count: ${Object.keys(this.roomConversations[room]).length}`)
+    console.log(`Room conversations count: ${Object.keys(this.roomConversations[room]).length}`);
     for (const _id in this.roomConversations[room]) {
       for (const message of this.roomConversations[room][_id]) {
         console.log(

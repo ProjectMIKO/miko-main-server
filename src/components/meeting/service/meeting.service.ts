@@ -72,6 +72,8 @@ export class MeetingService {
   }
 
   async updateMeetingField(meetingUpdateDto: MeetingUpdateDto): Promise<string> {
+    console.log(`updateMeetingField called with DTO: ${JSON.stringify(meetingUpdateDto)}`);
+  
     this.validateField(meetingUpdateDto.field);
     this.validateAction(meetingUpdateDto.action);
 

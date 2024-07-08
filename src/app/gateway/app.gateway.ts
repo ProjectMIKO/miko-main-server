@@ -311,7 +311,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const recordingId = this.roomRecord[room].recordingId;
       this.stopRecording(roomId, recordingId)
         .then(() => this.saveMom(roomId));
-      await this.openviduService.closeSession(room);
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
       delete this.roomMeetingMap[room];
     } else {
@@ -464,6 +463,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private async stopRecording(roomId: string, recordingId: string) {
+    console.log(`${roomId}: stop recording 시작`);
+
     const responseRecordingDto: RecordingResponseDto = await this.recordService.stopRecording(recordingId);
     console.log(`recording url: ${responseRecordingDto.url}`);
     console.log(`recording status: ${responseRecordingDto.status}`);
@@ -476,9 +477,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
+    console.log(`${roomId}: stop recording 종료`);
   }
 
   private async saveMom(roomId: string) {
+    console.log(`${roomId}: save mom 시작`);
+
     const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(roomId);
 
     // Conversations 및 Vertexes 조회
@@ -512,5 +516,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       action: '$set',
     };
     await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
+    console.log(`${roomId}: save mom 종료`);
   }
 }

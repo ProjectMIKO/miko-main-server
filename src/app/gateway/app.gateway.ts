@@ -441,11 +441,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // 기존 대화(conversations) 전송
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
-    for (const conversation of conversations) {
-      client.emit('script', `${conversation.user}: ${conversation.script}`);
-      await this.sleep(50);
+    const batchSize = 10;
+  
+    for (let i = 0; i < conversations.length; i += batchSize) {
+      const batch = conversations.slice(i, i + batchSize);
+      client.emit('scriptBatch', batch);
+      await this.sleep(50); // 배치 전송 사이에 잠깐의 지연
     }
-
     // 기존 버텍스(vertices) 전송
     const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
     for (const vertex of vertexes) {
@@ -508,7 +510,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Mom 저장
     const mom = await this.meetingService.createMom(momResponseDto);
-
+    console.log(`mom id: ${mom._id.toString()}`);
+    
     // Meeting에 Mom ID 업데이트
     const meetingUpdateDto_mom: MeetingUpdateDto = {
       id: roomId,

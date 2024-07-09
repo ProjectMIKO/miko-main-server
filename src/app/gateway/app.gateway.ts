@@ -438,8 +438,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log('Join Room Method: Initiated');
 
     const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(this.roomMeetingMap[room]);
-    
-    const batchSize = 10;
+
+    const batchSize = 100;
     // 대화(conversations) 전송
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
     for (let i = 0; i < conversations.length; i += batchSize) {
@@ -499,7 +499,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // 회의 기간 계산
     const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
     meetingResponseDto.period = periodMillis;
-    
+
     // Meeting에 Mom 업데이트
     const meetingUpdateDto_mom: MeetingUpdateDto = {
       id: roomId,

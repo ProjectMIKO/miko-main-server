@@ -10,6 +10,7 @@ import { MomResponseDto } from '@middleware/dto/mom.response.dto';
 import { MomRequestDto } from '@middleware/dto/mom.request.dto';
 import { Conversation } from 'components/conversation/schema/conversation.schema';
 import { Vertex } from 'components/vertex/schema/vertex.schema';
+import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.response.dto';
 
 @Injectable()
 export class MiddlewareService {
@@ -62,7 +63,7 @@ export class MiddlewareService {
       });
   }
 
-  public async extractMom(conversations: Conversation[], vertexes: Vertex[]): Promise<MomResponseDto> {
+  public async extractMom(conversations: Conversation[], vertexes: Vertex[]): Promise<MeetingFindResponseDto> {
     const momRequestDto: MomRequestDto = {
       conversations: conversations,
       vertexes: vertexes,
@@ -76,9 +77,9 @@ export class MiddlewareService {
       })
       .then((response) => {
         const responseData = response.data;
-        const momResponseDto = new MomResponseDto();
-        momResponseDto.mom = responseData.mom;
-        return momResponseDto;
+        const meetingFindResponseDto = new MeetingFindResponseDto();
+        meetingFindResponseDto.mom = responseData.mom;
+        return meetingFindResponseDto;
       })
       .catch((error) => {
         throw new InvalidMiddlewareException(`extractMom: ${error.message}`);

@@ -494,33 +494,29 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
 
     // 회의록 추출
-    const momResponseDto: MomResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
-    momResponseDto.title = meetingFindResponseDto.title;
-    momResponseDto.startTime = meetingFindResponseDto.startTime;
+    const meetingResponseDto: MeetingFindResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
 
     // 회의 기간 계산
     const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
-    momResponseDto.period = periodMillis;
-
-    // 참석자 목록 설정
-    const participants: ParticipantDto[] = meetingFindResponseDto.owner.map((name, index) => ({
-      name,
-      role: index === 0 ? 'host' : 'member',
-    }));
-    momResponseDto.participants = participants;
-
-    // Mom 저장
-    const mom = await this.meetingService.createMom(momResponseDto);
-    console.log(`mom id: ${mom._id.toString()}`);
+    meetingResponseDto.period = periodMillis;
     
-    // Meeting에 Mom ID 업데이트
+    // Meeting에 Mom 업데이트
     const meetingUpdateDto_mom: MeetingUpdateDto = {
       id: roomId,
-      value: mom._id.toString(),
+      value: meetingResponseDto.mom,
       field: 'mom',
       action: '$set',
     };
+
+    const meetingUpdateDto_period: MeetingUpdateDto = {
+      id: roomId,
+      value: meetingResponseDto.period,
+      field: 'period',
+      action: '$set',
+    };
+
     await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
+    await this.meetingService.updateMeetingField(meetingUpdateDto_period);
     console.log(`${roomId}: save mom 종료`);
   }
 }

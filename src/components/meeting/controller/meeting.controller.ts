@@ -147,12 +147,11 @@ export class MeetingController {
     }, 1000);
   }
 
-  @Post(':id/mom/update')
+  @Post('mom/update')
   @ApiOperation({ summary: 'Update MOM' })
   @ApiParam({ name: 'id', description: 'Meeting ID' })
   @ApiBody({ type: MomUpdateDto })
-  async updateField(@Param('id') id: string, @Body() body: MomUpdateDto) {
-    body.id = id;
+  async updateField(@Body() body: MomUpdateDto) {
     return await this.meetingService.updateMom(body);
   }
 

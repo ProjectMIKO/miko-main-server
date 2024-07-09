@@ -134,6 +134,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.logger.log(`Convert STT Method: Start`);
+    const roomId = this.roomMeetingMap[room]; // 회의 종료 후 stt 요청시 this.roomMeetingMap[room]가 undefined되는 문제가 있음
 
     // Blob 크기 확인 (KB 단위로 변환)
     const fileSize = file.size || file.byteLength || file.length;
@@ -168,7 +169,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.roomConversations[room][conversationId] = [conversationCreateDto];
     // Meeting 에 Conversation 저장
     const meetingUpdateDto_convers: MeetingUpdateDto = {
-      id: this.roomMeetingMap[room],
+      id: roomId,
       value: conversationId,
       field: 'conversations',
       action: '$push',

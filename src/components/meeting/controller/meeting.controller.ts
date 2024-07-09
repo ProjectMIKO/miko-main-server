@@ -84,7 +84,7 @@ export class MeetingController {
         clearInterval(intervalId);
         res.end();
       }
-    }, 1000);
+    }, 2000);
 
     // 연결이 닫히면 인터벌을 정리
     res.on('close', () => {
@@ -141,10 +141,11 @@ export class MeetingController {
             clearInterval(intervalId);
           })
           .on('error', () => {
+            clearInterval(intervalId);
             throw new InternalServerErrorException('Failed to fetch the recording file');
           });
       }
-    }, 1000);
+    }, 2000);
   }
 
   @Post('mom/update')

@@ -8,17 +8,27 @@ import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter'
 import { MeetingFindResponseDto } from '../dto/meeting.find.response.dto';
 import { MeetingUpdateDto } from '../dto/meeting.update.dto';
 import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
+import { MomUpdateDto } from '../dto/mom.update.dto';
 
 @Injectable()
 @UseFilters(GlobalExceptionsFilter)
 export class MeetingService {
-  constructor(
-    @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
-  ) {}
+  constructor(@InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>) {}
 
   validateField(field: string) {
     if (
-      !['title', 'owner', 'conversations', 'vertexes', 'edges', 'record', 'startTime', 'endTime', 'mom', 'period'].includes(field)
+      ![
+        'title',
+        'owner',
+        'conversations',
+        'vertexes',
+        'edges',
+        'record',
+        'startTime',
+        'endTime',
+        'mom',
+        'period',
+      ].includes(field)
     )
       throw new BadRequestException(`Invalid field: ${field}`);
   }
@@ -68,9 +78,22 @@ export class MeetingService {
     return this.meetingModel.findByIdAndDelete(id).exec();
   }
 
+  async updateMom(momUpdateDto: MomUpdateDto) {
+    const update = { ['$set']: { ['title']: momUpdateDto.title, ['mom']: momUpdateDto.mom } };
+
+    const meeting = await this.meetingModel
+      .findByIdAndUpdate(momUpdateDto.id, update, { new: true, useFindAndModify: false })
+      .populate(['title', 'mom'])
+      .exec();
+
+    if (!meeting) throw new NotFoundException(`Meeting with ID ${momUpdateDto.id} not found`);
+
+    return meeting._id.toString();
+  }
+
   async updateMeetingField(meetingUpdateDto: MeetingUpdateDto): Promise<string> {
     console.log(`updateMeetingField called with DTO: ${JSON.stringify(meetingUpdateDto)}`);
-  
+
     this.validateField(meetingUpdateDto.field);
     this.validateAction(meetingUpdateDto.action);
 
@@ -88,5 +111,4 @@ export class MeetingService {
 
     return meeting._id.toString();
   }
-
 }

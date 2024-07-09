@@ -22,6 +22,7 @@ import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
 import { MeetingUpdateDto } from '../dto/meeting.update.dto';
+import { MomUpdateDto } from '../dto/mom.update.dto';
 
 @ApiTags('Meeting')
 @Controller('api/meeting')
@@ -147,12 +148,12 @@ export class MeetingController {
   }
 
   @Post(':id/mom/update')
-  @ApiOperation({ summary: 'Update a specific field in a meeting' })
+  @ApiOperation({ summary: 'Update MOM' })
   @ApiParam({ name: 'id', description: 'Meeting ID' })
-  @ApiBody({ type: MeetingUpdateDto })
-  async updateField(@Param('id') id: string, @Body() body: MeetingUpdateDto) {
+  @ApiBody({ type: MomUpdateDto })
+  async updateField(@Param('id') id: string, @Body() body: MomUpdateDto) {
     body.id = id;
-    return await this.meetingService.updateMeetingField(body);
+    return await this.meetingService.updateMom(body);
   }
 
   @Delete(':id')

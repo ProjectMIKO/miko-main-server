@@ -77,6 +77,11 @@ export class MeetingController {
     res.setHeader('Connection', 'keep-alive');
 
     const intervalId = setInterval(async () => {
+      if (res.writableEnded) {
+        clearInterval(intervalId);
+        return;
+      }
+      
       meetingFindResponseDto = await this.meetingService.findOne(id); // mom id 조회될 때까지 검색
       if (meetingFindResponseDto.mom) {
         res.write(`data: ${JSON.stringify(meetingFindResponseDto)}\n\n`);
@@ -90,7 +95,9 @@ export class MeetingController {
     // 연결이 닫히면 인터벌을 정리
     res.on('close', () => {
       clearInterval(intervalId);
-      res.end();
+      if (!res.writableEnded) {
+        res.end();
+      }
     });
   }
 

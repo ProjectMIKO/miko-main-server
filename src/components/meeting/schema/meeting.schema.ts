@@ -21,6 +21,9 @@ export class Meeting {
   @Prop({ default: null })
   endTime: Date;
 
+  @Prop({ default: null })
+  period: number;
+
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Conversation' }], default: [] })
   conversations: Conversation[];
 
@@ -33,7 +36,7 @@ export class Meeting {
   @Prop({ default: null })
   record: string;
 
-  @Prop({ required: false })
+  @Prop({ default: null })
   mom: string;
 }
 

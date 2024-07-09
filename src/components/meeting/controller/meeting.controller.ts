@@ -18,7 +18,6 @@ import { VertexService } from 'components/vertex/service/vertex.service';
 import { EdgeService } from 'components/edge/service/edge.service';
 import { RecordService } from '@openvidu/service/record.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
-import { MomResponseDto, ParticipantDto } from '@middleware/dto/mom.response.dto';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -80,16 +79,13 @@ export class MeetingController {
     const intervalId = setInterval(async () => {
       meetingFindResponseDto = await this.meetingService.findOne(id); // mom id 조회될 때까지 검색
       if (meetingFindResponseDto.mom) {
-        const momResponseDto = await this.meetingService.findMom(meetingFindResponseDto.mom);
-        if (momResponseDto) {
-          res.write(`data: ${JSON.stringify(momResponseDto)}\n\n`);
+        res.write(`data: ${JSON.stringify(meetingFindResponseDto)}\n\n`);
 
-          // 인터벌을 정리하고 연결을 닫음
-          clearInterval(intervalId);
-          res.end();
-        }
+        // 인터벌을 정리하고 연결을 닫음
+        clearInterval(intervalId);
+        res.end();
       }
-    }, 2000);
+    }, 1000);
 
     // 연결이 닫히면 인터벌을 정리
     res.on('close', () => {
@@ -149,7 +145,7 @@ export class MeetingController {
             throw new InternalServerErrorException('Failed to fetch the recording file');
           });
       }
-    }, 2000);
+    }, 1000);
   }
 
   @Post(':id/update')

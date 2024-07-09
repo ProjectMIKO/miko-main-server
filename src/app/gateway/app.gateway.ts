@@ -32,7 +32,6 @@ import { OpenviduService } from '@openvidu/service/openvidu.service';
 import { InvalidPasswordException } from '@global/exception/invalidPassword.exception';
 import { MeetingUpdateDto } from 'components/meeting/dto/meeting.update.dto';
 import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
-import { MomResponseDto, ParticipantDto } from '@middleware/dto/mom.response.dto';
 import { Mutex } from 'async-mutex';
 
 @WebSocketGateway({
@@ -135,6 +134,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
     this.logger.log(`Convert STT Method: Start`);
+    const roomId = this.roomMeetingMap[room]; // 회의 종료 후 stt 요청시 this.roomMeetingMap[room]가 undefined되는 문제가 있음
 
     // Blob 크기 확인 (KB 단위로 변환)
     const fileSize = file.size || file.byteLength || file.length;
@@ -169,7 +169,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.roomConversations[room][conversationId] = [conversationCreateDto];
     // Meeting 에 Conversation 저장
     const meetingUpdateDto_convers: MeetingUpdateDto = {
-      id: this.roomMeetingMap[room],
+      id: roomId,
       value: conversationId,
       field: 'conversations',
       action: '$push',
@@ -494,33 +494,29 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
 
     // 회의록 추출
-    const momResponseDto: MomResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
-    momResponseDto.title = meetingFindResponseDto.title;
-    momResponseDto.startTime = meetingFindResponseDto.startTime;
+    const meetingResponseDto: MeetingFindResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
 
     // 회의 기간 계산
     const periodMillis = meetingFindResponseDto.endTime.getTime() - meetingFindResponseDto.startTime.getTime();
-    momResponseDto.period = periodMillis;
-
-    // 참석자 목록 설정
-    const participants: ParticipantDto[] = meetingFindResponseDto.owner.map((name, index) => ({
-      name,
-      role: index === 0 ? 'host' : 'member',
-    }));
-    momResponseDto.participants = participants;
-
-    // Mom 저장
-    const mom = await this.meetingService.createMom(momResponseDto);
-    console.log(`mom id: ${mom._id.toString()}`);
+    meetingResponseDto.period = periodMillis;
     
-    // Meeting에 Mom ID 업데이트
+    // Meeting에 Mom 업데이트
     const meetingUpdateDto_mom: MeetingUpdateDto = {
       id: roomId,
-      value: mom._id.toString(),
+      value: meetingResponseDto.mom,
       field: 'mom',
       action: '$set',
     };
+
+    const meetingUpdateDto_period: MeetingUpdateDto = {
+      id: roomId,
+      value: meetingResponseDto.period,
+      field: 'period',
+      action: '$set',
+    };
+
     await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
+    await this.meetingService.updateMeetingField(meetingUpdateDto_period);
     console.log(`${roomId}: save mom 종료`);
   }
 }

@@ -1,7 +1,7 @@
 import { Conversation } from 'components/conversation/schema/conversation.schema';
 import { Vertex } from 'components/vertex/schema/vertex.schema';
 import { Edge } from 'components/edge/schema/edge.schema';
-import { IsDate, IsNotEmpty, IsString, IsArray, ValidateNested } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString, IsArray, ValidateNested, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Meeting } from '../schema/meeting.schema';
 
@@ -27,6 +27,10 @@ export class MeetingFindResponseDto {
   @IsNotEmpty()
   endTime: Date;
 
+  @ApiProperty({ description: '회의 기간' })
+  @IsNumber()
+  period: number;
+  
   @ApiProperty({ description: 'List of conversations', type: [Conversation] })
   @IsArray()
   @ValidateNested({ each: true })
@@ -49,19 +53,27 @@ export class MeetingFindResponseDto {
   @IsString()
   record: string;
 
-  @ApiProperty({ description: 'Meeting Minutes ID', example: '22345667c7cc2cb63d418696' })
+  @ApiProperty({ description: '회의록 요약' })
   @IsString()
+  @IsNotEmpty()
   mom: string;
 
-  constructor(meeting: Meeting) {
-    this.title = meeting.title;
-    this.owner = meeting.owner;
-    this.startTime = meeting.startTime;
-    this.endTime = meeting.endTime;
-    this.conversationIds = meeting.conversations;
-    this.vertexIds = meeting.vertexes;
-    this.edgeIds = meeting.edges;
-    this.record = meeting.record;
-    this.mom = meeting.mom;
+  constructor();
+  constructor(meeting: Meeting);
+  constructor(meeting?: Meeting) {
+    if (meeting) {
+      this.title = meeting.title;
+      this.owner = meeting.owner;
+      this.startTime = meeting.startTime;
+      this.endTime = meeting.endTime;
+      this.period = meeting.period;
+      this.conversationIds = meeting.conversations;
+      this.vertexIds = meeting.vertexes;
+      this.edgeIds = meeting.edges;
+      this.record = meeting.record;
+      this.mom = meeting.mom;
+    } else {
+
+    }
   }
 }

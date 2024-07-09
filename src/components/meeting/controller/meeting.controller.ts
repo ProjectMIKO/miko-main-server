@@ -18,7 +18,6 @@ import { VertexService } from 'components/vertex/service/vertex.service';
 import { EdgeService } from 'components/edge/service/edge.service';
 import { RecordService } from '@openvidu/service/record.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
-import { MomResponseDto, ParticipantDto } from '@middleware/dto/mom.response.dto';
 import { MiddlewareService } from '@middleware/service/middleware.service';
 import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';

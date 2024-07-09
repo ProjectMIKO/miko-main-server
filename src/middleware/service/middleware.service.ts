@@ -6,7 +6,6 @@ import { SummarizeResponseDto } from '../dto/summarize.response.dto';
 import { ConvertResponseDto } from '../dto/convert.response.dto';
 import * as FormData from 'form-data';
 import { InvalidMiddlewareException } from '@nestjs/core/errors/exceptions/invalid-middleware.exception';
-import { MomResponseDto } from '@middleware/dto/mom.response.dto';
 import { MomRequestDto } from '@middleware/dto/mom.request.dto';
 import { Conversation } from 'components/conversation/schema/conversation.schema';
 import { Vertex } from 'components/vertex/schema/vertex.schema';

@@ -8,15 +8,12 @@ import { GlobalExceptionsFilter } from '@global/filter/global.exceptions.filter'
 import { MeetingFindResponseDto } from '../dto/meeting.find.response.dto';
 import { MeetingUpdateDto } from '../dto/meeting.update.dto';
 import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
-import { MomResponseDto } from '@middleware/dto/mom.response.dto';
-import { Mom, MomDocument } from '../schema/mom.schema';
 
 @Injectable()
 @UseFilters(GlobalExceptionsFilter)
 export class MeetingService {
   constructor(
     @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
-    @InjectModel(Mom.name) private momModel: Model<MomDocument>,
   ) {}
 
   validateField(field: string) {
@@ -92,25 +89,4 @@ export class MeetingService {
     return meeting._id.toString();
   }
 
-  async createMom(momResponseDto: MomResponseDto): Promise<Mom> {
-    const mom = new this.momModel(momResponseDto);
-
-    try {
-      await mom.save();
-    } catch (error) {
-      throw new Error('Failed to save Mom');
-    }
-
-    return mom;
-  }
-
-  async findMom(momId: string): Promise<MomResponseDto> {
-    const mom = await this.momModel.findById(momId);
-
-    if (!mom) throw new NotFoundException(`MOM with ID ${momId} not found`);
-
-    const momResponseDto = new MomResponseDto(mom);
-
-    return momResponseDto;
-  }
 }

@@ -10,12 +10,10 @@ import { VertexModule } from 'components/vertex/vertex.module';
 import { EdgeModule } from 'components/edge/edge.module';
 import { OpenviduModule } from '@openvidu/openvidu.module';
 import { MiddlewareModule } from '@middleware/middleware.module';
-import { Mom, MomSchema } from './schema/mom.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),
-    MongooseModule.forFeature([{ name: Mom.name, schema: MomSchema }]),
     ConversationModule,
     VertexModule,
     EdgeModule,

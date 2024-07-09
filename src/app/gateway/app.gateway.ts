@@ -32,7 +32,6 @@ import { OpenviduService } from '@openvidu/service/openvidu.service';
 import { InvalidPasswordException } from '@global/exception/invalidPassword.exception';
 import { MeetingUpdateDto } from 'components/meeting/dto/meeting.update.dto';
 import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
-import { MomResponseDto, ParticipantDto } from '@middleware/dto/mom.response.dto';
 import { Mutex } from 'async-mutex';
 
 @WebSocketGateway({

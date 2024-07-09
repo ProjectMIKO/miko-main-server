@@ -18,11 +18,11 @@ import { VertexService } from 'components/vertex/service/vertex.service';
 import { EdgeService } from 'components/edge/service/edge.service';
 import { RecordService } from '@openvidu/service/record.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
-import { MiddlewareService } from '@middleware/service/middleware.service';
 import * as https from 'https';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
 import { MeetingUpdateDto } from '../dto/meeting.update.dto';
+import { MomUpdateDto } from '../dto/mom.update.dto';
 
 @ApiTags('Meeting')
 @Controller('api/meeting')
@@ -33,7 +33,6 @@ export class MeetingController {
     private readonly vertexService: VertexService,
     private readonly edgeService: EdgeService,
     private readonly recordService: RecordService,
-    private readonly middlewareService: MiddlewareService,
   ) {}
 
   private readonly logger = new Logger(MeetingController.name);
@@ -148,13 +147,13 @@ export class MeetingController {
     }, 1000);
   }
 
-  @Post(':id/update')
-  @ApiOperation({ summary: 'Update a specific field in a meeting' })
+  @Post(':id/mom/update')
+  @ApiOperation({ summary: 'Update MOM' })
   @ApiParam({ name: 'id', description: 'Meeting ID' })
-  @ApiBody({ type: MeetingUpdateDto })
-  async updateField(@Param('id') id: string, @Body() body: MeetingUpdateDto) {
+  @ApiBody({ type: MomUpdateDto })
+  async updateField(@Param('id') id: string, @Body() body: MomUpdateDto) {
     body.id = id;
-    return await this.meetingService.updateMeetingField(body);
+    return await this.meetingService.updateMom(body);
   }
 
   @Delete(':id')

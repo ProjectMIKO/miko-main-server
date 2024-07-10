@@ -151,6 +151,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (!convertResponseDto.script) throw new EmptyDataException(`ConvertSTT: Empty script`);
 
+    if (convertResponseDto.script.length < 4) {
+      this.logger.warn(`Too short Script: ${convertResponseDto.script}`);
+      return;
+    }
+
     this.emitMessage(client, room, 'script', `${client['nickname']}: ${convertResponseDto.script}`);
 
     const conversationCreateDto: ConversationCreateDto = {

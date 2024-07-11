@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class SummaryBody {
   @ApiProperty({ description: 'Keyword of the item' })
@@ -12,13 +12,13 @@ export class SummaryBody {
   @IsString()
   @IsNotEmpty()
   subject: string;
-}
 
-export class Sub2Item {
-  @ApiProperty({ description: 'Sub2 item', type: SummaryBody })
-  @ValidateNested()
+  @ApiProperty({ description: 'Sub2 items', type: [SummaryBody], required: false })
+  @IsArray()
+  @ValidateNested({ each: true })
   @Type(() => SummaryBody)
-  sub2: SummaryBody[];
+  @IsOptional()
+  sub2?: SummaryBody[];
 }
 
 export class Sub1Item {
@@ -27,11 +27,12 @@ export class Sub1Item {
   @Type(() => SummaryBody)
   sub1: SummaryBody;
 
-  @ApiProperty({ description: 'Sub2 items', type: [Sub2Item] })
+  @ApiProperty({ description: 'Sub2 items', type: [SummaryBody], required: false })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => Sub2Item)
-  sub2: Sub2Item[];
+  @Type(() => SummaryBody)
+  @IsOptional()
+  sub2?: SummaryBody[];
 }
 
 export class Idea {
@@ -40,11 +41,12 @@ export class Idea {
   @Type(() => SummaryBody)
   main: SummaryBody;
 
-  @ApiProperty({ description: 'Sub1 items', type: [Sub1Item] })
+  @ApiProperty({ description: 'Sub1 items', type: [SummaryBody], required: false })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => Sub1Item)
-  sub1: Sub1Item[];
+  @Type(() => SummaryBody)
+  @IsOptional()
+  sub1?: SummaryBody[];
 }
 
 export class SummarizeResponseDto {

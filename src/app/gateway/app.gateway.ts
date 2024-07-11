@@ -220,13 +220,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`Main Subject Returned: ${idea.main.keyword} - ${idea.main.subject}`);
         const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
 
-        if (!idea.sub) continue;
+        if (!idea.sub1) continue;
 
-        for (const subItem of idea.sub) {
-          console.log(`Sub Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
-          const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
-          console.log(`Edge Create: vertex1: ${mainId} vertex2: ${subId}`);
-          await this.handleEdge(client, [room, mainId, subId, '$push']);
+        for (const subItem1 of idea.sub1) {
+          console.log(`Sub1 Subject Returned: ${subItem1.keyword} - ${subItem1.subject}`);
+          const sub1Id = await this.handleVertex(client, [room, summarizeRequestDto, subItem1]);
+          console.log(`Edge Create: vertex1: ${mainId} vertex2: ${sub1Id}`);
+          await this.handleEdge(client, [room, mainId, sub1Id, '$push']);
+
+          if (!subItem1.sub2) continue;
+
+          for (const subItem2 of subItem1.sub2) {
+            console.log(`Sub2 Subject Returned: ${subItem2.keyword} - ${subItem2.subject}`);
+            const sub2Id = await this.handleVertex(client, [room, summarizeRequestDto, subItem2]);
+            console.log(`Edge Create: vertex1: ${sub1Id} vertex2: ${sub2Id}`);
+            await this.handleEdge(client, [room, sub1Id, sub2Id, '$push']);
+          }
         }
       }
 

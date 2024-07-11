@@ -60,9 +60,14 @@ export class RecordService {
   }
 
   async stopRecording(recordingId: string): Promise<RecordingResponseDto> {
-    // Stop recording
-    const recording = await this.openvidu.stopRecording(recordingId);
-    return plainToClass(RecordingResponseDto, recording);
+    try {
+      const recording = await this.openvidu.stopRecording(recordingId);
+      return plainToClass(RecordingResponseDto, recording);
+    } catch (error) {
+      console.error('Error stopping the recording:', error);
+      const failedResponse = new RecordingResponseDto('failed');
+      return failedResponse;
+    }
   }
 
   async getRecording(recordingId: string): Promise<RecordingResponseDto> {

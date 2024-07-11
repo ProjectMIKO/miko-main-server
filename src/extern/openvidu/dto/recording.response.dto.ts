@@ -54,4 +54,8 @@ export class RecordingResponseDto {
 
   @ApiProperty({ description: 'Properties of the recording' })
   readonly properties: RecordingPropertiesDto;
+
+  constructor(status: string) {
+    this.status = status;
+  }
 }

@@ -3,17 +3,33 @@ import { Document, Types } from 'mongoose';
 import { Conversation } from 'components/conversation/schema/conversation.schema';
 import { Vertex } from 'components/vertex/schema/vertex.schema';
 import { Edge, EdgeSchema } from 'components/edge/schema/edge.schema';
-import { IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export type MeetingDocument = Meeting & Document;
+
+export class Owner {
+  @ApiProperty({ description: 'Name of the owner' })
+  @Prop({ required: true })
+  name: string;
+
+  @ApiProperty({ description: 'Role of the owner' })
+  @Prop({ required: true })
+  role: string;
+
+  @ApiProperty({ description: 'Image URL of the owner' })
+  @Prop({ required: true })
+  image: string;
+}
 
 @Schema()
 export class Meeting {
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: true, type: [String] })
-  owner: string[];
+  @Prop({ type: [Owner], required: true })
+  @Type(() => Owner)
+  owner: Owner[];
 
   @Prop({ default: null })
   startTime: Date;

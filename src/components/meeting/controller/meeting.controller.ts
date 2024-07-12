@@ -53,7 +53,16 @@ export class MeetingController {
     const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
     const edges = await this.edgeService.findEdges(meetingFindResponseDto.edgeIds);
 
-    return { conversations, vertexes, edges };
+    // 새로운 대화 객체 생성
+    const newConversations = conversations.map(conversation => {
+      const owner = meetingFindResponseDto.owner.find(owner => owner.name === conversation.user);
+      return {
+        ...conversation.toObject(),
+        image: owner ? owner.image : undefined
+      };
+    });
+    
+    return { conversations: newConversations, vertexes, edges };
   }
 
   @Get(':id/mom')

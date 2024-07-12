@@ -4,6 +4,7 @@ import { RoomNotFoundException } from '@global/exception/roomNotFound.exception'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { AppGateway } from 'app/gateway/app.gateway';
 import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
+import { Owner } from 'components/meeting/schema/meeting.schema';
 import { MeetingService } from 'components/meeting/service/meeting.service';
 
 @Injectable()
@@ -30,22 +31,27 @@ export class AppService {
    * @param password - 비밀번호
    * @returns 성공 여부
    */
-  public async createNewRoom(nickname: string, room: string, password: string): Promise<boolean> {
+  public async createNewRoom(nickname: string, room: string, password: string, image: string): Promise<boolean> {
     console.log(nickname, room, password);
 
     if (!nickname) throw new BadRequestException('Nickname is empty');
     if (!room) throw new BadRequestException('Room is empty');
 
     this.logger.log('Create Room Method: Initiated');
-    
+
     console.log('Existing rooms:', Object.keys(this.appGateway.roomMeetingMap));
 
     if (this.appGateway.roomMeetingMap[room]) throw new RoomExistException(`${room} is an existing room`);
 
+    const ownerObject: Owner = {
+      name: nickname,
+      role: 'host',
+      image: image,
+    };
 
     const meetingCreateDto: MeetingCreateDto = {
       title: room,
-      owner: nickname,
+      owner: [ownerObject], // 객체 배열로 설정
     };
 
     this.appGateway.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);

@@ -38,7 +38,7 @@ export class MeetingService {
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meeting = new this.meetingModel({ ...meetingCreateDto, owner: [meetingCreateDto.owner] });
+    const meeting = new this.meetingModel({ ...meetingCreateDto, owner: meetingCreateDto.owner });
 
     try {
       await meeting.save();
@@ -50,7 +50,7 @@ export class MeetingService {
   }
 
   public async findAllByOwner(ownerId: string): Promise<MeetingListResponseDto[]> {
-    const meetings = await this.meetingModel.find({ owner: ownerId }).exec();
+    const meetings = await this.meetingModel.find({ 'owner.name': ownerId }).exec();
 
     if (!meetings.length) {
       throw new NotFoundException('No meetings found for this owner');

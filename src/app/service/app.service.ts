@@ -4,6 +4,7 @@ import { RoomNotFoundException } from '@global/exception/roomNotFound.exception'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { AppGateway } from 'app/gateway/app.gateway';
 import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
+import { Owner } from 'components/meeting/schema/meeting.schema';
 import { MeetingService } from 'components/meeting/service/meeting.service';
 
 @Injectable()
@@ -37,15 +38,15 @@ export class AppService {
     if (!room) throw new BadRequestException('Room is empty');
 
     this.logger.log('Create Room Method: Initiated');
-    
+
     console.log('Existing rooms:', Object.keys(this.appGateway.roomMeetingMap));
 
     if (this.appGateway.roomMeetingMap[room]) throw new RoomExistException(`${room} is an existing room`);
 
-    const ownerObject = {
+    const ownerObject: Owner = {
       name: nickname,
       role: 'host',
-      image: image
+      image: image,
     };
 
     const meetingCreateDto: MeetingCreateDto = {

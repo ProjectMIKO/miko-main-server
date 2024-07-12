@@ -38,7 +38,7 @@ export class MeetingService {
   }
 
   public async createNewMeeting(meetingCreateDto: MeetingCreateDto): Promise<string> {
-    const meeting = new this.meetingModel({ ...meetingCreateDto, owner: [meetingCreateDto.owner] });
+    const meeting = new this.meetingModel({ ...meetingCreateDto, owner: meetingCreateDto.owner });
 
     try {
       await meeting.save();

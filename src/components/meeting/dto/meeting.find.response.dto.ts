@@ -3,7 +3,7 @@ import { Vertex } from 'components/vertex/schema/vertex.schema';
 import { Edge } from 'components/edge/schema/edge.schema';
 import { IsDate, IsNotEmpty, IsString, IsArray, ValidateNested, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Meeting } from '../schema/meeting.schema';
+import { Meeting, Owner } from '../schema/meeting.schema';
 
 export class MeetingFindResponseDto {
   @ApiProperty({ description: 'Meeting Title', example: 'Project Update Meeting' })
@@ -15,7 +15,7 @@ export class MeetingFindResponseDto {
   @IsArray()
   @ValidateNested({ each: true })
   @IsNotEmpty()
-  owner: string[];
+  owner: Owner[];
 
   @ApiProperty({ description: 'Meeting start date', example: '2024-07-04T09:00:00.000Z' })
   @IsDate()

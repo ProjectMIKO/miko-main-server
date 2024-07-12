@@ -13,26 +13,12 @@ export class SummaryBody {
   @IsNotEmpty()
   subject: string;
 
-  @ApiProperty({ description: 'Sub2 items', type: [SummaryBody], required: false })
+  @ApiProperty({ description: 'Sub items', type: [SummaryBody], required: false })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SummaryBody)
   @IsOptional()
-  sub2?: SummaryBody[];
-}
-
-export class Sub1Item {
-  @ApiProperty({ description: 'Sub1 item', type: SummaryBody })
-  @ValidateNested()
-  @Type(() => SummaryBody)
-  sub1: SummaryBody;
-
-  @ApiProperty({ description: 'Sub2 items', type: [SummaryBody], required: false })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SummaryBody)
-  @IsOptional()
-  sub2?: SummaryBody[];
+  sub?: SummaryBody[];
 }
 
 export class Idea {
@@ -41,12 +27,12 @@ export class Idea {
   @Type(() => SummaryBody)
   main: SummaryBody;
 
-  @ApiProperty({ description: 'Sub1 items', type: [SummaryBody], required: false })
+  @ApiProperty({ description: 'Sub items', type: [SummaryBody], required: false })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SummaryBody)
   @IsOptional()
-  sub1?: SummaryBody[];
+  sub?: SummaryBody[];
 }
 
 export class SummarizeResponseDto {

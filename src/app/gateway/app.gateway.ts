@@ -217,25 +217,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.middlewareService.summarizeScript(summarizeRequestDto);
 
       for (const idea of summarizeResponseDto.idea) {
-        console.log(`Main Subject Returned: ${idea.main.keyword} - ${idea.main.subject}`);
+        console.log(`Main 항목 반환: ${idea.main.keyword} - ${idea.main.subject}`);
         const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
 
-        if (!idea.sub1) continue;
-
-        for (const subItem1 of idea.sub1) {
-          console.log(`Sub1 Subject Returned: ${subItem1.keyword} - ${subItem1.subject}`);
-          const sub1Id = await this.handleVertex(client, [room, summarizeRequestDto, subItem1]);
-          console.log(`Edge Create: vertex1: ${mainId} vertex2: ${sub1Id}`);
-          await this.handleEdge(client, [room, mainId, sub1Id, '$push']);
-
-          if (!subItem1.sub2) continue;
-
-          for (const subItem2 of subItem1.sub2) {
-            console.log(`Sub2 Subject Returned: ${subItem2.keyword} - ${subItem2.subject}`);
-            const sub2Id = await this.handleVertex(client, [room, summarizeRequestDto, subItem2]);
-            console.log(`Edge Create: vertex1: ${sub1Id} vertex2: ${sub2Id}`);
-            await this.handleEdge(client, [room, sub1Id, sub2Id, '$push']);
-          }
+        if (idea.sub) {
+          await this.processSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
         }
       }
 
@@ -496,6 +482,28 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.meetingService.updateMeetingField(meetingUpdateDto_endTime);
     console.log(`${roomId}: stop recording 종료`);
+  }
+
+  /**
+   * summarize 정점 및 간선 처리 함수
+   * @param client - 클라이언트 소켓.
+   * @param room - 방 식별자.
+   * @param summarizeRequestDto - 요약 요청 데이터 전송 객체.
+   * @param parentId - 부모 정점 ID.
+   * @param subItems - 처리할 하위 항목 배열.
+   * @param level - 재귀의 현재 깊이 수준.
+   */
+  async processSubItems(client, room, summarizeRequestDto, parentId, subItems, level) {
+    for (const subItem of subItems) {
+      console.log(`Sub${level} Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
+      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+      console.log(`Edge Create: vertex1: ${parentId} vertex2: ${subId}`);
+      await this.handleEdge(client, [room, parentId, subId, '$push']);
+
+      if (subItem.sub) {
+        await this.processSubItems(client, room, summarizeRequestDto, subId, subItem.sub, level + 1);
+      }
+    }
   }
 
   private async saveMom(roomId: string) {

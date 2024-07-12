@@ -30,7 +30,7 @@ export class AppService {
    * @param password - 비밀번호
    * @returns 성공 여부
    */
-  public async createNewRoom(nickname: string, room: string, password: string): Promise<boolean> {
+  public async createNewRoom(nickname: string, room: string, password: string, image: string): Promise<boolean> {
     console.log(nickname, room, password);
 
     if (!nickname) throw new BadRequestException('Nickname is empty');
@@ -42,10 +42,15 @@ export class AppService {
 
     if (this.appGateway.roomMeetingMap[room]) throw new RoomExistException(`${room} is an existing room`);
 
+    const ownerObject = {
+      name: nickname,
+      role: 'host',
+      image: image
+    };
 
     const meetingCreateDto: MeetingCreateDto = {
       title: room,
-      owner: nickname,
+      owner: [ownerObject], // 객체 배열로 설정
     };
 
     this.appGateway.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);

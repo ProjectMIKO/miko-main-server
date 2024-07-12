@@ -68,8 +68,8 @@ export class AppController {
   })
   @Post('create/room')
   async createRoom(@Body() roomCreateDto: RoomCreateDto): Promise<boolean> {
-    const { nickname, room, password } = roomCreateDto;
-    return await this.appService.createNewRoom(nickname, room, password);
+    const { nickname, room, password, image } = roomCreateDto;
+    return await this.appService.createNewRoom(nickname, room, password, image);
   }
 
   @ApiOperation({ summary: 'Join an existing room' })

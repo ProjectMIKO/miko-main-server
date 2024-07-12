@@ -16,4 +16,9 @@ export class RoomCreateDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @ApiProperty({ description: 'Image of the user' })
+  @IsString()
+  @IsNotEmpty()
+  image: string;
 }

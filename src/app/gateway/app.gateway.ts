@@ -69,6 +69,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     client['nickname'] = client.handshake.auth.nickname;
+    client['image'] = client.handshake.auth.image;
     this.logger.log(`${client['nickname']}: connected to server`);
   }
 
@@ -104,9 +105,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.joinRoom(client, room);
 
+    const ownerObject = {
+      name: client['nickname'],
+      role: 'member',
+      image: client['image']
+    };
+
     const meetingUpdateDto_owner: MeetingUpdateDto = {
       id: this.roomMeetingMap[room],
-      value: client['nickname'],
+      value: ownerObject,
       field: 'owner',
       action: '$push',
     };

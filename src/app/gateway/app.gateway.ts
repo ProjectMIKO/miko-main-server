@@ -160,7 +160,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    this.emitMessage(client, room, 'script', `${client['nickname']}: ${convertResponseDto.script}`);
+    this.emitMessage(client, room, 'script', `${client['nickname']}|${client['image']}|${convertResponseDto.script}`);
 
     const conversationCreateDto: ConversationCreateDto = {
       user: client['nickname'],
@@ -462,17 +462,24 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const batchSize = 10;
     // 대화(conversations) 전송
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
-    for (let i = 0; i < conversations.length; i += 300) {
-      const batch = conversations.slice(i, i + batchSize);
+  
+    // 새로운 대화 객체 생성
+    const newConversations = conversations.map(conversation => {
+      return {
+        ...conversation.toObject(),
+        image: conversation.user === client['nickname'] ? client['image'] : undefined 
+      };
+    });
+
+    for (let i = 0; i < conversations.length; i += batchSize) {
+      const batch = newConversations.slice(i, i + batchSize);
       client.emit('scriptBatch', batch);
-      // await this.sleep(50); // 배치 전송 사이에 잠깐의 지연
     }
     // 버텍스(vertices) 전송
     const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
     for (let i = 0; i < vertexes.length; i += batchSize) {
       const batch = vertexes.slice(i, i + batchSize);
       client.emit('vertexBatch', batch);
-      // await this.sleep(50); // 배치 전송 사이에 잠깐의 지연
     }
 
     // 에지(edges) 전송
@@ -480,7 +487,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (let i = 0; i < edges.length; i += batchSize) {
       const batch = edges.slice(i, i + batchSize);
       client.emit('edgeBatch', batch);
-      // await this.sleep(50); // 배치 전송 사이에 잠깐의 지연
     }
 
     this.logger.log('Join Room Method: Complete');

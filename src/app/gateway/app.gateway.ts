@@ -22,13 +22,11 @@ import { EmptyDataException } from 'assets/global/exception/emptyData.exception'
 import { EdgeEditRequestDto } from 'components/edge/dto/edge.edit.request.dto';
 import { RecordService } from '@openvidu/service/record.service';
 import { StartRecordingDto } from '@openvidu/dto/recording.request.dto';
-import { S3Service } from '@s3/service/s3.service';
 import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
 import { VertexCreateRequestDto } from 'components/vertex/dto/vertex.create.request.dto';
 import { VertexCreateResponseDto } from 'components/vertex/dto/vertex.create.response.dto';
 import { EdgeEditReponseDto } from 'components/edge/dto/edge.edit.response.dto';
 import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.response.dto';
-import { OpenviduService } from '@openvidu/service/openvidu.service';
 import { InvalidPasswordException } from '@global/exception/invalidPassword.exception';
 import { MeetingUpdateDto } from 'components/meeting/dto/meeting.update.dto';
 import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
@@ -59,8 +57,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly vertexService: VertexService,
     private readonly edgeService: EdgeService,
     private readonly recordService: RecordService,
-    private readonly s3Service: S3Service,
-    private readonly openviduService: OpenviduService,
   ) {}
 
   afterInit() {

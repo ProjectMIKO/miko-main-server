@@ -465,9 +465,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   
     // 새로운 대화 객체 생성
     const newConversations = conversations.map(conversation => {
+      const owner = meetingFindResponseDto.owner.find(owner => owner.name === conversation.user);
       return {
         ...conversation.toObject(),
-        image: conversation.user === client['nickname'] ? client['image'] : undefined 
+        image: owner ? owner.image : undefined
       };
     });
 

@@ -47,6 +47,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public roomPasswordManager: { [key: string]: string } = {};
   private roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
   private readonly roomMutexes: { [key: string]: Mutex } = {};
+  private roomVertexHandler: { [key: string]: { vertexData: { keyword: string; id: string }[] } } = {};
 
   @WebSocketServer() server: Server;
 
@@ -214,14 +215,27 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       for (const idea of summarizeResponseDto.idea) {
         console.log(`Main 항목 반환: ${idea.main.keyword} - ${idea.main.subject}`);
-        const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main, 0]);
+        const existingVertex = this.roomVertexHandler[room]?.vertexData.find(
+          (vertex) => vertex.keyword === idea.main.keyword,
+        );
+        let mainId: string;
+
+        if (existingVertex) {
+          console.log(`중복된 vertex 발견: ${existingVertex.keyword} - ${existingVertex.id}`);
+          mainId = existingVertex.id;
+        } else {
+          mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main, 0]);
+          console.log(`새로운 vertex 생성: ${idea.main.keyword} - ${mainId}`);
+
+          this.roomVertexHandler[room].vertexData.push({ keyword: idea.main.keyword, id: mainId });
+        }
 
         if (idea.sub) {
           await this.processSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
         }
       }
 
-      this.roomConversations[room] = {}; // 임시 저장한 대화 flush
+      this.roomConversations[room] = {}; // 임시 저장한 대화 플러시
       this.logger.log(`Summarize Method: Finished`);
     } finally {
       release();
@@ -418,6 +432,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       action: '$set',
     };
 
+    this.roomVertexHandler[room] = { vertexData: [] };
+
     await this.meetingService.updateMeetingField(meetingUpdateDto_record);
     await this.meetingService.updateMeetingField(meetingUpdateDto_startTime);
 
@@ -492,9 +508,24 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   async processSubItems(client, room, summarizeRequestDto, parentId, subItems, level) {
     for (const subItem of subItems) {
-      console.log(`Sub${level} Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
-      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem, level]);
-      console.log(`Edge Create: vertex1: ${parentId} vertex2: ${subId}`);
+      console.log(`Sub${level} 항목 반환: ${subItem.keyword} - ${subItem.subject}`);
+      const existingVertex = this.roomVertexHandler[room]?.vertexData.find(
+        (vertex) => vertex.keyword === subItem.keyword,
+      );
+      let subId;
+
+      if (existingVertex) {
+        console.log(`중복된 vertex 발견: ${existingVertex.keyword} - ${existingVertex.id}`);
+        subId = existingVertex.id;
+      } else {
+        subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem, level]);
+        console.log(`새로운 vertex 생성: ${subItem.keyword} - ${subId}`);
+
+        // roomVertexHandler에 keyword와 id 저장
+        this.roomVertexHandler[room].vertexData.push({ keyword: subItem.keyword, id: subId });
+      }
+
+      console.log(`간선 생성: vertex1: ${parentId} vertex2: ${subId}`);
       await this.handleEdge(client, [room, parentId, subId, '$push']);
 
       if (subItem.sub) {

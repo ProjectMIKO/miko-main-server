@@ -11,6 +11,9 @@ export class Vertex {
   @Prop({ required: true })
   subject: string;
 
+  @Prop({ required: true })
+  priority: number;
+
   @Prop({ type: [String], default: [] })
   conversationIds: string[];
 }

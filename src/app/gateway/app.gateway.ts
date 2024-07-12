@@ -218,7 +218,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       for (const idea of summarizeResponseDto.idea) {
         console.log(`Main 항목 반환: ${idea.main.keyword} - ${idea.main.subject}`);
-        const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main]);
+        const mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main, 0]);
 
         if (idea.sub) {
           await this.processSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
@@ -235,7 +235,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('vertex')
   async handleVertex(
     client: Socket,
-    [room, summarizeRequestDto, summaryBody]: [string, SummarizeRequestDto, SummaryBody],
+    [room, summarizeRequestDto, summaryBody, priority]: [string, SummarizeRequestDto, SummaryBody, number],
   ) {
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
@@ -248,6 +248,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const vertexCreateRequestDto: VertexCreateRequestDto = {
       keyword: summaryBody.keyword,
       subject: summaryBody.subject,
+      priority: priority,
       conversationIds: Object.keys(this.roomConversations[room]),
     };
 
@@ -496,7 +497,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async processSubItems(client, room, summarizeRequestDto, parentId, subItems, level) {
     for (const subItem of subItems) {
       console.log(`Sub${level} Subject Returned: ${subItem.keyword} - ${subItem.subject}`);
-      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem]);
+      const subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem, level]);
       console.log(`Edge Create: vertex1: ${parentId} vertex2: ${subId}`);
       await this.handleEdge(client, [room, parentId, subId, '$push']);
 

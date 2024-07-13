@@ -90,25 +90,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`Enter Room: Start`);
 
-    if (this.countMember(room) == 0) {
-      client.join(room);
-      client.emit('entered_room');
-
+    if (room == 'MIKO') {
+      await this.joinRoom(client, room);
+    } else if (this.countMember(room) == 0) {
       await this.createNewRoom(client, room);
-
       this.logger.log(`Enter Room: 최초 입장`);
-
-      return;
+    } else {
+      await this.joinRoom(client, room);
     }
+
     client.join(room);
     client.emit('entered_room');
-
-    await this.joinRoom(client, room);
 
     const ownerObject = {
       name: client['nickname'],
       role: 'member',
-      image: client['image']
+      image: client['image'],
     };
 
     const meetingUpdateDto_owner: MeetingUpdateDto = {
@@ -332,6 +329,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.stopRecording(roomId, recordingId).then(() => this.saveMom(roomId));
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
       delete this.roomMeetingMap[room];
+      delete this.roomHostManager[room];
+      delete this.roomConversations[room];
+      delete this.roomPasswordManager[room];
+      delete this.roomVertexHandler[room];
     } else {
       client.emit('end_meeting', this.roomMeetingMap[room]);
     }
@@ -427,7 +428,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const recordingResponseDto: RecordingResponseDto = await this.recordService.startRecording(startRecordingDto);
 
-    if(recordingResponseDto?.createdAt == null){
+    if (recordingResponseDto?.createdAt == null) {
       console.log(recordingResponseDto);
       console.log(recordingResponseDto.status);
       throw new InternalServerErrorException('Failed to start recording or create the room');
@@ -472,13 +473,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const batchSize = 10;
     // 대화(conversations) 전송
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
-  
+
     // 새로운 대화 객체 생성
-    const newConversations = conversations.map(conversation => {
-      const owner = meetingFindResponseDto.owner.find(owner => owner.name === conversation.user);
+    const newConversations = conversations.map((conversation) => {
+      const owner = meetingFindResponseDto.owner.find((owner) => owner.name === conversation.user);
       return {
         ...conversation.toObject(),
-        image: owner ? owner.image : undefined
+        image: owner ? owner.image : undefined,
       };
     });
 

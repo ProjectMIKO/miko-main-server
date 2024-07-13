@@ -36,6 +36,7 @@ export class AppService {
 
     if (!nickname) throw new BadRequestException('Nickname is empty');
     if (!room) throw new BadRequestException('Room is empty');
+    if (!password) throw new BadRequestException('Password is empty');
 
     this.logger.log('Create Room Method: Initiated');
 
@@ -55,6 +56,27 @@ export class AppService {
     };
 
     this.appGateway.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
+    this.appGateway.roomPasswordManager[room] = password;
+    this.appGateway.roomHostManager[room] = nickname;
+    this.appGateway.roomConversations[room] = {};
+
+    console.log(`Create New Meeting Completed: ${room}: ${this.appGateway.roomMeetingMap[room]}`);
+    this.logger.log('Create Room Method: Complete');
+
+    return true;
+  }
+
+  public async generateTestRoom(nickname: string, room: string, password: string, meetingId: string): Promise<boolean> {
+    if (!nickname) throw new BadRequestException('Nickname is empty');
+    if (!room) throw new BadRequestException('Room is empty');
+    if (!password) throw new BadRequestException('Password is empty');
+    if (!meetingId) throw new BadRequestException('MeetingID is empty');
+
+    this.logger.warn(`Test Room Generated Request: ${nickname}/${room}/${password}/${meetingId}`);
+
+    if (this.appGateway.roomMeetingMap[room]) throw new RoomExistException(`${room} is an existing room`);
+
+    this.appGateway.roomMeetingMap[room] = meetingId;
     this.appGateway.roomPasswordManager[room] = password;
     this.appGateway.roomHostManager[room] = nickname;
     this.appGateway.roomConversations[room] = {};

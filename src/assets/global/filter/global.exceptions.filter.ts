@@ -27,7 +27,6 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let statusCode: number;
-    let status = 'error';
     let message: string;
 
     console.log('Catched by Global Exceptions Handler');

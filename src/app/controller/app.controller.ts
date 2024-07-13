@@ -99,4 +99,10 @@ export class AppController {
     const { room, password } = roomJoinDto;
     return await this.appService.joinRoom(room, password);
   }
+
+  @Post('generate/room')
+  async generateRoom(@Body() roomCreateDto: RoomCreateDto): Promise<boolean> {
+    const { nickname, room, password, image } = roomCreateDto;
+    return await this.appService.generateTestRoom(nickname, room, password, image); // image -> meetingId
+  }
 }

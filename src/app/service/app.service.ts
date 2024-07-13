@@ -6,8 +6,10 @@ import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
 import { RecordService } from '@openvidu/service/record.service';
 import { AppGateway } from 'app/gateway/app.gateway';
 import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
+import { MeetingFindResponseDto } from 'components/meeting/dto/meeting.find.response.dto';
 import { Owner } from 'components/meeting/schema/meeting.schema';
 import { MeetingService } from 'components/meeting/service/meeting.service';
+import { VertexService } from 'components/vertex/service/vertex.service';
 
 @Injectable()
 export class AppService {
@@ -17,6 +19,7 @@ export class AppService {
     private readonly meetingService: MeetingService,
     private readonly recordService: RecordService,
     private readonly appGateway: AppGateway,
+    private readonly vertexService: VertexService,
   ) {}
 
   public getHello(): string {
@@ -83,6 +86,15 @@ export class AppService {
     this.appGateway.roomPasswordManager[room] = password;
     this.appGateway.roomHostManager[room] = nickname;
     this.appGateway.roomConversations[room] = {};
+
+    const meetingFindResponseDto: MeetingFindResponseDto = await this.meetingService.findOne(meetingId);
+    const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
+
+    this.appGateway.roomVertexHandler[room] = { vertexData: [] };
+    this.appGateway.roomVertexHandler[room].vertexData = vertexes.map((vertex) => ({
+      keyword: vertex.keyword,
+      id: vertex._id.toString(),
+    }));
 
     const recordId = (await this.meetingService.findOne(meetingId)).record;
     const recordingResponseDto: RecordingResponseDto = await this.recordService.getRecording(recordId);

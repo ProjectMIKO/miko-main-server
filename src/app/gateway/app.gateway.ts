@@ -47,7 +47,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public roomPasswordManager: { [key: string]: string } = {};
   public roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
   private readonly roomMutexes: { [key: string]: Mutex } = {};
-  private roomVertexHandler: { [key: string]: { vertexData: { keyword: string; id: string }[] } } = {};
+  public roomVertexHandler: { [key: string]: { vertexData: { keyword: string; id: string }[] } } = {};
 
   @WebSocketServer() server: Server;
 

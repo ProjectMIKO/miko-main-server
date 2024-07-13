@@ -21,7 +21,7 @@ export class VertexService {
     return vertexCreateResponseDto;
   }
 
-  public async findVertexes(vertexIdList: Vertex[]): Promise<Vertex[]> {
+  public async findVertexes(vertexIdList: Vertex[]): Promise<(Vertex & { _id: string })[]> {
     const vertexes = await this.vertexModel
       .find({
         _id: {
@@ -30,8 +30,7 @@ export class VertexService {
       })
       .exec();
 
-
-    return vertexes;
+    return vertexes as (Vertex & { _id: string })[];
   }
 
   public async deleteVertices(vertexRequestDto: VertexRequestDto): Promise<{ deletedCount: number }> {

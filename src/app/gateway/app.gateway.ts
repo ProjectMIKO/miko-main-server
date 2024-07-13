@@ -1,4 +1,4 @@
-import { BadRequestException, Logger } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -423,6 +423,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     const recordingResponseDto: RecordingResponseDto = await this.recordService.startRecording(startRecordingDto);
+
+    if(recordingResponseDto?.createdAt == null){
+      console.log(recordingResponseDto);
+      console.log(recordingResponseDto.status);
+      throw new InternalServerErrorException('Failed to start recording or create the room');
+    }
+
     this.roomRecord[room] = { recordingId: recordingResponseDto.id, createdAt: recordingResponseDto.createdAt };
 
     const meetingUpdateDto_record: MeetingUpdateDto = {

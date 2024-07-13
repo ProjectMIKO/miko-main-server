@@ -415,9 +415,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Room 최초 개설했을 경우
     this.logger.log('Create Room Method: Initiated');
 
+    // room 값을 base64url로 인코딩
+    const encodedSessionId = Buffer.from(room).toString('base64url');
+
     const startRecordingDto: StartRecordingDto = {
-      sessionId: room, // 세션 ID를 room 으로 사용한다고 가정
-      name: `${room}_recording`,
+      sessionId: encodedSessionId,
+      name: `${encodedSessionId}_recording`,
       hasAudio: true,
       hasVideo: false,
     };

@@ -45,7 +45,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public roomMeetingMap: { [key: string]: string } = {};
   public roomHostManager: { [key: string]: string } = {};
   public roomPasswordManager: { [key: string]: string } = {};
-  private roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
+  public roomRecord: { [key: string]: { recordingId: string; createdAt: number } } = {};
   private readonly roomMutexes: { [key: string]: Mutex } = {};
   private roomVertexHandler: { [key: string]: { vertexData: { keyword: string; id: string }[] } } = {};
 

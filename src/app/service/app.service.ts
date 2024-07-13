@@ -2,6 +2,8 @@ import { InvalidPasswordException } from '@global/exception/invalidPassword.exce
 import { RoomExistException } from '@global/exception/roomExist.exception';
 import { RoomNotFoundException } from '@global/exception/roomNotFound.exception';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { RecordingResponseDto } from '@openvidu/dto/recording.response.dto';
+import { RecordService } from '@openvidu/service/record.service';
 import { AppGateway } from 'app/gateway/app.gateway';
 import { MeetingCreateDto } from 'components/meeting/dto/meeting.create.dto';
 import { Owner } from 'components/meeting/schema/meeting.schema';
@@ -13,6 +15,7 @@ export class AppService {
 
   constructor(
     private readonly meetingService: MeetingService,
+    private readonly recordService: RecordService,
     private readonly appGateway: AppGateway,
   ) {}
 
@@ -80,6 +83,13 @@ export class AppService {
     this.appGateway.roomPasswordManager[room] = password;
     this.appGateway.roomHostManager[room] = nickname;
     this.appGateway.roomConversations[room] = {};
+
+    const recordId = (await this.meetingService.findOne(meetingId)).record;
+    const recordingResponseDto: RecordingResponseDto = await this.recordService.getRecording(recordId);
+    this.appGateway.roomRecord[room] = {
+      recordingId: recordingResponseDto.id,
+      createdAt: recordingResponseDto.createdAt,
+    };
 
     console.log(`Create New Meeting Completed: ${room}: ${this.appGateway.roomMeetingMap[room]}`);
     this.logger.log('Create Room Method: Complete');

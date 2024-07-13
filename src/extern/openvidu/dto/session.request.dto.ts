@@ -124,7 +124,7 @@ export class SessionPropertiesDto {
   @ApiPropertyOptional({ description: 'Custom session ID' })
   @IsOptional()
   @IsString()
-  readonly customSessionId?: string;
+  customSessionId?: string;
 
   @ApiPropertyOptional({
     description: 'Forced video codec for the session',

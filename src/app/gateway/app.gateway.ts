@@ -102,19 +102,25 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(room);
     client.emit('entered_room');
 
-    const ownerObject = {
-      name: client['nickname'],
-      role: 'member',
-      image: client['image'],
-    };
+    const meeting = await this.meetingService.findOne(this.roomMeetingMap[room]);
+    const existingOwners = meeting.owner || [];
+    const isOwnerNameDuplicated = existingOwners.some((owner) => owner.name === client['nickname']);
 
-    const meetingUpdateDto_owner: MeetingUpdateDto = {
-      id: this.roomMeetingMap[room],
-      value: ownerObject,
-      field: 'owner',
-      action: '$push',
-    };
-    await this.meetingService.updateMeetingField(meetingUpdateDto_owner);
+    if (!isOwnerNameDuplicated) {
+      const ownerObject = {
+        name: client['nickname'],
+        role: 'member',
+        image: client['image'],
+      };
+
+      const meetingUpdateDto_owner: MeetingUpdateDto = {
+        id: this.roomMeetingMap[room],
+        value: ownerObject,
+        field: 'owner',
+        action: '$push',
+      };
+      await this.meetingService.updateMeetingField(meetingUpdateDto_owner);
+    }
 
     this.logger.log(`Enter Room: Finished`);
   }

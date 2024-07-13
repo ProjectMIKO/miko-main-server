@@ -24,6 +24,7 @@ import { MeetingListResponseDto } from '../dto/meeting.list.response.dto';
 import { MeetingUpdateDto } from '../dto/meeting.update.dto';
 import { MomUpdateDto } from '../dto/mom.update.dto';
 
+
 @ApiTags('Meeting')
 @Controller('api/meeting')
 export class MeetingController {
@@ -129,30 +130,39 @@ export class MeetingController {
     }
 
     const intervalId = setInterval(async () => {
-      let recordingResponseDto: RecordingResponseDto = await this.recordService.getRecording(
-        meetingFindResponseDto.record,
-      );
+      try {
+        let recordingResponseDto: RecordingResponseDto = await this.recordService.getRecording(
+          meetingFindResponseDto.record,
+        );
 
-      if (!recordingResponseDto) {
-        throw new NotFoundException('Recording not found');
-      }
+        if (!recordingResponseDto) {
+          throw new NotFoundException('Recording not found');
+        }
 
-      if (recordingResponseDto.status == 'ready' || recordingResponseDto.status == 'failed') {
-        const fileUrl = recordingResponseDto.url;
+        if (recordingResponseDto.status == 'ready' || recordingResponseDto.status == 'failed') {
+          const fileUrl = recordingResponseDto.url;
 
-        https
-          .get(fileUrl, (fileRes) => {
-            if (fileRes.statusCode !== 200) {
+          https
+            .get(fileUrl, (fileRes) => {
+              if (fileRes.statusCode !== 200) {
+                throw new InternalServerErrorException('Failed to fetch the recording file');
+              }
+              res.setHeader('Content-Type', 'audio/webm');
+              fileRes.pipe(res);
+              clearInterval(intervalId);
+            })
+            .on('error', () => {
+              clearInterval(intervalId);
               throw new InternalServerErrorException('Failed to fetch the recording file');
-            }
-            res.setHeader('Content-Type', 'audio/webm');
-            fileRes.pipe(res);
-            clearInterval(intervalId);
-          })
-          .on('error', () => {
-            clearInterval(intervalId);
-            throw new InternalServerErrorException('Failed to fetch the recording file');
-          });
+            });
+        }
+      } catch (error) {
+        clearInterval(intervalId);
+        if (!res.headersSent) {
+          res.status(500).json({ message: error.message });
+        } else {
+          res.end();
+        }
       }
     }, 2000);
   }

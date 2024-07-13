@@ -85,7 +85,7 @@ export class MeetingController {
     res.setHeader('Connection', 'keep-alive');
 
     const intervalId = setInterval(async () => {
-      meetingFindResponseDto = await this.meetingService.findOne(id); // mom id 조회될 때까지 검색
+      meetingFindResponseDto = await this.meetingService.findOne(id);
       if (meetingFindResponseDto.mom) {
         res.write(`data: ${JSON.stringify(meetingFindResponseDto)}\n\n`);
 

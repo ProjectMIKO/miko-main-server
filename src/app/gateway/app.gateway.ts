@@ -557,6 +557,18 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const conversations = await this.conversationService.findConversation(meetingFindResponseDto.conversationIds);
     const vertexes = await this.vertexService.findVertexes(meetingFindResponseDto.vertexIds);
 
+    if (!Array.isArray(conversations) || conversations.length === 0) {
+      console.log('Conversations are empty');
+      const meetingUpdateDto_mom: MeetingUpdateDto = {
+        id: roomId,
+        value: 'Conversations are empty',
+        field: 'mom',
+        action: '$set',
+      };
+      await this.meetingService.updateMeetingField(meetingUpdateDto_mom);
+      return;
+    }
+
     // 회의록 추출
     const meetingResponseDto: MeetingFindResponseDto = await this.middlewareService.extractMom(conversations, vertexes);
 

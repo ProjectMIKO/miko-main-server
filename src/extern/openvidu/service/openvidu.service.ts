@@ -20,8 +20,16 @@ export class OpenviduService implements OnModuleInit {
   }
 
   async createSession(properties?: SessionPropertiesDto): Promise<SessionResponseDto> {
+    if (properties?.customSessionId) {
+      properties.customSessionId = this.encodeCustomSessionId(properties.customSessionId);
+    }
+
     const session: Session = await this.openvidu.createSession(properties);
     return this.toSessionResponseDto(session);
+  }
+
+  private encodeCustomSessionId(customSessionId: string): string {
+    return Buffer.from(customSessionId).toString('base64url');
   }
 
   private toSessionResponseDto(session: Session): SessionResponseDto {

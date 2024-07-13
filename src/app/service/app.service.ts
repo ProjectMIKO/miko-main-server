@@ -56,7 +56,6 @@ export class AppService {
 
     this.appGateway.roomMeetingMap[room] = await this.meetingService.createNewMeeting(meetingCreateDto);
     this.appGateway.roomPasswordManager[room] = password;
-    this.appGateway.roomPasswordManager[room] = password;
     this.appGateway.roomHostManager[room] = nickname;
     this.appGateway.roomConversations[room] = {};
 

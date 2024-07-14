@@ -233,15 +233,21 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         if (existingVertex) {
           console.log(`중복된 vertex 발견: ${existingVertex.keyword} - ${existingVertex.id}`);
           mainId = existingVertex.id;
+
+          if (idea.sub) {
+            // 중복된 아이템 기존처럼 수행
+            await this.processDuplicatedSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
+          }
         } else {
           mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main, 0]);
           console.log(`새로운 vertex 생성: ${idea.main.keyword} - ${mainId}`);
 
           this.roomVertexHandler[room].vertexData.push({ keyword: idea.main.keyword, id: mainId });
-        }
 
-        if (idea.sub) {
-          await this.processSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
+          if (idea.sub) {
+            // 메인이 겹치지 않으므로 뿌리지 않음.
+            await this.processSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
+          }
         }
       }
 
@@ -537,13 +543,65 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * @param subItems - 처리할 하위 항목 배열.
    * @param level - 재귀의 현재 깊이 수준.
    */
-  async processSubItems(client, room, summarizeRequestDto, parentId, subItems, level) {
+  async processSubItems(
+    client: Socket,
+    room: string,
+    summarizeRequestDto: SummarizeRequestDto,
+    parentId: string,
+    subItems: any,
+    level: number,
+  ) {
     for (const subItem of subItems) {
       console.log(`Sub${level} 항목 반환: ${subItem.keyword} - ${subItem.subject}`);
       const existingVertex = this.roomVertexHandler[room]?.vertexData.find(
         (vertex) => vertex.keyword === subItem.keyword,
       );
-      let subId;
+      let subId: string;
+
+      if (existingVertex && false) {
+        // 비활성화
+        console.log(`중복된 vertex 발견: ${existingVertex.keyword} - ${existingVertex.id}`);
+        subId = existingVertex.id;
+      } else {
+        subId = await this.handleVertex(client, [room, summarizeRequestDto, subItem, level]);
+        console.log(`새로운 vertex 생성: ${subItem.keyword} - ${subId}`);
+
+        // roomVertexHandler에 keyword와 id 저장
+        this.roomVertexHandler[room].vertexData.push({ keyword: subItem.keyword, id: subId });
+      }
+
+      console.log(`간선 생성: vertex1: ${parentId} vertex2: ${subId}`);
+      await this.handleEdge(client, [room, parentId, subId, '$push']);
+
+      if (subItem.sub) {
+        await this.processSubItems(client, room, summarizeRequestDto, subId, subItem.sub, level + 1);
+      }
+    }
+  }
+
+  /**
+   * summarize 정점 및 간선 처리 함수
+   * @param client - 클라이언트 소켓.
+   * @param room - 방 식별자.
+   * @param summarizeRequestDto - 요약 요청 데이터 전송 객체.
+   * @param parentId - 부모 정점 ID.
+   * @param subItems - 처리할 하위 항목 배열.
+   * @param level - 재귀의 현재 깊이 수준.
+   */
+  async processDuplicatedSubItems(
+    client: Socket,
+    room: string,
+    summarizeRequestDto: SummarizeRequestDto,
+    parentId: string,
+    subItems: any,
+    level: number,
+  ) {
+    for (const subItem of subItems) {
+      console.log(`Sub${level} 항목 반환: ${subItem.keyword} - ${subItem.subject}`);
+      const existingVertex = this.roomVertexHandler[room]?.vertexData.find(
+        (vertex) => vertex.keyword === subItem.keyword,
+      );
+      let subId: string;
 
       if (existingVertex) {
         console.log(`중복된 vertex 발견: ${existingVertex.keyword} - ${existingVertex.id}`);
@@ -560,7 +618,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.handleEdge(client, [room, parentId, subId, '$push']);
 
       if (subItem.sub) {
-        await this.processSubItems(client, room, summarizeRequestDto, subId, subItem.sub, level + 1);
+        await this.processDuplicatedSubItems(client, room, summarizeRequestDto, subId, subItem.sub, level + 1);
       }
     }
   }

@@ -33,7 +33,7 @@ export class VertexService {
     return vertexes as (Vertex & { _id: string })[];
   }
 
-  public async deleteVertices(vertexRequestDto: VertexRequestDto): Promise<{ deletedCount: number }> {
+  public async deleteVertexes(vertexRequestDto: VertexRequestDto): Promise<{ deletedCount: number }> {
     const { vertexIdList } = vertexRequestDto;
 
     const result = await this.vertexModel

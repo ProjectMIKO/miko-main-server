@@ -34,7 +34,7 @@ import { Mutex } from 'async-mutex';
 
 @WebSocketGateway({
   cors: {
-    origin: ['https://admin.socket.io', 'https://miko-frontend-i3vt.vercel.app', 'http://localhost:3000'],
+    origin: ['https://miko-frontend-i3vt.vercel.app', 'https://www.mi-ko.site', 'http://localhost:3000'],
     methods: ['GET', 'POST'],
     credentials: true,
   },

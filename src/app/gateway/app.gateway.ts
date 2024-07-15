@@ -191,7 +191,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // roomConversations 가 5개 이상 되면 handleSummarize 호출
     console.log(`${this.roomConversations[room].length}`);
-    if (Object.keys(this.roomConversations[room]).length >= 3) await this.handleSummarize(client, room);
+    if (Object.keys(this.roomConversations[room]).length >= 5) await this.handleSummarize(client, room);
 
     this.logger.log(`Convert STT Method: Finished`);
   }

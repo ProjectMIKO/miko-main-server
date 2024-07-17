@@ -47,6 +47,9 @@ export class OpenviduService implements OnModuleInit {
   }
 
   async createConnection(sessionId: string, properties?: ConnectionPropertiesDto): Promise<ConnectionResponseDto> {
+    if (sessionId) {
+      sessionId = this.encodeCustomSessionId(sessionId);
+    }
     const session = this.openvidu.activeSessions.find((s) => s.sessionId === sessionId);
     if (!session) {
       throw new Error('Session not found');

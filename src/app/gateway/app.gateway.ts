@@ -84,9 +84,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!room) throw new BadRequestException('Room is empty');
     if (!this.roomConversations[room] || !this.roomMeetingMap[room])
       throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
-    if (this.roomPasswordManager[room] != password) {
-      throw new InvalidPasswordException('Invalid password');
-    }
+    if (this.roomPasswordManager[room] != password) throw new InvalidPasswordException('Invalid password');
 
     this.logger.log(`Enter Room: Start`);
 
@@ -198,10 +196,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
-    if (!this.roomMutexes[room]) {
-      console.log('lock');
-      this.roomMutexes[room] = new Mutex();
-    }
+    if (!this.roomMutexes[room]) this.roomMutexes[room] = new Mutex();
 
     const release = await this.roomMutexes[room].acquire();
 
@@ -340,6 +335,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const recordingId = this.roomRecord[room].recordingId;
       this.stopRecording(roomId, recordingId).then(() => this.saveMom(roomId));
       this.emitMessage(client, room, 'end_meeting', this.roomMeetingMap[room]);
+      if (this.roomMutexes[room].isLocked) this.roomMutexes[room].release();
       delete this.roomMeetingMap[room];
       delete this.roomHostManager[room];
       delete this.roomConversations[room];

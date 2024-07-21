@@ -195,21 +195,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('summarize')
+  @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
     if (!this.roomMutexes[room]) this.roomMutexes[room] = new Mutex();
 
     const release = await this.roomMutexes[room].acquire();
 
-    if (!room) throw new BadRequestException('Room is empty');
-    if (!this.roomConversations[room] || !this.roomMeetingMap[room])
-      throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
-
     try {
-      this.logger.log(`Summarize Method: Start`);
+      if (!room) throw new BadRequestException('Room is empty');
+      if (!this.roomConversations[room] || !this.roomMeetingMap[room])
+        throw new RoomNotFoundException('Room 이 정상적으로 생성되지 않았습니다');
 
+      this.logger.log('Summarize Method: Start');
       this.printRoomConversations(room);
+
       if (!this.roomConversations[room] || Object.keys(this.roomConversations[room]).length === 0)
-        throw new EmptyDataException(`SummarizeScript: Empty conversations`);
+        throw new EmptyDataException('SummarizeScript: Empty conversations');
 
       const summarizeRequestDto: SummarizeRequestDto = {
         conversations: this.roomConversations[room],
@@ -219,9 +220,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.middlewareService.summarizeScript(summarizeRequestDto);
 
       for (const idea of summarizeResponseDto.idea) {
-        console.log(`Main 항목 반환: ${idea.main.keyword} - ${idea.main.subject}`);
+        console.log(`Main 항목 반환: ${idea.keyword} - ${idea.subject}`);
         const existingVertex = this.roomVertexHandler[room]?.vertexData.find(
-          (vertex) => vertex.keyword === idea.main.keyword,
+          (vertex) => vertex.keyword === idea.keyword,
         );
         let mainId: string;
 
@@ -230,24 +231,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
           mainId = existingVertex.id;
 
           if (idea.sub) {
-            // 중복된 아이템 기존처럼 수행
             await this.processDuplicatedSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
           }
         } else {
-          mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main, 0]);
-          console.log(`새로운 vertex 생성: ${idea.main.keyword} - ${mainId}`);
+          mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea, 0]);
+          console.log(`새로운 vertex 생성: ${idea.keyword} - ${mainId}`);
 
-          this.roomVertexHandler[room].vertexData.push({ keyword: idea.main.keyword, id: mainId });
+          this.roomVertexHandler[room].vertexData.push({ keyword: idea.keyword, id: mainId });
 
           if (idea.sub) {
-            // 메인이 겹치지 않으므로 뿌리지 않음.
             await this.processSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
           }
         }
       }
 
-      this.roomConversations[room] = {}; // 임시 저장한 대화 플러시
-      this.logger.log(`Summarize Method: Finished`);
+      this.roomConversations[room] = {};
+      this.logger.log('Summarize Method: Finished');
     } finally {
       release();
     }

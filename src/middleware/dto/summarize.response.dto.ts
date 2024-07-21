@@ -21,24 +21,10 @@ export class SummaryBody {
   sub?: SummaryBody[];
 }
 
-export class Idea {
-  @ApiProperty({ description: 'Main item', type: SummaryBody })
-  @ValidateNested()
-  @Type(() => SummaryBody)
-  main: SummaryBody;
-
-  @ApiProperty({ description: 'Sub items', type: [SummaryBody], required: false })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SummaryBody)
-  @IsOptional()
-  sub?: SummaryBody[];
-}
-
 export class SummarizeResponseDto {
-  @ApiProperty({ description: 'Idea array', type: [Idea] })
+  @ApiProperty({ description: 'Idea array', type: [SummaryBody] })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => Idea)
-  idea: Idea[];
+  @Type(() => SummaryBody)
+  idea: SummaryBody[];
 }

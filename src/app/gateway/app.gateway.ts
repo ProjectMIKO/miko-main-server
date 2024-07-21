@@ -153,6 +153,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const time_offset = currentTime.getTime() - this.roomRecord[room].createdAt;
 
     const convertResponseDto: ConvertResponseDto = await this.middlewareService.convertStt(file); // STT 변환 요청
+    if (convertResponseDto.code == 429){
+      this.emitMessage(client, room, 'script', `${convertResponseDto.code}|${convertResponseDto.message}`);
+      return;
+    }
 
     if (!convertResponseDto.script) throw new EmptyDataException(`ConvertSTT: Empty script`);
 

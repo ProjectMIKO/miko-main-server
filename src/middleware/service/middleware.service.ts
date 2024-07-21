@@ -54,10 +54,20 @@ export class MiddlewareService {
         const responseData = response.data;
         const convertResponseDto: ConvertResponseDto = {
           script: responseData.text,
+          code: 200,
+          message: '',
         };
         return convertResponseDto;
       })
       .catch((error) => {
+        if (error.response && error.response.status === 429) {
+          const convertResponseDto: ConvertResponseDto = {
+            script: '',
+            code: 429,
+            message: 'STT 서비스가 현재 과부하 상태입니다. 잠시 후 다시 시도해주세요.',
+          };
+          return convertResponseDto;
+        }
         throw new InvalidMiddlewareException(`ConvertStt: ${error.message}`);
       });
   }

@@ -199,7 +199,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('summarize')
-  @SubscribeMessage('summarize')
   public async handleSummarize(client: Socket, room: string) {
     if (!this.roomMutexes[room]) this.roomMutexes[room] = new Mutex();
 
@@ -224,9 +223,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.middlewareService.summarizeScript(summarizeRequestDto);
 
       for (const idea of summarizeResponseDto.idea) {
-        console.log(`Main 항목 반환: ${idea.keyword} - ${idea.subject}`);
+        console.log(`Main 항목 반환: ${idea.main.keyword} - ${idea.main.subject}`);
         const existingVertex = this.roomVertexHandler[room]?.vertexData.find(
-          (vertex) => vertex.keyword === idea.keyword,
+          (vertex) => vertex.keyword === idea.main.keyword,
         );
         let mainId: string;
 
@@ -238,10 +237,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
             await this.processDuplicatedSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
           }
         } else {
-          mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea, 0]);
-          console.log(`새로운 vertex 생성: ${idea.keyword} - ${mainId}`);
+          mainId = await this.handleVertex(client, [room, summarizeRequestDto, idea.main, 0]);
+          console.log(`새로운 vertex 생성: ${idea.main.keyword} - ${mainId}`);
 
-          this.roomVertexHandler[room].vertexData.push({ keyword: idea.keyword, id: mainId });
+          this.roomVertexHandler[room].vertexData.push({ keyword: idea.main.keyword, id: mainId });
 
           if (idea.sub) {
             await this.processSubItems(client, room, summarizeRequestDto, mainId, idea.sub, 1);
